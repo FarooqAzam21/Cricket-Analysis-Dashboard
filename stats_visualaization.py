@@ -33,8 +33,8 @@ def ensure_numeric(df, cols):
 # ---------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 file_path1 = os.path.join(BASE_DIR, "odi_batsman.csv")
-file_path2 = os.path.join(BASE_DIR, "odi_bowler.csv")
-file_path3 = os.path.join(BASE_DIR, "odi_all_rounders.csv")
+file_path2 = os.path.join(BASE_DIR, "odi_all_rounders.csv")
+file_path3 = os.path.join(BASE_DIR, "odi_bowler.csv")
 file_path4 = os.path.join(BASE_DIR, "yearwise_data.csv")
 
 
@@ -65,7 +65,7 @@ except Exception:
 # strip column names
 df.columns = df.columns.str.strip()
 df2.columns = df2.columns.str.strip()
-bowlers_data.columns = bowlers_data.columns.str.strip()
+bowlers_data.columns = bowlers_data.columns.map(str).str.strip()
 year_wise_data.columns = year_wise_data.columns.str.strip()
 
 # ---------------------------
