@@ -36,10 +36,7 @@ file_path1 = os.path.join(BASE_DIR, "odi_batsman.csv")
 file_path2 = os.path.join(BASE_DIR, "odi_bowler.csv")
 file_path3 = os.path.join(BASE_DIR, "odi_all_rounders.csv")
 file_path4 = os.path.join(BASE_DIR, "yearwise_data.csv")
-csv_path = r"c:\Users\Farooq\Desktop\New folder (4)\Cricket_Analysis\odi_batsman.csv"
-csv_path_2 = r"c:\Users\Farooq\Desktop\New folder (4)\Cricket_Analysis\odi_all_rounders.csv"
-csv_pat_4 = r"C:\Users\Farooq\Desktop\New folder (4)\Cricket_Analysis\odi_bowler.csv"
-csv_pat_3 = r"C:\Users\Farooq\Desktop\New folder (4)\Cricket_Analysis\yearwise_data.csv"
+
 
 # ---------------------------
 # Load CSVs (with robust handling)
@@ -171,38 +168,6 @@ else:
 # ---------------------------
 # Top Visualizations (3 columns)
 # ---------------------------
-col1, col2 = st.columns(2)
-with col1:
-    st.markdown("---")
-    st.header("📝 Edit & Update CSV Data")
-
-    # Choose dataset to edit
-    dataset_choice = st.selectbox("Select dataset to edit", ["Batsman", "All Rounders", "Bowlers", "Yearwise"])
-
-    # Load selected dataframe
-    if dataset_choice == "Batsman":
-        edit_df = df.copy()
-        csv_file = csv_path
-    elif dataset_choice == "All Rounders":
-        edit_df = df2.copy()
-        csv_file = csv_path_2
-    elif dataset_choice == "Bowlers":
-        edit_df = bowlers_data.copy()
-        csv_file = csv_pat_4
-    else:
-        edit_df = year_wise_data.copy()
-        csv_file = csv_pat_3
-
-    # Editable dataframe in Streamlit
-    edited = st.data_editor(edit_df, use_container_width=True, num_rows="dynamic")
-
-    # Save button
-    if st.button("💾 Save Changes to CSV"):
-        try:
-            edited.to_csv(csv_file, index=False)
-            st.success(f"✅ CSV file updated: {csv_file}")
-        except Exception as e:
-            st.error(f"Error saving file: {e}")
 
 col1, col2, col3 = st.columns(3)
 
