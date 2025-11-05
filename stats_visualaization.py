@@ -3,8 +3,6 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 import numpy as np
-from ultralytics import YOLO
-import cv2
 import os
 import plotly.graph_objects as go
 from sklearn.ensemble import RandomForestRegressor
@@ -835,77 +833,5 @@ else:
 
 st.markdown("---")
 st.caption("Dashboard logic preserved from original; code cleaned for stability, fixed boolean precedence, and safe handling of missing columns.")
-model = YOLO("yolov8n-pose.pt")  # or yolov11n-pose.pt if you have it
-
-def analyze_pose(keypoints, role="batsman"):
-    feedback = "Analyzing..."
-    if role == "batsman":
-        # Indices from YOLO pose keypoints
-        left_shoulder, right_shoulder = keypoints[5], keypoints[6]
-        left_knee, right_knee = keypoints[13], keypoints[14]
-        left_hip, right_hip = keypoints[11], keypoints[12]
-
-        shoulder_tilt = abs(left_shoulder[1] - right_shoulder[1])
-        stance_width = abs(left_knee[0] - right_knee[0])
-        hip_balance = abs(left_hip[1] - right_hip[1])
-
-        if shoulder_tilt < 20 and 60 < stance_width < 150 and hip_balance < 25:
-            feedback = "✅ Proper stance and balanced weight distribution"
-        else:
-            feedback = "⚠️ Unstable stance or poor weight transfer"
-
-    elif role == "bowler":
-        left_ankle, right_ankle = keypoints[15], keypoints[16]
-        left_knee, right_knee = keypoints[13], keypoints[14]
-        hip_y = np.mean([keypoints[11][1], keypoints[12][1]])
-
-        landing_diff = abs(left_ankle[1] - right_ankle[1])
-        knee_flex = abs(left_knee[1] - hip_y)
-
-        if landing_diff < 25 and knee_flex < 100:
-            feedback = "✅ Stable front foot landing and safe posture"
-        else:
-            feedback = "⚠️ Risky landing or high stress on knee"
-
-    return feedback
 
 
-def analyze_cricket_video(video_path, role):
-    cap = cv2.VideoCapture(video_path)
-    feedback_summary = []
-
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        frame = cv2.resize(frame, (640, 360))
-        results = model.predict(frame, verbose=False)
-
-        for result in results:
-            for kp in result.keypoints.xy:
-                keypoints = kp.cpu().numpy()
-                feedback = analyze_pose(keypoints, role)
-                feedback_summary.append(feedback)
-                
-                for x, y in keypoints:
-                    cv2.circle(frame, (int(x), int(y)), 3, (0, 255, 0), -1)
-                
-        st.image(frame, channels="BGR")
-
-    cap.release()
-    return max(set(feedback_summary), key=feedback_summary.count)
-
-
-# Streamlit App
-st.title("🏏 Cricket Video Analyzer (YOLO Pose Edition)")
-
-role = st.radio("Select role to analyze:", ["batsman", "bowler"])
-video = st.file_uploader("Upload Cricket Video", type=["mp4", "mov", "avi"])
-
-if video:
-    with open("uploaded_video.mp4", "wb") as f:
-        f.write(video.read())
-    st.info("Analyzing with YOLO Pose model...")
-    feedback = analyze_cricket_video("uploaded_video.mp4", role)
-    st.success(f"Result: {feedback}")
