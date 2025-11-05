@@ -5,6 +5,7 @@ import plotly.express as px
 import numpy as np
 from ultralytics import YOLO
 import cv2
+import os
 import plotly.graph_objects as go
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import LabelEncoder, StandardScaler
@@ -32,6 +33,11 @@ def ensure_numeric(df, cols):
 # ---------------------------
 # File paths (update if needed)
 # ---------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+file_path1 = os.path.join(BASE_DIR, "odi_batsman.csv")
+file_path2 = os.path.join(BASE_DIR, "odi_bowler.csv")
+file_path3 = os.path.join(BASE_DIR, "odi_all_rounders.csv")
+file_path4 = os.path.join(BASE_DIR, "yearwise_data.csv")
 csv_path = r"c:\Users\Farooq\Desktop\New folder (4)\Cricket_Analysis\odi_batsman.csv"
 csv_path_2 = r"c:\Users\Farooq\Desktop\New folder (4)\Cricket_Analysis\odi_all_rounders.csv"
 csv_pat_4 = r"C:\Users\Farooq\Desktop\New folder (4)\Cricket_Analysis\odi_bowler.csv"
@@ -41,23 +47,23 @@ csv_pat_3 = r"C:\Users\Farooq\Desktop\New folder (4)\Cricket_Analysis\yearwise_d
 # Load CSVs (with robust handling)
 # ---------------------------
 try:
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(file_path1)
 except Exception as e:
     st.error(f"Failed to read {csv_path}: {e}")
     raise SystemExit
 
 try:
-    df2 = pd.read_csv(csv_path_2)
+    df2 = pd.read_csv(file_path2)
 except Exception:
     df2 = pd.DataFrame()  # allow empty
 
 try:
-    bowlers_data = pd.read_csv(csv_pat_4)
+    bowlers_data = pd.read_csv(file_path3)
 except Exception:
     bowlers_data = pd.DataFrame()
 
 try:
-    year_wise_data = pd.read_csv(csv_pat_3)
+    year_wise_data = pd.read_csv(file_path4)
 except Exception:
     year_wise_data = pd.DataFrame()
 
