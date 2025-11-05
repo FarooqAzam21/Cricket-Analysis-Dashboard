@@ -1,7 +1,8 @@
-pandas
 streamlit
+pandas
 plotly
+numpy
 scikit-learn
-numpy 
-opencv-python
-ultralytics
+ultralytics==8.2.100
+opencv-python-headless==4.8.1.78
+matplotlib
