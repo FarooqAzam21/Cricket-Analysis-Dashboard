@@ -1,57 +1,162 @@
+# stats_visualization_fixed.py
 import pandas as pd
 import streamlit as st
 import plotly.express as px
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.preprocessing import LabelEncoder , StandardScaler
-from sklearn.cluster import KMeans
-from sklearn.model_selection import train_test_split 
+import numpy as np
+from ultralytics import YOLO
+import cv2
 import plotly.graph_objects as go
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.model_selection import train_test_split
+
+# ---------------------------
+# Config / helpers
+# ---------------------------
 le = LabelEncoder()
 scaler = StandardScaler()
-# =====================================
-# CSV file ka path (update apna path)
-# =====================================
+
+def safe_col(df, col, default=0):
+    """Return df[col] if exists else a Series of default values."""
+    if col in df.columns:
+        return df[col]
+    return pd.Series([default]*len(df), index=df.index)
+
+def ensure_numeric(df, cols):
+    for c in cols:
+        if c in df.columns:
+            df[c] = pd.to_numeric(df[c], errors='coerce')
+        else:
+            df[c] = 0
+
+# ---------------------------
+# File paths (update if needed)
+# ---------------------------
 csv_path = r"c:\Users\Farooq\Desktop\New folder (4)\Cricket_Analysis\odi_batsman.csv"
 csv_path_2 = r"c:\Users\Farooq\Desktop\New folder (4)\Cricket_Analysis\odi_all_rounders.csv"
+csv_pat_4 = r"C:\Users\Farooq\Desktop\New folder (4)\Cricket_Analysis\odi_bowler.csv"
 csv_pat_3 = r"C:\Users\Farooq\Desktop\New folder (4)\Cricket_Analysis\yearwise_data.csv"
-# =====================================
-# Load CSV
-# =====================================
-df = pd.read_csv(csv_path)
-df2 = pd.read_csv(csv_path_2)
-year_wise_data = pd.read_csv(csv_pat_3)
+
+# ---------------------------
+# Load CSVs (with robust handling)
+# ---------------------------
+try:
+    df = pd.read_csv(csv_path)
+except Exception as e:
+    st.error(f"Failed to read {csv_path}: {e}")
+    raise SystemExit
+
+try:
+    df2 = pd.read_csv(csv_path_2)
+except Exception:
+    df2 = pd.DataFrame()  # allow empty
+
+try:
+    bowlers_data = pd.read_csv(csv_pat_4)
+except Exception:
+    bowlers_data = pd.DataFrame()
+
+try:
+    year_wise_data = pd.read_csv(csv_pat_3)
+except Exception:
+    year_wise_data = pd.DataFrame()
+
+# strip column names
 df.columns = df.columns.str.strip()
 df2.columns = df2.columns.str.strip()
+bowlers_data.columns = bowlers_data.columns.str.strip()
 year_wise_data.columns = year_wise_data.columns.str.strip()
-batsman_and_all_rounder = pd.concat([df , df2] , ignore_index=True , sort=False)
-batsmen = batsman_and_all_rounder[batsman_and_all_rounder['role'] == "Batsman"]
-all_rounders = batsman_and_all_rounder[batsman_and_all_rounder['role'] != "Batsman"]
-wicket_keepers = df[df['role'] == 'wicket-keeper']
-all_players = pd.concat([batsmen , all_rounders , wicket_keepers])  
-# Basic Cleaning
-batsman_and_all_rounder = batsman_and_all_rounder.dropna(subset=['player', 'Team', 'matches', 'average', 'strike_rate' , 'wickets' , 'bowling_average'])
-num_cols = ['matches', 'runs', 'average', 'strike_rate', 'wickets']
-for col in num_cols:
-    if col in batsman_and_all_rounder.columns:
-        batsman_and_all_rounder[col] = pd.to_numeric(batsman_and_all_rounder[col], errors='coerce')
-df3 = all_players.copy()      
-df3['role'] = df3['role'].str.strip().str.lower()
-df3['Team'] = le.fit_transform(df3['Team'])
-df3['Format'] = le.fit_transform(df3['Format'])
-df3.fillna(0 , inplace=True)
-x = df[['matches', 'Innings' , 'runs', 'strike_rate', '100s', '50s']]
-y = df['average']
-scaler = StandardScaler()
-x_scaled = scaler.fit_transform(x)
-# =====================================
-# Streamlit Setup
-# =====================================
+
+# ---------------------------
+# Standardize text columns used for logic
+# ---------------------------
+for d in [df, df2, bowlers_data, year_wise_data]:
+    if 'role' in d.columns:
+        d['role'] = d['role'].astype(str).str.strip()
+    if 'batting_position' in d.columns:
+        # keep as string for consistent comparisons later
+        d['batting_position'] = d['batting_position'].astype(str).str.strip()
+
+# ---------------------------
+# Build master frames
+# ---------------------------
+# concat batsmen + allrounders (original logic kept)
+batsman_and_all_rounder = pd.concat([df, df2], ignore_index=True, sort=False)
+
+# create subsets
+# Ensure role lowercased for checks, but keep original values for display if present
+batsman_and_all_rounder['role'] = batsman_and_all_rounder.get('role', '').astype(str).str.strip()
+batsmen = batsman_and_all_rounder[batsman_and_all_rounder['role'].str.lower() == "batsman"]
+
+# wicket keepers - check across df (original code read from df); be robust to variants
+# use any source to find wicket-keepers (df primary, else look into combined data)
+wicket_keepers = df[df['role'].astype(str).str.strip().str.lower() == 'wicket-keeper']
+if wicket_keepers.empty:
+    wicket_keepers = batsman_and_all_rounder[batsman_and_all_rounder['role'].astype(str).str.strip().str.lower().str.contains('wicket-keeper', na=False)]
+
+all_rounders = batsman_and_all_rounder[(batsman_and_all_rounder['role'].astype(str).str.strip().str.lower() != "batsman") & (batsman_and_all_rounder['role'].astype(str).str.strip().str.lower() != "wicket-keeper")]
+
+# combine everything including bowlers (keeps original logic)
+all_players = pd.concat([batsmen, all_rounders, wicket_keepers, bowlers_data], ignore_index=True, sort=False)
+
+# ---------------------------
+# Basic cleaning & numeric conversion
+# ---------------------------
+# Ensure numeric columns exist and are numerifc
+num_cols = ['matches', 'runs', 'average', 'strike_rate', 'wickets', 'bowling_average', 'economy', 'Innings', '100s', '50s']
+ensure_numeric(all_players, num_cols)
+ensure_numeric(df, num_cols)
+ensure_numeric(bowlers_data, num_cols)
+ensure_numeric(year_wise_data, ['year', 'matches', 'runs', 'average', 'SR', '50s', '100s'])
+
+# Fill NA where reasonable (but avoid masking real missing data)
+all_players.fillna({'runs':0, 'average':0, 'strike_rate':0, 'matches':0, 'wickets':0, 'bowling_average':999, 'economy':999}, inplace=True)
+
+# Normalize role and batting_position strings in all_players for logical checks
+all_players['role'] = all_players.get('role', '').astype(str).str.strip().str.lower()
+all_players['batting_position'] = all_players.get('batting_position', '').astype(str).str.strip()
+
+# copy used for ML feature encoding (like previous df3)
+df3 = all_players.copy()
+# encode team/format in df3 for model inputs (keeps original all_players unchanged for UI filters)
+if 'Team' in df3.columns:
+    try:
+        df3['Team_encoded'] = le.fit_transform(df3['Team'].astype(str))
+    except Exception:
+        # fallback: numeric mapping
+        df3['Team_encoded'] = df3['Team'].astype('category').cat.codes
+if 'Format' in df3.columns:
+    try:
+        df3['Format_encoded'] = le.fit_transform(df3['Format'].astype(str))
+    except Exception:
+        df3['Format_encoded'] = df3['Format'].astype('category').cat.codes
+
+required_for_rf = ['matches', 'Innings', 'runs', 'strike_rate', '100s', '50s', 'average']
+for c in required_for_rf:
+    if c not in df.columns:
+        df[c] = 0
+
+X_rf = df[['matches', 'Innings', 'runs', 'strike_rate', '100s', '50s']].fillna(0)
+y_rf = df['average'].fillna(0)
+
+# Scale features
+try:
+    x_scaled = scaler.fit_transform(X_rf)
+except Exception:
+    x_scaled = X_rf.values  # fallback if scaler fails
+
+# ---------------------------
+# Streamlit UI
+# ---------------------------
 st.set_page_config(page_title="Cricket Stats Dashboard", layout="wide")
 st.title("🏏 Cricket Analytics Dashboard")
 
-# Sidebar
+# Sidebar filters
 st.sidebar.header("Filters & Options")
-teams = ['All'] + sorted(batsman_and_all_rounder['Team'].dropna().unique().tolist())
+# For the team dropdown show actual team names from all_players (not encoded)
+teams = ['All']
+if 'Team' in all_players.columns:
+    teams += sorted(all_players['Team'].dropna().unique().tolist())
 selected_team = st.sidebar.selectbox("Select Team", teams)
 
 if selected_team != "All":
@@ -59,137 +164,469 @@ if selected_team != "All":
 else:
     data = all_players
 
-# =====================================
-# 🧭 Top Visualizations
-# =====================================
-col1, col2  = st.columns(2)
-filtered_batsmen = batsmen[batsmen['runs'] > 1000] 
+# ---------------------------
+# Top Visualizations (3 columns)
+# ---------------------------
+col1, col2 = st.columns(2)
 with col1:
-    fig1 = px.bar(
-        filtered_batsmen.sort_values(by='runs', ascending=False).head(10),
-        x='player', y='runs', color='Team',
-        title="🏆 Top 10 Run Scorers"
-    )
-    st.plotly_chart(fig1, use_container_width=True)
+    st.markdown("---")
+    st.header("📝 Edit & Update CSV Data")
 
-with col2:
-    fig2 = px.scatter(
-        filtered_batsmen, x='average', y='strike_rate', color='Team',
-        size='matches', hover_name='player',
-        title="📈 Average vs Strike Rate Comparison"
-    )
-    st.plotly_chart(fig2, use_container_width=True)
-filtered_batsmen = batsmen[batsmen['runs'] > 1000]        
-fig4 = px.bar(
-    filtered_batsmen.sort_values(by='average' , ascending=False).head(10),
-    x='player' , y = 'average', color='Team',
-    title="Top 10 batters by Average"
-    )
-st.plotly_chart(fig4 , use_container_width=True , key='batting_average_chart')
-fig5 = px.bar(
-    filtered_batsmen.sort_values(by='strike_rate' , ascending=False).head(10),
-    x='player' , y = 'strike_rate', color='Team',
-    title="Top 10 batters by Strike Rate"
-    )
-st.plotly_chart(fig5 , use_container_width=True , key='strike_rate_chart')
-col3 , col4 = st.columns(2)
-with col3:
-    fig6 = px.bar(
-        all_rounders.sort_values(by='wickets' , ascending=False).head(10),
-        x='player' , y='wickets' , color='Team',
-        title="Top 10 all rounders by wickets "
-    )
-st.plotly_chart(fig6 , use_container_width=True , key='wicket_chart')  
-with col4:
-    fig7 = px.bar(
-        all_rounders.sort_values(by='bowling_average' , ascending=True).head(10),
-        x='player' , y='wickets' , color='Team',
-        title="Top 10 all rounders by wickets "
-    )
-st.plotly_chart(fig7 , use_container_width=True , key='bowling_average_chart')
+    # Choose dataset to edit
+    dataset_choice = st.selectbox("Select dataset to edit", ["Batsman", "All Rounders", "Bowlers", "Yearwise"])
 
-# =====================================
-# ⚡ Top 5 Batters Recommendation
-# =====================================
+    # Load selected dataframe
+    if dataset_choice == "Batsman":
+        edit_df = df.copy()
+        csv_file = csv_path
+    elif dataset_choice == "All Rounders":
+        edit_df = df2.copy()
+        csv_file = csv_path_2
+    elif dataset_choice == "Bowlers":
+        edit_df = bowlers_data.copy()
+        csv_file = csv_pat_4
+    else:
+        edit_df = year_wise_data.copy()
+        csv_file = csv_pat_3
+
+    # Editable dataframe in Streamlit
+    edited = st.data_editor(edit_df, use_container_width=True, num_rows="dynamic")
+
+    # Save button
+    if st.button("💾 Save Changes to CSV"):
+        try:
+            edited.to_csv(csv_file, index=False)
+            st.success(f"✅ CSV file updated: {csv_file}")
+        except Exception as e:
+            st.error(f"Error saving file: {e}")
+
+col1, col2, col3 = st.columns(3)
+
+# ---------------------------
+# Format-wise Charts
+# ---------------------------
+
+formats = ['Odi', 'T20', 'Test']  # Adjust according to your dataset values
+
+for fmt in formats:
+    st.markdown(f"## 🏏 {fmt} Format Analysis")
+    st.markdown("---")
+
+    # Filter data for this format
+    fmt_batsmen = batsmen[batsmen['Format'] == fmt]
+    fmt_all_rounders = all_rounders[all_rounders['Format'] == fmt]
+    fmt_bowlers = bowlers_data[bowlers_data['Format'] == fmt]
+    fmt_wicket_keepers = wicket_keepers[wicket_keepers['Format'] == fmt]
+    fmt_all_players = pd.concat([fmt_batsmen , fmt_all_rounders , fmt_wicket_keepers , fmt_bowlers])
+    # ---------------------------
+    # Top Batsmen Charts
+    # ---------------------------
+    col1, col2, col3 = st.columns(3)
+
+    filtered_batsmen = fmt_all_players[(fmt_all_players['matches'] > 10) & (fmt_all_players['role'].isin(['Batsman' , 'wicket-keeper']))] if not fmt_all_players.empty else pd.DataFrame()
+    filtered_batsmen = filtered_batsmen.sort_values(by='runs', ascending=False)
+    with col1:
+        if not filtered_batsmen.empty:
+            fig1 = px.bar(
+                filtered_batsmen.sort_values(by='runs', ascending=False).head(10),
+                x='player',
+                y='runs', color='Team',
+                title=f"🏆 Top 10 Run Scorers - {fmt}"
+            )
+            st.plotly_chart(fig1, use_container_width=True, key=f'top_runs_{fmt}')
+        else:
+            st.info(f"No batsman data for {fmt}.")
+
+    with col2:
+        if not filtered_batsmen.empty:
+            fig2 = px.scatter(
+                filtered_batsmen, x='average', y='strike_rate', color='Team',
+                size='matches', hover_name='player',
+                title=f"📈 Avg vs SR (Runs > 1000) - {fmt}"
+            )
+            st.plotly_chart(fig2, use_container_width=True, key=f'avg_sr_{fmt}')
+        else:
+            st.info(f"No Average vs Strike Rate data for {fmt}.")
+
+    with col3:
+        if not fmt_wicket_keepers.empty:
+            fig3 = px.scatter(
+                fmt_wicket_keepers, x='average', y='strike_rate', color='Team',
+                size='matches', hover_name='player',
+                title=f"📊 Wicket Keepers: Avg vs SR - {fmt}"
+            )
+            st.plotly_chart(fig3, use_container_width=True, key=f'wk_scatter_{fmt}')
+        else:
+            st.info(f"No wicket-keeper data for {fmt}.")
+
+    # ---------------------------
+    # More Charts
+    # ---------------------------
+    st.markdown("---")
+    if not filtered_batsmen.empty:
+        fig4 = px.bar(
+            filtered_batsmen.sort_values(by='average', ascending=False).head(10),
+            x='player',
+            y='average', color='Team',
+            title=f"Top 10 Batters by Average - {fmt}"
+        )
+        st.plotly_chart(fig4, use_container_width=True, key=f'bat_avg_{fmt}')
+
+        fig5 = px.bar(
+            filtered_batsmen.sort_values(by='strike_rate', ascending=False).head(10),
+            x='player',
+            y='strike_rate', color='Team',
+            title=f"Top 10 Batters by Strike Rate - {fmt}"
+        )
+        st.plotly_chart(fig5, use_container_width=True, key=f'bat_sr_{fmt}')
+    else:
+        st.info(f"No batting data for {fmt} format.")
+
+    # ---------------------------
+    # All-rounders
+    # ---------------------------
+    col4, col5 = st.columns(2)
+    with col4:
+        if not fmt_all_rounders.empty:
+            fig6 = px.bar(
+                fmt_all_rounders.sort_values(by='wickets', ascending=False).head(10),
+                x='player', 
+                y='wickets', color='Team',
+                title=f"Top 10 All-Rounders by Wickets - {fmt}"
+            )
+            st.plotly_chart(fig6, use_container_width=True, key=f'wickets_{fmt}')
+        else:
+            st.info(f"No all-rounder data for {fmt} format.")
+
+    with col5:
+        if not fmt_all_rounders.empty:
+            fig7 = px.bar(
+                fmt_all_rounders.sort_values(by='bowling_average', ascending=True).head(10),
+                x='player', 
+                y='bowling_average', color='Team',
+                title=f"Top 10 All-Rounders by Bowling Avg (Lower Better) - {fmt}"
+            )
+            st.plotly_chart(fig7, use_container_width=True, key=f'bowling_avg_{fmt}')
+        else:
+            st.info(f"No bowling average data for {fmt} format.")
+
+    # ---------------------------
+    # Bowlers Section
+    # ---------------------------
+    st.markdown("---")
+    st.subheader(f"⚡ Top 10 Bowlers - {fmt}")
+    colB1, colB2 = st.columns(2)
+
+    if not fmt_bowlers.empty:
+        with colB1:
+            fig8 = px.bar(
+                fmt_bowlers.sort_values(by='wickets', ascending=False).head(10),
+                x='player', 
+                y='wickets', color='Team',
+                title=f"Top 10 Bowlers by Wickets - {fmt}"
+            )
+            st.plotly_chart(fig8, use_container_width=True, key=f'bowl_wickets_{fmt}')
+
+        with colB2:
+            fig9 = px.bar(
+                fmt_bowlers.sort_values(by='bowling_average', ascending=True).head(10),
+                x='player', 
+                y='bowling_average', color='Team',
+                title=f"Top 10 Bowlers by Bowling Avg (Lower Better) - {fmt}"
+            )
+            st.plotly_chart(fig9, use_container_width=True, key=f'bowl_avg_{fmt}')
+    else:
+        st.info(f"No bowling data available for {fmt} format.")
+
+# ---------------------------
+# Top 5 (or 7) Batters Recommendation logic (preserve original intention)
+# ---------------------------
 st.markdown("---")
-st.header("⚡ Auto Recommendation: Top 5 Batters")
-
+st.header("⚡ Auto Recommendation: Top Batters (Position-aware)")
+format = all_players['Format'].unique()
+selected_format = st.selectbox("Select the format" , format , key='select he format box')
 min_matches = 10
 min_avg = 45
 min_sr = 90
 
-positions = ['All'] + [str(int(pos)) for pos in sorted(all_players['batting_position'].dropna().unique())]
-selected_pos = st.selectbox("Select Batting Position", positions , key='batting order')
+# build positions list from all_players
+positions_raw = all_players['batting_position'].dropna().unique().tolist() if 'batting_position' in all_players.columns else []
+# try to normalize numeric-looking positions to ints then to strings
+positions = ['All']
+try:
+    int_positions = sorted({int(float(p)) for p in positions_raw if str(p).strip() != ''})
+    positions += [str(p) for p in int_positions]
+except Exception:
+    # fallback keep as strings
+    positions += sorted([str(p) for p in positions_raw if str(p).strip() != ''])
 
-# Normalize data
-all_players['role'] = all_players['role'].str.strip().str.lower()
-all_players['batting_position'] = all_players['batting_position'].astype(str).str.strip()
+selected_pos = st.selectbox("Select Batting Position", positions, key='batting_order_select')
 
-# Base filter
-base_filter = (
+# Prepare normalized fields in all_players
+all_players['matches'] = pd.to_numeric(all_players.get('matches', 0), errors='coerce').fillna(0)
+all_players['average'] = pd.to_numeric(all_players.get('average', 0), errors='coerce').fillna(0)
+all_players['strike_rate'] = pd.to_numeric(all_players.get('strike_rate', 0), errors='coerce').fillna(0)
+all_players['bowling_average'] = pd.to_numeric(all_players.get('bowling_average', 999), errors='coerce').fillna(999)
+all_players['economy'] = pd.to_numeric(all_players.get('economy', 999), errors='coerce').fillna(999)
+
+# Base filters
+base_filter_odi = (
     (all_players['matches'] >= min_matches) &
     (all_players['average'] >= min_avg) &
     (all_players['strike_rate'] >= min_sr)
 )
-# Apply based on position
-if selected_pos == "All":
-    filtered = all_players[base_filter]
+base_filter_t20 = (
+    (all_players['matches'] >= 10) &
+    (all_players['average'] >= 30) &
+    (all_players['strike_rate'] >= 130)
+)
+base_filter_test = (
+    (all_players['matches'] >= 10) &
+    (all_players['average'] >= 40)
+)
 
-elif selected_pos == '1':
-    filtered = all_players[base_filter & (all_players['batting_position'] == selected_pos)]
+base_filter_bowler_odi = (
+    (all_players['role'] == 'fast-bowler') &
+    (all_players['matches'] >= 10) &
+    (all_players['bowling_average'] <= 35) &
+    (all_players['economy'] < 6)
+)
+base_filter_bowler_t20 = (
+    (all_players['role'] == 'fast-bowler') &
+    (all_players['matches'] >= 10) &
+    (all_players['bowling_average'] <= 35) &
+    (all_players['economy'] < 8)
+)
+base_filter_bowler_test = (
+    (all_players['role'] == 'fast-bowler') &
+    (all_players['matches'] >= 10) &
+    (all_players['bowling_average'] <= 35)
+)
+# Apply position-specific logic (preserve your original varied thresholds)
 
-elif selected_pos == '2':
-    filtered = all_players[base_filter & (all_players['batting_position'] == selected_pos)]
+if selected_format =='T20':
+    if selected_pos == "All":
+        filtered = all_players[base_filter_t20]
 
-elif selected_pos == '3':
-    filtered = all_players[base_filter & (all_players['batting_position'] == selected_pos)]
+    elif selected_pos == '1':
+        filtered = all_players[base_filter_t20 & (all_players['batting_position'] == selected_pos) & (all_players['Format'] == selected_format)]
 
-elif selected_pos == '4':
-    filtered = all_players[
-        (all_players['matches'] >= min_matches) &
-        (all_players['average'] >= min_avg - 10) &
-        (all_players['strike_rate'] >= min_sr + 5) &
-        (all_players['batting_position'] == selected_pos)
-    ]
-elif selected_pos == '5':
-    filtered = all_players[
-        (all_players['matches'] >= min_matches) &
-        (all_players['average'] >= min_avg - 10) &
-        (all_players['strike_rate'] > min_sr + 10) &
-        (all_players['batting_position'] == selected_pos) &
-        (all_players['role'].str.contains('wicket-keeper'))
-    ]
+    elif selected_pos == '2':
+        filtered = all_players[base_filter_t20 & (all_players['batting_position'] == selected_pos) & (all_players['Format'] == selected_format)]
 
-elif selected_pos == '6':
-    filtered = all_players[
-        (all_players['matches'] >= min_matches) &
-        (all_players['average'] >= min_avg - 10) &
-        (all_players['strike_rate'] > min_sr + 10) &
-        (all_players['batting_position'] == selected_pos)
-    ]
+    elif selected_pos == '3':
+        filtered = all_players[base_filter_t20 & (all_players['batting_position'] == selected_pos) & (all_players['Format'] == selected_format)]
 
-elif selected_pos == '7':
-    filtered = all_players[
-        (
+    elif selected_pos == '4':
+        filtered = all_players[
             (all_players['matches'] >= min_matches) &
-            (all_players['average'] >= min_avg - 20) &
-            (all_players['strike_rate'] >= min_sr + 5) &
-            (all_players['batting_position'] == selected_pos)
-        ) &
-        (all_players['bowling_average'] < 35.0) |
-        (all_players['role'] != 'batsman' ) &
-        (all_players['role'] != 'wicket-keeper') 
+            (all_players['average'] >= (30)) &
+            (all_players['strike_rate'] >= (130)) &
+            (all_players['batting_position'] == selected_pos) &
+            (all_players['Format'] == selected_format)
+        ]
 
-    ]
-else:
-    filtered = all_players[base_filter]
+    elif selected_pos == '5':
+        filtered = all_players[
+            (all_players['matches'] >= min_matches) &
+            (all_players['average'] >= (30)) &
+            (all_players['strike_rate'] > (130)) &
+            (all_players['batting_position'] == selected_pos) &
+            (all_players['role'].str.contains('wicket', na=False)) &
+            (all_players['Format'] == selected_format)
+        ]
 
-top7 = filtered.sort_values(by=['average', 'strike_rate', 'runs' , 'bowling_average'], ascending=False).head(7)
-st.dataframe(top7[['player', 'Team', 'matches', 'average', 'strike_rate', 'batting_position' , 'bowling_average']])
+    elif selected_pos == '6':
+        filtered = all_players[
+            (all_players['matches'] >= min_matches) &
+            (all_players['average'] >= (25)) &
+            (all_players['strike_rate'] > (150)) &
+            (all_players['batting_position'] == selected_pos) &
+            (all_players['Format'] == selected_format)
+        ]
 
-# =====================================
-# 🧩 Team Builder (Unique Position Logic)
-# =====================================
+    elif selected_pos == '7':
+        # combine conditions carefully with parentheses to maintain intended precedence
+        filtered = all_players[
+            (
+                (all_players['matches'] >= min_matches) &
+                (all_players['average'] >= (100)) &
+                (all_players['strike_rate'] >= (120)) &
+                (all_players['batting_position'] == selected_pos) &
+                (all_players['Format'] == selected_format)
+            ) &
+            (
+                (all_players['bowling_average'] < 35.0) |
+                ((all_players['role'] != 'batsman')) &
+                (all_players['role'] != 'wicket-keeper')
+            )
+        ]
+    elif selected_pos == '8':
+        # leg-spinner specific (fix missing comma and ensure boolean expression valid)
+        filtered = all_players[
+            (all_players['role'] == 'leg-spinner') &
+            (all_players['matches'] >= min_matches) &
+            (all_players['bowling_average'] < 30) &
+            (all_players['batting_position'] == selected_pos) & (all_players['Format'] == selected_format)
+        ]
+
+    elif selected_pos in ['9', '10', '11']:
+        # bowlers for positions 9-11 (use base_filter_bowler and batting_position match)
+        filtered = all_players[base_filter_bowler_t20 & (all_players['batting_position'] == selected_pos) & (all_players['Format'] == selected_format)]
+
+    else:
+        filtered = all_players[base_filter_t20]
+elif selected_format =='Odi':
+    if selected_pos == "All":
+        filtered = all_players[base_filter_odi]
+
+    elif selected_pos == '1':
+        filtered = all_players[base_filter_odi & (all_players['batting_position'] == selected_pos) & (all_players['Format'] == selected_format)]
+
+    elif selected_pos == '2':
+        filtered = all_players[base_filter_odi & (all_players['batting_position'] == selected_pos) & (all_players['Format'] == selected_format)]
+
+    elif selected_pos == '3':
+        filtered = all_players[base_filter_odi & (all_players['batting_position'] == selected_pos) & (all_players['Format'] == selected_format)]
+
+    elif selected_pos == '4':
+        filtered = all_players[
+            (all_players['matches'] >= min_matches) &
+            (all_players['average'] >= (min_avg - 10)) &
+            (all_players['strike_rate'] >= (min_sr - 5)) &
+            (all_players['batting_position'] == selected_pos) &
+            (all_players['Format'] == selected_format)
+        ]
+
+    elif selected_pos == '5':
+        filtered = all_players[
+            (all_players['matches'] >= min_matches) &
+            (all_players['average'] >= (min_avg - 10)) &
+            (all_players['strike_rate'] > (min_sr + 10)) &
+            (all_players['batting_position'] == selected_pos) &
+            (all_players['role'].str.contains('wicket', na=False)) &
+            (all_players['Format'] == selected_format)
+        ]
+
+    elif selected_pos == '6':
+        filtered = all_players[
+            (all_players['matches'] >= min_matches) &
+            (all_players['average'] >= (min_avg - 10)) &
+            (all_players['strike_rate'] > (min_sr + 10)) &
+            (all_players['batting_position'] == selected_pos) &
+            (all_players['Format'] == selected_format)
+        ]
+
+    elif selected_pos == '7':
+        # combine conditions carefully with parentheses to maintain intended precedence
+        filtered = all_players[
+            (
+                (all_players['matches'] >= min_matches) &
+                (all_players['average'] >= (min_avg - 20)) &
+                (all_players['strike_rate'] >= (min_sr + 5)) &
+                (all_players['batting_position'] == selected_pos) &
+                (all_players['Format'] == selected_format)
+            ) &
+            (
+                (all_players['bowling_average'] < 35.0) |
+                ((all_players['role'] != 'batsman')) &
+                (all_players['role'] != 'wicket-keeper')
+            )
+        ]
+
+    elif selected_pos == '8':
+        # leg-spinner specific (fix missing comma and ensure boolean expression valid)
+        filtered = all_players[
+            (all_players['role'] == 'leg-spinner') &
+            (all_players['matches'] >= min_matches) &
+            (all_players['bowling_average'] < 35) &
+            (all_players['batting_position'] == selected_pos) & (all_players['Format'] == selected_format)
+        ]
+
+    elif selected_pos in ['9', '10', '11']:
+        # bowlers for positions 9-11 (use base_filter_bowler and batting_position match)
+        filtered = all_players[base_filter_bowler_odi & (all_players['batting_position'] == selected_pos) & (all_players['Format'] == selected_format)]
+
+    else:
+        filtered = all_players[base_filter_odi]
+elif selected_format == 'Test':
+    if selected_pos == "All":
+        filtered = all_players[base_filter_test]
+
+    elif selected_pos == '1':
+        filtered = all_players[base_filter_test & (all_players['batting_position'] == selected_pos) & (all_players['Format'] == selected_format)]
+
+    elif selected_pos == '2':
+        filtered = all_players[base_filter_test & (all_players['batting_position'] == selected_pos) & (all_players['Format'] == selected_format)]
+
+    elif selected_pos == '3':
+        filtered = all_players[base_filter_test & (all_players['batting_position'] == selected_pos) & (all_players['Format'] == selected_format)]
+
+    elif selected_pos == '4':
+        filtered = all_players[
+            (all_players['matches'] >= min_matches) &
+            (all_players['average'] >= (min_avg - 10)) &
+            (all_players['batting_position'] == selected_pos) &
+            (all_players['Format'] == selected_format)
+        ]
+
+    elif selected_pos == '5':
+        filtered = all_players[
+            (all_players['matches'] >= min_matches) &
+            (all_players['average'] >= (min_avg - 10)) &
+            (all_players['batting_position'] == selected_pos) &
+            (all_players['role'].str.contains('wicket', na=False)) &
+            (all_players['Format'] == selected_format)
+        ]
+
+    elif selected_pos == '6':
+        filtered = all_players[
+            (all_players['matches'] >= min_matches) &
+            (all_players['average'] >= (min_avg - 10)) &
+            (all_players['batting_position'] == selected_pos) &
+            (all_players['Format'] == selected_format)
+        ]
+
+    elif selected_pos == '7':
+        # combine conditions carefully with parentheses to maintain intended precedence
+        filtered = all_players[
+            (
+                (all_players['matches'] >= min_matches) &
+                (all_players['average'] >= (min_avg - 20)) &
+                (all_players['batting_position'] == selected_pos) &
+                (all_players['Format'] == selected_format)
+            ) &
+            (
+                (all_players['bowling_average'] < 35.0) |
+                ((all_players['role'] != 'batsman')) &
+                (all_players['role'] != 'wicket-keeper')
+            )
+        ]
+
+    elif selected_pos == '8':
+        # leg-spinner specific (fix missing comma and ensure boolean expression valid)
+        filtered = all_players[
+            (all_players['role'].contain('spinner')) &
+            (all_players['matches'] >= min_matches) &
+            (all_players['bowling_average'] < 35) &
+            (all_players['batting_position'] == selected_pos) & (all_players['Format'] == selected_format)
+        ]
+
+    elif selected_pos in ['9', '10', '11']:
+        # bowlers for positions 9-11 (use base_filter_bowler and batting_position match)
+        filtered = all_players[base_filter_bowler_test & (all_players['batting_position'] == selected_pos) & (all_players['Format'] == selected_format)]
+
+    else:
+        filtered = all_players[base_filter_test]        
+# Sorting and show top7 (preserve original ordering)
+top7 = filtered.sort_values(by=['average', 'strike_rate', 'runs', 'bowling_average'], ascending=False).head(7)
+display_cols = ['player', 'Team' , 'runs' , 'matches', 'average', 'strike_rate', 'batting_position', 'bowling_average', 'wickets', 'economy']
+display_cols = [c for c in display_cols if c in top7.columns]
+st.dataframe(top7[display_cols])
+
+# ---------------------------
+# Team Builder (unique position constraint)
+# ---------------------------
 st.markdown("---")
 st.header("🧩 Team Builder (1 Player per Position)")
 
@@ -199,127 +636,270 @@ if "used_positions" not in st.session_state:
     st.session_state.used_positions = set()
 
 for i, row in top7.iterrows():
-    btn_label = f"Add {row['player']} ({row['batting_position']})"
-    if st.button(btn_label):
-        if row['batting_position'] in st.session_state.used_positions:
-            st.warning(f"⚠️ Position '{row['batting_position']}' already taken!")
+    pos = str(row.get('batting_position', 'NA'))
+    btn_label = f"Add {row.get('player', 'Unknown')} ({pos})"
+    if st.button(btn_label, key=f"add_{i}_{pos}"):
+        if pos in st.session_state.used_positions:
+            st.warning(f"⚠️ Position '{pos}' already taken!")
         else:
             st.session_state.selected_team.append(row.to_dict())
-            st.session_state.used_positions.add(row['batting_position'])
-            st.success(f"✅ {row['player']} added to your team!")
+            st.session_state.used_positions.add(pos)
+            st.success(f"✅ {row.get('player', 'Unknown')} added to your team!")
 
 if st.session_state.selected_team:
-    st.dataframe(pd.DataFrame(st.session_state.selected_team)[['player', 'Team', 'average', 'strike_rate', 'batting_position']])
+    team_df = pd.DataFrame(st.session_state.selected_team)
+    cols_to_show = [c for c in ['player', 'Team', 'average', 'strike_rate', 'batting_position'] if c in team_df.columns]
+    st.dataframe(team_df[cols_to_show])
 
-# =====================================
-# 📊 Summary Comparison
-# =====================================
-fig3 = px.bar(
-    top7,
-    x='player',
-    y=['average', 'strike_rate'],
-    barmode='group',
-    title="🏅 Top 5 Players: Average vs Strike Rate"
-)
-st.plotly_chart(fig3, use_container_width=True)
+# ---------------------------
+# Summary Comparison Chart (top7)
+# ---------------------------
+if not top7.empty:
+    fig_summary = px.bar(
+        top7,
+        x='player',
+        y=[c for c in ['average', 'strike_rate'] if c in top7.columns],
+        barmode='group',
+        title="🏅 Top Players: Average vs Strike Rate"
+    )
+    st.plotly_chart(fig_summary, use_container_width=True, key='summary_chart')
 
-# =====================================
-# 🔍 Player Search & Full Analysis
-# =====================================
+# ---------------------------
+# Player Search & Analysis
+# ---------------------------
 st.markdown("---")
 st.header("🔍 Player Search & Analysis")
-
-player_list = sorted(all_players['player'].dropna().unique().tolist())
-selected_player = st.selectbox("Search Player", player_list)
+player_list = sorted(all_players['player'].dropna().unique().tolist()) if 'player' in all_players.columns else []
+selected_player = st.selectbox("Search Player", player_list, key='player_search_box')
 
 if selected_player:
     player_data = all_players[all_players['player'] == selected_player]
+    if not player_data.empty:
+        player_row = player_data.iloc[0]
+        col_img, col_info = st.columns([1, 2])
 
-    # Player Info
-    player_row = player_data.iloc[0]
-    col_img, col_info = st.columns([1, 2])
+        # image
+        if 'image_url' in player_row and pd.notna(player_row['image_url']):
+            col_img.image(player_row['image_url'], width=180)
+        else:
+            col_img.image("https://via.placeholder.com/150?text=No+Image", width=180)
 
-    # 🖼️ Image from CSV
-    if 'image_url' in player_row and pd.notna(player_row['image_url']):
-        col_img.image(player_row['image_url'], width=180)
-    else:
-        col_img.image("https://via.placeholder.com/150?text=No+Image", width=180)
+        # summary
+        col_info.markdown(f"### {player_row.get('player','Unknown')}")
+        col_info.markdown(f"**Team:** {player_row.get('Team','-')}")
+        if 'role' in player_row:
+            col_info.markdown(f"**Role:** {player_row.get('role','-')}")
+        if 'batting_position' in player_row:
+            col_info.markdown(f"**Batting Position:** {player_row.get('batting_position','-')}")
 
-    # 🎯 Player Summary Info
-    col_info.markdown(f"### {player_row['player']}")
-    col_info.markdown(f"**Team:** {player_row['Team']}")
-    if 'role' in player_row:
-        col_info.markdown(f"**Role:** {player_row['role']}")
-    if 'batting_position' in player_row:
-        col_info.markdown(f"**Batting Position:** {player_row['batting_position']}")
+        if 'Format' in player_data.columns:
+            formats = player_data['Format'].unique()
 
-    # 🧮 Metrics
-    cols = st.columns(4)
-    cols[0].metric("Matches", int(player_data['matches'].mean()))
-    if 'runs' in player_data.columns:
-        cols[1].metric("Runs", int(player_data['runs'].mean()))
-    if 'average' in player_data.columns:
-        cols[2].metric("Average", round(player_data['average'].mean(), 2))
-    if 'strike_rate' in player_data.columns:
-        cols[3].metric("Strike Rate", round(player_data['strike_rate'].mean(), 2))
+            for fmt in formats:
+                fmt_data = player_data[player_data['Format'] == fmt]
 
-    # =====================================
-    # Format-wise Stats
-    # =====================================
-    if 'Format' in player_data.columns:
-        st.subheader("📊 Format-wise Performance")
-        format_stats = player_data.groupby('Format')[['runs', 'matches', 'average', 'strike_rate']].mean().reset_index()
-        fig_format = px.bar(format_stats, x='Format', y='runs', color='Format', title="Runs by Format")
-        st.plotly_chart(fig_format, use_container_width=True)
-st.subheader("🎯 Predict Player Runs") 
-rf_model = RandomForestRegressor(n_estimators=200 ,random_state=42)
-rf_model.fit(x_scaled , y)
-selected_player = st.selectbox("Select the player and get the prediction of average" , df3['player'].unique())
-player_data = df3[df3['player']== selected_player].iloc[0]
-input_data = [[
-    player_data['matches'],
-    player_data['Innings'],
-    player_data['runs'],
-    player_data['strike_rate'],
-    player_data['100s'],
-    player_data['50s']
-]]
-predicted_average = rf_model.predict(input_data)[0]
-st.metric(label=f"Predicted Batting Average for {selected_player}", value=round(predicted_average, 2))
-st.header("Predict Player Next Year Performance")
-players = sorted(year_wise_data['player'].unique().tolist())
-selected_player = st.selectbox("Select the player and get the prediction of average" , players )
-player_data = year_wise_data[year_wise_data['player']== selected_player].copy()
-X = player_data[['matches', 'average', 'SR', '50s', '100s']] 
-y = player_data['runs']
-x_train , x_test , y_train , y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-model = RandomForestRegressor(n_estimators=200 , random_state=42)
-model.fit(x_train , y_train)
-latest = player_data.iloc[-1][['matches', 'average', 'SR', '50s', '100s']].values.reshape(1, -1)
-predicted_next = model.predict(latest)[0]
-next_year = player_data['year'].max()+1
-fig = go.Figure()
-fig.add_trace(go.Scatter(
-    x=player_data['year'],
-    y=player_data['runs'],
-    mode='lines+markers',
-    name='Actual Runs',
-    line=dict(color='blue' , width=3)
-))
-fig.add_trace(go.Scatter(
-    x=[next_year],
-    y=[predicted_next],
-    mode='markers+text',
-    name='Predicted Runs',
-    marker=dict(color='red', size=12, symbol='star'),
-    text=[f"{int(predicted_next)}"], 
-    textposition="top center"
-))
-fig.update_layout( 
-    title=f"📊 {selected_player} — Yearly Runs Trend", 
-    xaxis_title="Year", 
-    yaxis_title="Total Runs", 
-    template="plotly_white" )
-st.plotly_chart(fig, use_container_width=True)
-st.success(f"🏏 **{selected_player}** is predicted to score approximately **{predicted_next:.0f} runs** in **{next_year}**.") 
-st.info(f"📈 Estimated average per match: **{predicted_next / player_data.iloc[-1]['matches']:.1f} runs/match**")
+                st.markdown(f"#### 🏏 {fmt} Format")
+
+                cols = st.columns(6)
+                cols[0].metric("Matches", int(fmt_data['matches'].sum() if 'matches' in fmt_data.columns else 0))
+                
+                if 'runs' in fmt_data.columns:
+                    cols[1].metric("Runs", int(fmt_data['runs'].sum()))
+
+                if 'average' in fmt_data.columns:
+                    cols[2].metric("Average", round(fmt_data['average'].mean(), 2))
+
+                if 'strike_rate' in fmt_data.columns:
+                    cols[3].metric("Strike Rate", round(fmt_data['strike_rate'].mean(), 2))
+
+                if 'wickets' in fmt_data.columns:
+                    cols[4].metric("Wickets", int(fmt_data['wickets'].sum()))
+
+                if 'bowling_average' in fmt_data.columns:
+                    cols[5].metric("Bowling Average", round(fmt_data['bowling_average'].mean(), 2))
+
+                st.markdown("---")
+
+            # --- Combined Chart for all formats ---
+            st.subheader("📈 Runs Comparison Across Formats")
+            format_stats = (
+                player_data.groupby('Format')[['runs', 'matches', 'average', 'strike_rate']]
+                .mean()
+                .reset_index()
+            )
+
+            fig_format = px.bar(
+                format_stats,
+                x='Format',
+                y='runs',
+                color='Format',
+                title=f"Runs by Format for {selected_player}"
+            )
+            st.plotly_chart(fig_format, use_container_width=True, key=f'format_{selected_player}')
+
+# ---------------------------
+# Predicted Batting Average (RF) - preserve original approach
+# ---------------------------
+st.markdown("---")
+st.subheader("🎯 Predict Batsman Runs")
+
+try:
+    rf_model = RandomForestRegressor(n_estimators=200, random_state=42)
+    rf_model.fit(x_scaled, y_rf)
+    selected_player_for_pred = st.selectbox("Select the player for runs prediction", df['player'].unique(), key='avg_pred_player')
+    single_player_row = df[df['player'] == selected_player_for_pred].iloc[0]
+    input_data = single_player_row[['matches', 'Innings', 'average', 'strike_rate', '100s', '50s']].values.reshape(1, -1)
+    # scale input same as training
+    try:
+        input_scaled = scaler.transform(input_data)
+    except Exception:
+        input_scaled = input_data
+    predicted_runs = rf_model.predict(input_scaled)[0]
+    st.metric(label=f"Predicted Runs for {selected_player_for_pred}", value=round(predicted_runs, 0))
+except Exception as e:
+    st.warning(f"Average prediction skipped due to error: {e}")
+
+# ---------------------------
+# Year-wise prediction (next-year) & plot
+# ---------------------------
+st.markdown("---")
+st.header("Predict Player Next Year Performance (Year-wise)")
+
+if not year_wise_data.empty and 'player' in year_wise_data.columns:
+    players_year = sorted(year_wise_data['player'].unique().tolist())
+    sel_player_year = st.selectbox("Select player for year-wise prediction", players_year, key='yearwise_player')
+
+    if sel_player_year:
+        player_year_df = year_wise_data[year_wise_data['player'] == sel_player_year].copy()
+        # ensure required columns exist
+        required_cols = ['year', 'matches', 'runs', 'average', 'SR', '50s', '100s']
+        for c in required_cols:
+            if c not in player_year_df.columns:
+                player_year_df[c] = 0
+        # sort by year and drop NA runs
+        player_year_df['year'] = pd.to_numeric(player_year_df['year'], errors='coerce')
+        player_year_df = player_year_df.sort_values('year').dropna(subset=['year'])
+
+        if len(player_year_df) >= 3:
+            # train on historical year rows
+            Xy = player_year_df[['matches', 'average', 'SR', '50s', '100s']].fillna(0)
+            yy = player_year_df['runs'].fillna(0)
+            x_train, x_test, y_train, y_test = train_test_split(Xy, yy, test_size=0.2, random_state=42)
+            model_year = RandomForestRegressor(n_estimators=200, random_state=42)
+            model_year.fit(x_train, y_train)
+
+            # predict next year using latest row stats
+            latest = player_year_df.iloc[-1][['matches', 'average', 'SR', '50s', '100s']].values.reshape(1, -1)
+            predicted_next = model_year.predict(latest)[0]
+            next_year = int(player_year_df['year'].max()) + 1
+
+            # plot actual + predicted
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=player_year_df['year'],
+                y=player_year_df['runs'],
+                mode='lines+markers',
+                name='Actual Runs',
+                line=dict(color='blue', width=3)
+            ))
+            fig.add_trace(go.Scatter(
+                x=[next_year],
+                y=[predicted_next],
+                mode='markers+text',
+                name='Predicted Runs',
+                marker=dict(color='red', size=12, symbol='star'),
+                text=[f"{int(predicted_next)}"],
+                textposition="top center"
+            ))
+            fig.update_layout(
+                title=f"📊 {sel_player_year} — Yearly Runs Trend",
+                xaxis_title="Year",
+                yaxis_title="Total Runs",
+                template="plotly_white"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+            st.success(f"🏏 {sel_player_year} is predicted to score approximately {predicted_next:.0f} runs in {next_year}.")
+            est_matches = int(player_year_df.iloc[-1]['matches']) if 'matches' in player_year_df.columns else 1
+            st.info(f"📈 Estimated average per match: {predicted_next/est_matches:.1f} runs/match")
+        else:
+            st.warning("Not enough year-wise data (need at least 3 years) to train a model for this player.")
+else:
+    st.info("No year-wise data file found or yearwise CSV missing 'player' column.")
+
+
+st.markdown("---")
+st.caption("Dashboard logic preserved from original; code cleaned for stability, fixed boolean precedence, and safe handling of missing columns.")
+model = YOLO("yolov8n-pose.pt")  # or yolov11n-pose.pt if you have it
+
+def analyze_pose(keypoints, role="batsman"):
+    feedback = "Analyzing..."
+    if role == "batsman":
+        # Indices from YOLO pose keypoints
+        left_shoulder, right_shoulder = keypoints[5], keypoints[6]
+        left_knee, right_knee = keypoints[13], keypoints[14]
+        left_hip, right_hip = keypoints[11], keypoints[12]
+
+        shoulder_tilt = abs(left_shoulder[1] - right_shoulder[1])
+        stance_width = abs(left_knee[0] - right_knee[0])
+        hip_balance = abs(left_hip[1] - right_hip[1])
+
+        if shoulder_tilt < 20 and 60 < stance_width < 150 and hip_balance < 25:
+            feedback = "✅ Proper stance and balanced weight distribution"
+        else:
+            feedback = "⚠️ Unstable stance or poor weight transfer"
+
+    elif role == "bowler":
+        left_ankle, right_ankle = keypoints[15], keypoints[16]
+        left_knee, right_knee = keypoints[13], keypoints[14]
+        hip_y = np.mean([keypoints[11][1], keypoints[12][1]])
+
+        landing_diff = abs(left_ankle[1] - right_ankle[1])
+        knee_flex = abs(left_knee[1] - hip_y)
+
+        if landing_diff < 25 and knee_flex < 100:
+            feedback = "✅ Stable front foot landing and safe posture"
+        else:
+            feedback = "⚠️ Risky landing or high stress on knee"
+
+    return feedback
+
+
+def analyze_cricket_video(video_path, role):
+    cap = cv2.VideoCapture(video_path)
+    feedback_summary = []
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        frame = cv2.resize(frame, (640, 360))
+        results = model.predict(frame, verbose=False)
+
+        for result in results:
+            for kp in result.keypoints.xy:
+                keypoints = kp.cpu().numpy()
+                feedback = analyze_pose(keypoints, role)
+                feedback_summary.append(feedback)
+                
+                for x, y in keypoints:
+                    cv2.circle(frame, (int(x), int(y)), 3, (0, 255, 0), -1)
+                
+        st.image(frame, channels="BGR")
+
+    cap.release()
+    return max(set(feedback_summary), key=feedback_summary.count)
+
+
+# Streamlit App
+st.title("🏏 Cricket Video Analyzer (YOLO Pose Edition)")
+
+role = st.radio("Select role to analyze:", ["batsman", "bowler"])
+video = st.file_uploader("Upload Cricket Video", type=["mp4", "mov", "avi"])
+
+if video:
+    with open("uploaded_video.mp4", "wb") as f:
+        f.write(video.read())
+    st.info("Analyzing with YOLO Pose model...")
+    feedback = analyze_cricket_video("uploaded_video.mp4", role)
+    st.success(f"Result: {feedback}")
