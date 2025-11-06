@@ -44,7 +44,7 @@ file_path4 = os.path.join(BASE_DIR, "yearwise_data.csv")
 try:
     df = pd.read_csv(file_path1)
 except Exception as e:
-    st.error(f"Failed to read {csv_path}: {e}")
+    st.error(f"Failed to read {file_path1}: {e}")
     raise SystemExit
 
 try:
@@ -99,7 +99,9 @@ all_rounders = batsman_and_all_rounder[(batsman_and_all_rounder['role'].astype(s
 
 # combine everything including bowlers (keeps original logic)
 all_players = pd.concat([batsmen, all_rounders, wicket_keepers, bowlers_data], ignore_index=True, sort=False)
-
+num_cols = ['matches', 'runs', 'average', 'strike_rate', 'wickets', 'bowling_average']
+for c in num_cols:
+    all_players[c] = pd.to_numeric(all_players[c], errors='coerce').fillna(0)
 # ---------------------------
 # Basic cleaning & numeric conversion
 # ---------------------------
@@ -211,7 +213,7 @@ for fmt in formats:
             fig2 = px.scatter(
                 filtered_batsmen, x='average', y='strike_rate', color='Team',
                 size='matches', hover_name='player',
-                title=f"📈 Avg vs SR (Runs > 1000) - {fmt}"
+                title=f"📈 Avg vs SR  - {fmt}"
             )
             st.plotly_chart(fig2, use_container_width=True, key=f'avg_sr_{fmt}')
         else:
@@ -710,23 +712,70 @@ if selected_player:
 # Predicted Batting Average (RF) - preserve original approach
 # ---------------------------
 st.markdown("---")
-st.subheader("🎯 Predict Batsman Runs")
+st.subheader("🎯 Predict Batsman Runs (Format-wise)")
 
 try:
+    # Load dataset
+    df = pd.read_csv("odi_batsman.csv")
+
+    # Check required columns
+    required_cols = ['player', 'matches', 'Innings', 'average', 'strike_rate', '100s', '50s', 'Format', 'runs']
+    for col in required_cols:
+        if col not in df.columns:
+            st.error(f"Missing column: {col}")
+            st.stop()
+
+    # Select format (like ODI, T20, Test)
+    selected_format = st.selectbox("Select Format", sorted(df['Format'].unique()), key='format_select')
+
+    # Filter data based on format
+    df_format = df[df['Format'] == selected_format]
+
+    # Avoid empty data issues
+    if df_format.empty:
+        st.warning(f"No data found for format: {selected_format}")
+        st.stop()
+
+    # Define features and target
+    features = ['matches', 'Innings', 'average', 'strike_rate', '100s', '50s']
+    target = 'runs'
+
+    x = df_format[features]
+    y = df_format[target] / df_format['matches']  # runs per match (realistic next match target)
+
+    # Scale features
+    scaler = StandardScaler()
+    x_scaled = scaler.fit_transform(x)
+
+    # Train model
     rf_model = RandomForestRegressor(n_estimators=200, random_state=42)
-    rf_model.fit(x_scaled, y_rf)
-    selected_player_for_pred = st.selectbox("Select the player for runs prediction", df['player'].unique(), key='avg_pred_player')
-    single_player_row = df[df['player'] == selected_player_for_pred].iloc[0]
-    input_data = single_player_row[['matches', 'Innings', 'average', 'strike_rate', '100s', '50s']].values.reshape(1, -1)
-    # scale input same as training
-    try:
-        input_scaled = scaler.transform(input_data)
-    except Exception:
-        input_scaled = input_data
-    predicted_runs = rf_model.predict(input_scaled)[0]
-    st.metric(label=f"Predicted Runs for {selected_player_for_pred}", value=round(predicted_runs, 0))
+    rf_model.fit(x_scaled, y)
+
+    # Player selection for prediction
+    selected_player = st.selectbox(
+        f"Select Player ({selected_format})",
+        df_format['player'].unique(),
+        key='avg_pred_player'
+    )
+
+    # Fetch player data
+    single_row = df_format[df_format['player'] == selected_player].iloc[0]
+    input_data = single_row[features].values.reshape(1, -1)
+
+    # Scale input
+    input_scaled = scaler.transform(input_data)
+
+    # Predict
+    predicted_run = rf_model.predict(input_scaled)[0]
+
+    # Display result
+    st.metric(
+        label=f"Predicted Next Match Runs for {selected_player} ({selected_format})",
+        value=f"{round(predicted_run, 0)} runs"
+    )
+
 except Exception as e:
-    st.warning(f"Average prediction skipped due to error: {e}")
+    st.warning(f"⚠ Prediction skipped due to error: {e}")
 
 # ---------------------------
 # Year-wise prediction (next-year) & plot
