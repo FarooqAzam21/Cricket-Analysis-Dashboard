@@ -9,7 +9,9 @@ Kane Williamson,NewZeland,Odi,175,167,18,7256,37.40,48.69,35.40,81.59,148,15,47,
 Joe Root,England,Test,158,288,24,13543,73,51.29,47.46,57.49,262,39,66,3,"",Batsman
 Joe Root,England,T20,32,30,5,893,6,35.72,23.16,126.30,90*,0,5,3,"",Batsman
 Joe Root,England,Odi,186,175,24,7330,28,48.54,61.85,87.65,166*,19,43,4,https://wallpapers.com/images/hd/joe-root-portrait-31krp0eo0xyw2om5.jpg ,Batsman,0
-Rayan Rickelton,South Africa,Odi,15,15,1,454,0.0,32.42,0.0,86.97,103,1,1,2,https://img1.hscicdn.com/image/upload/f_autot_ds_w_1200/lsci/db/PICTURES/CMS/345900/345935.jpg ,Batsman,0
+Ryan Rickelton,South Africa,Test,13,23,3,793,0,39.65,0,52.65,259,2,1,1,"",wicket-keeper
+Ryan Rickelton,South Africa,T20,18,18,0,381,0,21.16,0,134.15,76,0,2,1,"",wicket-keeper
+Ryan Rickelton,South Africa,Odi,15,15,1,454,0.0,32.42,0.0,86.97,103,1,1,2,https://img1.hscicdn.com/image/upload/f_autot_ds_w_1200/lsci/db/PICTURES/CMS/345900/345935.jpg ,wicket-keeper,0
 Phil Salt,England,T20,50,46,6,1540,0,38.50,0,168.12,141*,4,7,1,"",Batsman
 Phil Salt,England,Odi,33,31,0,988,0.0,31.87,0.0,114.75,122,1,5,1,https://ichef.bbci.co.uk/ace/standard/3840/cpsprodpb/443b/live/496ab100-1d9b-11ef-a090-6b563b2f66e3.jpg ,Batsman,0
 Fakhar Zaman,Pakistan,Odi,87,86,6,3696,1,46.20,110.00,93.64,210*,11,17,2,https://assets.khelnow.com/news/uploads/2025/02/Fakhar-Zaman-Odi.jpg ,Batsman,0
@@ -20,13 +22,17 @@ Imam ul Haq,Pakistan,Odi,75,74,7,3152,0.0,47.04,0.0,81.95,151,9,20,2,https://tse
 Abdullah Shafique,Pakistan,Test,24,46,3,1610,0,37.44,0,44.15,201,5,6,1,"",Batsman
 Abdullah Shafique,Pakistan,T20,6,6,1,64,0,12.80,0,120.75,41,0,0,1,"",Batsman
 Abdullah Shafique,Pakistan,Odi,27,27,2,737,0.0,29.48,0.0,78.07,113,1,6,1,https://en.dailypakistan.com.pk/wp-content/uploads/2023/11/abdullah-shafique-profile-1699087069-5971.jpg ,Batsman,0
-Rachin Ravindara,New Zeland,T20,35,32,7,502,14,20.08,21.78,133.15,69,0,3,3,"",Batsman
-Rachin Ravindara,New Zeland,Odi,17,32,3,1224,10,42.20,44.60,60.26,240,3,4,1,"",Batsman
+Rachin Ravindara,New Zeland,T20,36,33,7,528,14,20.30,21.78,134.69,69,0,3,3,"",Batsman
+Rachin Ravindara,New Zeland,Test,17,32,3,1224,10,42.20,44.60,60.26,240,3,4,1,"",Batsman
 Rachin Ravindara,New Zeland,Odi,34,30,1,1240,21.0,43.1,45.28,109.07,123*,5,4,2,https://assets.khelnow.com/news/uploads/2025/02/Rachin-Ravindra-New-Zealand-Odi.jpg ,Batsman,0
 Devon Conway,New Zeland,Test,29,54,1,2081,0,39.26,0,52.22,200,5,12,2,"",Batsman
-Devon Conway,New Zeland,T20,59,54,10,1572,0,35.72,0,126.97,99*,0,11,2,"",Batsman
+Devon Conway,New Zeland,T20,60,55,10,1628,0,36.17,0,127.98,99*,0,12,1,"",Batsman
 Devon Conway,New Zeland,Odi,36,35,3,1431,0.0,47.1,0.0,87.73,152*,5,4,1,https://studybymind.com/wp-content/uploads/2023/10/Devon-Conway-biography-in-english-South-african-new-zealand-cricketer-2.jpeg ,Batsman,0
+Shubman Gill,India,Test,39,72,6,2839,0,43.01,0,61.45,268,10,8,3,"",Batsman
+Shubman Gill,India,T20,32,32,4,808,0,28.85,0,139.31,126*,1,3,2,"",Batsman
 Shubman Gill,India,Odi,58,58,8,2818,0.0,56.36,0.0,99.22,208,8,15,2,https://wallpapers.com/images/hd/shubman-gill-bcouvug1edixisa4.jpg ,Batsman,0
+KL Rahul,India,T20,72,68,8,2265,0,37.75,0,139.12,110*,2,22,2,"",Batsman
+KL Rahul,India,Test,65,114,5,3985,0,36.55,0,52.48,199,11,20,2,"",Batsman
 KL Rahul,India,Odi,87,81,17,3092,0.0,48.31,0.0,88.41,112,7,18,4,https://www.ipl.com/upload/20241015/e5ecd2506862590ebdd27b70e59dbdb9.jpg ,Batsman,0
 Ben Ducket,England,T20,20,20,2,527,0,29.27,0,153.64,84,0,3,2,"",Batsman
 Ben Ducket,England,Test,38,70,3,2872,0,42.86,0,86.14,182,6,16,1,"",Batsman
@@ -34,7 +40,7 @@ Ben Ducket,England,Odi,30,30,1,1229,0.0,42.37,0.0,102.58,165,3,8,2,https://tse1.
 Travis Head,Australia,Test,60,101,6,3963,16,41.71,32.87,67.67,175,9,20,1,"",Batsman
 Travis Head,Australia,T20,47,45,4,1197,1,29.19,56,156.67,91,0,5,1,"",Batsman
 Travis Head,Australia,Odi,79,76,8,3007,28.0,43.57,41.14,105.73,154*,7,17,1,https://tse2.mm.bing.net/th/id/OIP.mj8srQlsB3Mqde-M4C7i8gHaFN?pid=Api&P=0&h=220 ,Batsman,0
-Matt Short,Australia,Odi,19,18,2,357,8,22.31,17.00,157.26,66,0,1,2,"",Batsman
+Matt Short,Australia,T20,20,19,2,382,8,22.47,17.00,155.28,66,0,1,2,"",Batsman
 Matt Short,Australia,Odi,18,16,0,392,2.0,24.5,161.5,93.11,63,0,2,2,https://img1.hscicdn.com/image/upload/f_autot_ds_wide_w_1280q_70/lsci/db/PICTURES/CMS/368900/368972.6.jpg ,Batsman,0
 Tony De Zorzi,South Africa,T20,2,2,0,40,0,20.00,0,153.84,33,0,0,3,"",Batsman
 Tony De Zorzi,South Africa,Test,15,27,1,816,0,31.38,0,54.65,177,2,3,3,"",Batsman
@@ -42,7 +48,7 @@ Tony De Zorzi,South Africa,Odi,17,16,1,571,0.0,35.68,0.0,96.45,119*,1,1,2,https:
 Tanzid Hassan,Bangladesh,T20,42,42,4,1056,0,27.78,0,128.15,89,0,10,2,"",Batsman
 Tanzid Hassan,Bangladesh,Odi,26,25,0,548,0.0,21.92,0.0,100.18,84,0,4,1,https://img1.hscicdn.com/image/upload/f_autot_ds_square_w_320q_50/lsci/db/PICTURES/CMS/392000/392065.2.png ,Batsman,0
 Shai Hope,Windies,Test,43,82,3,2005,0,25.37,0,42.93,147,3,5,4,"",wicket-keeper
-Shai Hope,Windies,T20,55,53,7,1388,0,30.17,0,137.69,102*,1,9,3,"",wicket-keeper
+Shai Hope,Windies,T20,56,54,7,1389,0,29.55,0,137.38,102*,1,9,3,"",wicket-keeper
 Shai Hope,Windies,Odi,145,139,21,5951,0.0,50.0,0.0,79.06,170,18,29,4,http://www.telegraph.co.uk/content/dam/cricket/2017/09/05/TELEMMGLPICT000138692746_trans_NvBQzQNjv4BqFB5_K9cMdGPZexEeYHxP_9tlHAtrCIpNj5ftyjXF60U.jpeg?imwidth=450 ,wicket-keeper,0
 Brandon King,Windies,Test,4,8,0,147,0,18.37,0,59.27,75,0,1,1,"",Batsman
 Brandon King,Windies,T20,73,71,5,1704,0,25.81,0,133.64,85*,0,13,1,"",Batsman
@@ -53,10 +59,10 @@ Will Young,NewZeland,Odi,47,47,5,1679,0.0,39.97,0.0,86.5,120,4,10,2,https://tse1
 Ibrahim Zadran,Afghanistan,T20,58,58,7,1558,0,30.54,0,110.88,72*,0,13,1,"",Batsman
 Ibrahim Zadran,Afghanistan,Test,8,16,0,602,1,37.62,13.00,48.78,114,1,4,1,"",Batsman 
 Ibrahim Zadran,Afghanistan,Odi,36,36,3,1656,0.0,50.18,0.0,83.09,177,6,7,1,https://tse2.mm.bing.net/th/id/OIF.HzyCxaZWNkLIOZRIZdBJbg?pid=Api&P=0&h=220 ,Batsman,0
-SediqUllah Atal,Afghanistan,Odi,22,22,2,470,0,23.50,0,117.79,73*,0,3,1,"",Batsman
+SediqUllah Atal,Afghanistan,T20,22,22,2,470,0,23.50,0,117.79,73*,0,3,1,"",Batsman
 SediqUllah Atal,Afghanistan,Odi,9,8,0,335,0.0,41.87,0.0,82.1,104,1,2,3,https://img1.hscicdn.com/image/upload/f_autot_ds_square_w_640q_50/lsci/db/PICTURES/CMS/383200/383242.png ,Batsman,0
-Rahman Ulllah Gurbaz,Afghanistan,Odi,2,4,0,97,0,24.25,0,56.72,46,0,0,1,"",wicket-keeper
-Rahman Ulllah Gurbaz,Afghanistan,Odi,80,80,0,2067,0,25.83,0,134.83,100,1,11,1,"",wicket-keeper
+Rahman Ulllah Gurbaz,Afghanistan,Test,2,4,0,97,0,24.25,0,56.72,46,0,0,1,"",wicket-keeper
+Rahman Ulllah Gurbaz,Afghanistan,T20,80,80,0,2067,0,25.83,0,134.83,100,1,11,1,"",wicket-keeper
 Rahman Ulllah Gurbaz,Afghanistan,Odi,49,49,1,1785,0.0,37.18,0.0,87.8,151,8,6,2,https://img1.hscicdn.com/image/upload/f_autot_ds_square_w_640q_50/lsci/db/PICTURES/CMS/383200/383237.png ,Batsman,0
 Pathum Nissanka,Srilanka,Test,18,31,2,1305,0,45.00,0,56.76,187,4,7,1,"",Batsman
 Pathum Nissanka,Srilanka,T20,74,73,3,2211,0,31.58,0,126.55,107,1,17,1,"",Batsman	
@@ -81,14 +87,15 @@ Charith Asalanka,Srilanka,T20,70,68,8,1357,7,22.61,32.14,126.35,80*,0,6,5,"",Bat
 Charith Asalanka,Srilanka,Odi,78,70,10,2621,17.0,43.68,29.94,91.35,127,5,17,4,https://tse1.mm.bing.net/th/id/OIP.UP-ChVapFfQ9uOjLe7Hf2gHaFv?pid=Api&P=0&h=220 ,Batsman,0
 Towhid Hirdoy,Bangladesh,Odi,44,40,3,1265,0.0,34.18,0.0,77.75,100,1,11,5,https://img1.hscicdn.com/image/upload/f_autot_ds_square_w_640q_50/lsci/db/PICTURES/CMS/380200/380236.png ,Batsman,0
 Josh Ingilis,Australia,Test,3,4,0,119,0,29.75,0,82.63,102,1,0,7,"",Batsman
-Josh Ingilis,Australia,T20,39,37,6,899,0,29.00,0,160.24,110,2,2,5,"",Batsman	
+Josh Ingilis,Australia,T20,40,38,6,911,0,28.46,0,159.26,110,2,2,4,"",Batsman	
 Josh Ingilis,Australia,Odi,33,29,3,766,0.0,29.46,0.0,106.38,120*,1,4,5,https://tse4.mm.bing.net/th/id/OIP.2NCs7zMkYXq3jTThbs6njgHaEM?pid=Api&P=0&h=220 ,wicket-keeper,0
 Rassie Ven der Dussen,South Africa,Odi,71,65,12,2657,0.0,50.13,0.0,87.02,134,6,17,4,https://tse2.mm.bing.net/th/id/OIP.4-FxC_zWAmJDEB-z86xyJAHaEK?pid=Api&P=0&h=220 ,Batsman,0
 Hashmat Ullah Shahidi,Afghanistan,Odi,90,88,15,2435,0.0,33.35,0.0,67.37,97*,0,22,4,https://tse1.mm.bing.net/th/id/OIP.lVCGA-J81o26JJzGDimOoAHaE2?pid=Api&P=0&h=220 ,Batsman,0
 Temba Bavuma,South Africa,Odi,53,51,5,1941,0.0,42.19,0.0,88.02,144,5,8,4,https://www.ipl.com/upload/20241015/d4fc7ea9c3017fa380596ecf278d235f.png ,Batsman,0
 Daryll Mitchell,New Zeland,Test,33,53,5,2139,3,44.56,128.33,53.79,190,5,15,5,"",Batsman
-Daryll Mitchell,New Zeland,T20,87,79,18,1633,9,26.77,21.00,138.15,72*,0,8,5,"",Batsman
+Daryll Mitchell,New Zeland,T20,	88,80,18,1674,9,27.00,21.00,138.80,72*,0,8,5,"",Batsman
 Daryll Mitchell,New Zeland,Odi,55,50,7,2219,14,51.60,22.71,93.51,134,6,11,4,https://tse1.mm.bing.net/th/id/OIP.aZeqZ42zYMYgfqC2L0FFEQHaFj?pid=Api&P=0&h=220 ,Batsman,0
+Tom Latham,New Zeland,Test,88,158,6,5834,0,38.38,0,47.49,264*,13,31,6,"",wicket-keeper
 Tom Latham,New Zeland,Odi,158,145,18,4385,0.0,34.52,0.0,85.74,145*,8,26,5,https://tse2.mm.bing.net/th/id/OIP.0CIAvQ9hUhsSxoimdVLSCgHaLH?pid=Api&P=0&h=220 ,wicket-keeper,0
 Liton Das,Bangladesh,Test,50,88,2,2929,0,34.05,0,58.96,141,4,18,7,"",wicket-keeper
 Liton Das,Bangladesh,T20,117,115,5,2590,0,23.54,0,126.15,83,0,15,1,"",wicket-keeper
@@ -103,11 +110,15 @@ Hassan Nawaz,Pakistan,T20,25,24,2,457,0,20.77,0,154.39,105*,1,2,4,"",Batsman
 Hassan Nawaz,Pakistan,Odi,4,4,2,113,0,56.50,0,88.97,63*,0,1,7,https://i.aaj.tv/primary/2025/03/22092739baafecc.webp ,Batsman,0
 Tristan Stubbs,South Africa,Odi,15,15,2,392,0.0,30.15,0.0,84.84,112*,1,3,5,https://tse3.mm.bing.net/th/id/OIP.tyjZl_gOoMc7V8zWst1dHAHaHa?pid=Api&P=0&h=220 ,Batsman,0
 David Millar,South Africa,Odi,178,154,45,4611,0.0,42.3,0.0,102.34,139,7,24,6,https://tse3.mm.bing.net/th/id/OIP.PiVUCyeF4dQVQxID4D_ezwHaEK?pid=Api&P=0&h=220 ,Batsman,0
+Mushfiqur Rahim,Bangladesh,Test,98,181,15,6328,0,38.12,0,48.41,219*,12,27,4,"",wicket-keeper
 Mushfiqur Rahim,Bangladesh,Odi,274,256,42,7795,0.0,36.42,0.0,79.7,144,9,49,4,https://statico.sportskeeda.com/editor/2025/02/8f5a6-17399602354222-1920.jpg ,Batsman,0
 Nurul Hassan,Bangladesh,Odi,13,11,4,237,0.0,33.85,0.0,89.11,45*,0,0,6,https://tse3.mm.bing.net/th/id/OIP.u6jekX-xnskZckyHCwE60gHaEg?pid=Api&P=0&h=220 ,Batsman,0
+Rishabh Pant,India,Test,47,82,5,3427,0,44.50,0,74.16,159*,8,18,5,"",wicket-keeper
+Rishabh Pant,India,T20,76,66,14,1209,0,23.25,0,127.26,65*,0,3,5,"",wicket-keeper
 Rishabh Pant,India,Odi,31,27,1,871,0.0,33.5,0.0,106.21,125,1,5,6,https://tse3.mm.bing.net/th/id/OIP.BrluJw76JtNUHiDItAcREwHaIX?pid=Api&P=0&h=220 ,wicket-keeper,0
 Surya Kumar Yadav,India,T20,94,89,14,2754,2,36.72,2.5,164.41,117,4,21,4,"",Batsman
 Surya Kumar Yadav,India,Odi,37,35,5,773,0.0,25.76,0.0,105.02,72*,0,4,5,https://tse1.mm.bing.net/th/id/OIP.HT5kS7c1aiVt__6ivnJCTgHaEK?pid=Api&P=0&h=220 ,Batsman,0
+Sherfane Rutherford,Windies,T20,42,37,6,588,2,18.96,46.00,138.02,68*,0,3,5,"",Batsman
 Sherfane Rutherford,Windies,Odi,19,17,3,656,0.0,46.85,0.0,102.34,113,1,6,6,https://img1.hscicdn.com/image/upload/f_autot_ds_square_w_320q_50/lsci/db/PICTURES/CMS/322100/322173.1.png ,Batsman,0
 Salman Agha,Pakistan,Test,23,44,6,1487,20,39.13,58.05,62.29,132*,3,10,7,"",Batsman
 Salman Agha,Pakistan,T20,35,32,6,596,5,22.92,26.80,109.96,56,0,4,4,"",Batsman
@@ -115,6 +126,8 @@ Salman Agha,Pakistan,Odi,42,35,6,1178,17,40.62,54.94,96.16,134,1,7,5,https://d13
 Irfan Khan,Pakistan,T20,14,11,4,189,0,27.00,0,135.00,37*,0,0,6,"",Batsman
 Irfan Khan,Pakistan,Odi,9,6,0,48,0.0,8.0,0.0,64.86,22,0,0,6,https://tse2.mm.bing.net/th/id/OIP.hhQiaJsyGJ3H6rIiUCiEbwHaLH?pid=Api&P=0&h=220 ,Batsman,0
 Rahmat Shah,Afghanistan,Odi,124,119,5,4025,0.0,35.3,0.0,71.25,114,5,32,4,https://i.pinimg.com/736x/a6/30/7c/a6307c4f8e4b64887c0ea064206b3824.jpg ,Batsman,0
+Jamie Smith,England,T20,5,5,0,130,0,26.00,0,194.02,60,0,1,1,"",wicket-keeper
+Jamie Smith,England,Test,15,25,3,1075,0,48.86,0,75.22,184*,2,6,7,"",wicket-keeper
 Jamie Smith,England,Odi,18,17,0,387,0.0,22.76,0.0,112.82,64,0,3,5,https://img1.hscicdn.com/image/upload/f_autot_ds_wide_w_1280q_70/lsci/db/PICTURES/CMS/386500/386509.6.jpg ,wicket-keeper,0
 Saud Shakeel,Pakistan,Odi,16,16,1,408,1.0,27.2,37.0,85.35,68,0,4,5,https://tse3.mm.bing.net/th/id/OIP.5C2M3qB1PtTayYkmi1bG4gHaEc?pid=Api&P=0&h=220 ,Batsman,0
 Jos Buttler,England,Test,57,100,9,2907,0,31.94,0,54.18,152,2,18,7,"",wicket-keeper
@@ -129,7 +142,7 @@ Saif Hassan,Bangladesh,T20,18,17,3,396,2,28.28,53.5,121.84,69,0,4,1,"",Batsman
 Saif Hassan,Bangladesh,Odi,6,6,0,180,4.0,30.5,11.5,86.53,80,0,1,1,https://img1.hscicdn.com/image/upload/f_autot_ds_w_1280q_80/lsci/db/PICTURES/CMS/406600/406628.jpg ,Batsman,0
 Soyuma Sarkar,Bangladesh,Odi,79,74,4,2338,16.0,33.4,35.43,94.92,169,3,14,2, https://img1.hscicdn.com/image/upload/f_autot_ds_w_1280q_80/lsci/db/PICTURES/CMS/381400/381492.jpg ,Batsman,0
 Alick Athanaze,Windies,Test,15,29,0,725,1,25.00,79,52.91,92,0,4,1,"",Batsman
-Alick Athanaze,Windies,T20,11,11,1,273,0,27.30,0,131.88,60,0,2,2,"",Batsman
+Alick Athanaze,Windies,T20,12,12,1,304,0,27.63,0,132.17,60,0,2,1,"",Batsman
 Alick Athanaze,Windies,Odi,16,16,0,376,2.0,23.5,17.5,80.51,66,0,2,2,https://img1.hscicdn.com/image/upload/f_autot_ds_w_1280q_80/lsci/db/PICTURES/CMS/385000/385035.jpg ,Batsman,0
 Yashavi Jaiswal,India,Test,26,49,2,2428,0,51.65,0,66.42,214*,7,12,1,"",Batsman
 Yashavi Jaiswal,India,T20,23,22,2,723,0,36.15,0,164.31,100,1,5,1,"",Batsman
@@ -144,15 +157,15 @@ Parvez Hossain Emon,Bangladesh,Odi,3,3,0,108,0.0,36.0,0.0,83.72,67,0,1,2,"https:
 Sheryas Iyer,India,T20,51,47,11,1104,0,30.66,0,136.12,74*,0,8,4,"",Batsman
 Sheryas Iyer,India,Test,14,24,2,811,0,36.86,0,63.01,105,1,5,4,"",Batsman
 Sheryas Iyer,India,Odi,72,67,6,2917,0.0,47.81,0.0,99.01,128*,5,22,4,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/401400/401436.jpg",Batsman,0
-Mitchell Marsh,Australia,T20,79,75,13,2053,17,33.11,27.76,140.04,103*,1,11,1,"",Batsman
+Mitchell Marsh,Australia,T20,80,76,13,2083,17,33.06,27.76,139.79,103*,1,11,1,"",Batsman
 Mitchell Marsh,Australia,Test,46,80,7,2083,51,28.53,40.41,56.29,181,3,9,6,"",Batsman
 Mitchell Marsh,Australia,Odi,99,95,12,3098,57.0,37.32,35.71,94.56,177*,4,20,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/407200/407268.png",Batsman,0
 Mahidul Islam Ankon,Bangladesh,Odi,3,3,0,69,,23.0,0.0,57.02,46,0,0,5,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/394000/394013.jpg",wicket-keeper,0
-Ackeme Augeste,Windies,T20,6,6,1,132,0,26.40,0,136.08,50,0,1,4,"",Batsman
+Ackeme Augeste,Windies,T20,7,7,1,156,0,26.00,0,138.05,50,0,1,4,"",Batsman
 Ackeme Augeste,Windies,Odi,1,1,0,17,,17.0,0.0,58.62,17,0,0,4,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/406200/406217.jpg",wicket-keeper,0
 Mitchell Owen,Australia,Odi,3,2,0,37,2.0,18.5,21.0,137.03,36,0,0,6,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/404300/404348.jpg",Batsman,0
-Alex Cary,Australia,Odi,43,65,7,2010,0,34.65,0,64.13,156,2,11,7,"",wicket-keeper
-Alex Cary,Australia,Odi,42,29,5,267,0,11.12,0,109.87,37,0,0,5,"",wicket-keeper
+Alex Cary,Australia,Test,43,65,7,2010,0,34.65,0,64.13,156,2,11,7,"",wicket-keeper
+Alex Cary,Australia,T20,42,29,5,267,0,11.12,0,109.87,37,0,0,5,"",wicket-keeper
 Alex Cary,Australia,Odi,85,77,13,2245,0.0,35.07,0.0,90.67,5,106,1,13,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/403100/403127.jpg",wicket-keeper,0
 Matt Renshaw,Australia,Odi,3,3,1,107,0.0,53.5,0.0,95.53,56,0,1,4,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/391100/391130.jpg",Batsman,0
 Sahibzada Farhan,Pakistan,T20,30,30,0,666,0,22.20,0,124.02,74,0,5,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/406600/406680.jpg",Batsman
@@ -163,7 +176,6 @@ Hussain Talat,Pakistan,T20,23,23,3,441,7,22.05,15.42,113.95,63,0,2,5,"",Batsman,
 Mathew Breetzke,South Africa,Test,2,3,0,14,0,4.66,0,25.45,13,0,0,4,"",Batsman,0
 Mathew Breetzke,South Africa,T20,13,13,1,158,0,13.16,0,116.17,51,0,1,4,"",Batsman,0
 Mathew Breetzke,South Africa,Odi,6,6,0,509,0,72.71,0,100.39,1,150,4,4,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/405100/405182.jpg",Batsman,0
-Dewald Brevis,South Africa,Test,4,6,0,138,1,23.00,22.00,95.83,54,0,2,6,"",Batsman
 Dewald Brevis,South Africa,Test,6,6,1,110,0,22.00,0,159.42,49,0,0,4,"",Batsman
 Dewald Brevis,South Africa,Odi,6,6,1,110,0,22.00,0,159.42,49,0,0,4,"",Batsman
 Dewald Brevis,South Africa,T20,15,15,2,400,0,30.76,0,180.18,125*,1,1,4,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/404900/404951.jpg",Batsman
@@ -175,20 +187,36 @@ Lhuan-dre Pretorius,South Africa,Odi,1,1,0,57,0,57.00,0,95.00,57,0,1,1,"",Batsma
 Lhuan-dre Pretorius,South Africa,Test,2,3,0,235,0,78.33,0,92.88,153,1,1,3,"",wicket-keeper
 Lhuan-dre Pretorius,South Africa,T20,12,12,0,157,0,13.08,0,121.70,51,0,1,3,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/402800/402861.jpg",wicket-keeper
 Tim David,Australia,Odi,4,4,0,45,1,11.25,20,84.90,53,0,0,6,"",Batsman
-Tim David,Australia,Odi,66,57,14,1582,0,36.79,0,169.01,102*,1,9,6,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/404800/404868.jpg",Batsman
+Tim David,Australia,T20,67,58,14,1596,5,36.27,51.00,168.88,102*,1,9,6,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/404800/404868.jpg",Batsman
 Jaker Ali,Bangladesh,Test,6,11,0,337,0,30.63,0,56.63,91,0,4,6,"",Batsman
 Jaker Ali,Bangladesh,Odi,12,12,2,394,0,39.40,0,78.48,68,0,3,6,"",Batsman
-Jaker Ali,Bangladesh,Odi,47,42,13,732,0,25.24,0,123.02,72*,0,3,6,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/397100/397190.jpg",Batsman
-Abhishek Sharma,India,T20,27,26,0,961,0,36.96,0,192.20,135,2,6,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/406900/406904.jpg",Batsman
-Marcus Stoinis,Australia,T20,80,65,24,1321,48,32.21,25.35,148.76,78,0,6,7,"",Batsman
+Jaker Ali,Bangladesh,T20,47,42,13,732,0,25.24,0,123.02,72*,0,3,6,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/397100/397190.jpg",Batsman
+Abhishek Sharma,India,T20,28,27,0,989,6,36.62,30.50,189.82,135,2,6,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/406900/406904.jpg",Batsman
+Marcus Stoinis,Australia,T20,81,66,24,1338,49,31.85,25.67,147.51,78,0,6,7,"",Batsman
 Rovman Powell,Windies,Odi,51,48,3,979,0,21.75,0,84.90,101,1,2,6,"",Batsman
-Rovman Powell,Windies,T20,104,92,14,2055,5,26.34,43.40,142.51,107,1,9,6,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/390900/390990.jpg",Batsman
+Rovman Powell,Windies,T20,105,93,14,2057,5,26.03,43.40,142.35,107,1,9,6,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/390900/390990.jpg",Batsman
 Sinethemba Qeshile,South Africa,Odi,1,1,0,22,0,22.00,0,95.65,22,0,0,5,"",Batsman
 Tim Robinson,NewZeland,Odi,3,3,0,48,0,16.00,0,102.12,35,0,0,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_wide_w_1280,q_70/lsci/db/PICTURES/CMS/407000/407056.6.jpg",Batsman
-Tim Robinson,NewZeland,T20,	20,18,3,472,0,31.46,0,137.20,106*,1,2,1,"",Batsman
+Tim Robinson,NewZeland,T20,21,19,3,495,0,30.93,0,135.61,106*,1,2,2,"",Batsman
 Usman Khawaja,Australia,Test,84,152,14,6053,0,43.86,0,48.56,232,16,27,2,"",Batsman
 Shan Masood,Pakistan,Test,44,84,1,2550,2,30.72,46,52.21,156,6,13,3,"",Batsman
 Shan Masood,Pakistan,Odi,9,9,0,163,0,18.11,0,69.65,50,0,1,2,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/408100/408109.jpg",Batsman
 Shan Masood,Pakistan,T20,19,17,4,395,0,30.38,0,121.91,65*,0,3,4,"",Batsman	
 Shivam Dube,India,Odi,4,4,0,43,1,10.75,106,89.58,25,0,0,5,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/408900/408991.jpg",Batsman
 Shivam Dube,India,T20,45,32,10,607,21,27.59,29.00,138.26,63*,0,4,5,"",Batsman
+Glenn Maxwell,Australia,T20,125,115,18,2835,49,29.22,30.04,155.76,145*,5,12,5,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/405100/405109.jpg",Batsman
+Jitesh Sharma,India,T20,11,9,1,125,0,15.62,0,147.05,35,0,0,5,"",wicket-keeper
+Tilak Verma,India,T20,36,33,12,996,3,47.42,14.66,146.68,120*,2,4,4,"",Batsman
+Tilak Verma,India,Odi,4,4,1,68,0,22.66,0,57.14,52,0,1,4,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/406900/406986.jpg",Batsman
+Josh Phillipe,Australia,T20,14,13,0,160,0,12.30,0,108.84,45,0,0,5,"",wicket-keeper
+Josh Phillipe,Australia,Odi,4,4,0,102,0,25.50,0,86.44,39,0,0,5,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/408000/408057.png",wicket-keeper
+Dinesh Chandimal,Srilanka,Test,90,161,15,6361,0,43.56,0,50.07,206*,16,34,6,"",wicket-keeper 
+Dinesh Chandimal,Srilanka,Odi,157,142,21,3854,0,31.85,0,111,74.24,4,24,4,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/402700/402713.jpg",wicket-keeper
+Dinesh Chandimal,Srilanka,T20,69,62,7,1066,0,19.38,0,103.49,66*,0,6,4,"",wicket-keeper
+Nishan Madushka,Srilanka,Odi,8,7,0,182,0,26.00,0,80.88,69,0,2,6,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/389500/389526.jpg",wicket-keeper
+Nishan Madushka,Srilanka,Test,10,18,1,571,0,33.58,0,55.43,205,1,2,7,"",wicket-keeper
+Mitchell Hay,NewZeland,T20,12,10,2,89,0,11.12,0,125.35,41*,0,0,5,"",wicket-keeper
+Mitchell Hay,NewZeland,Odi,7,5,1,166,0,41.50,0,104.40,99*,0,1,2,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/398600/398677.jpg",wicket-keeper
+Amir Jangoo,Windies,Test,1,2,0,30,0,15.00,0,53.57,30,0,0,1,"",Batsman
+Amir Jangoo,Windies,Odi,5,5,1,153,0,38.25,0,92.16,104*,1,0,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/392900/392912.jpg",Batsman
+Amir Jangoo,Windies,T20,5,5,1,148,0,37.00,0,137.03,74*,0,1,1,"",Batsman

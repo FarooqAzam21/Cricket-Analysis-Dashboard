@@ -313,6 +313,85 @@ for fmt in formats:
 # Top 5 (or 7) Batters Recommendation logic (preserve original intention)
 # ---------------------------
 st.markdown("---")
+st.subheader("⚔ Player Comparison")
+
+try:
+    # Select two players
+    col1, col2 = st.columns(2)
+    with col1:
+        player1 = st.selectbox("Select Player 1", all_players['player'].unique(), key="p1")
+    with col2:
+        player2 = st.selectbox("Select Player 2", all_players['player'].unique(), key="p2")
+
+    # Fetch their data
+    p1_data = all_players[all_players['player'] == player1]
+    p2_data = all_players[all_players['player'] == player2]
+
+    # Check if 'Format' column exists
+    if 'Format' in df.columns:
+        formats = all_players['Format'].unique()
+        selected_format = st.selectbox("Select Format", formats, key="fmt_cmp")
+
+        p1_format = p1_data[p1_data['Format'] == selected_format].iloc[0]
+        p2_format = p2_data[p2_data['Format'] == selected_format].iloc[0]
+    else:
+        st.warning("⚠ 'Format' column not found in your CSV. Please add it (ODI/T20/Test).")
+        st.stop()
+
+    # Show comparison side by side
+    st.write(f"### {selected_format} Format Comparison")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.image(f"https://source.unsplash.com/400x400/?{player1},cricketer", caption=player1)
+        st.metric("Matches", p1_format['matches'])
+        st.metric("Innings", p1_format['Innings'])
+        st.metric("Runs", p1_format['runs'])
+        st.metric("Average", p1_format['average'])
+        st.metric("Strike Rate", p1_format['strike_rate'])
+        st.metric("100s", p1_format['100s'])
+        st.metric("50s", p1_format['50s'])
+
+    with col2:
+        st.image(f"https://source.unsplash.com/400x400/?{player2},cricketer", caption=player2)
+        st.metric("Matches", p2_format['matches'])
+        st.metric("Innings", p2_format['Innings'])
+        st.metric("Runs", p2_format['runs'])
+        st.metric("Average", p2_format['average'])
+        st.metric("Strike Rate", p2_format['strike_rate'])
+        st.metric("100s", p2_format['100s'])
+        st.metric("50s", p2_format['50s'])
+
+    # Optional: Add radar comparison chart
+    import plotly.graph_objects as go
+    categories = ['matches', 'Innings', 'runs', 'average', 'strike_rate', '100s', '50s']
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatterpolar(
+        r=[p1_format[c] for c in categories],
+        theta=categories,
+        fill='toself',
+        name=player1
+    ))
+    fig.add_trace(go.Scatterpolar(
+        r=[p2_format[c] for c in categories],
+        theta=categories,
+        fill='toself',
+        name=player2
+    ))
+
+    fig.update_layout(
+        polar=dict(radialaxis=dict(visible=True)),
+        showlegend=True,
+        title=f"{selected_format} Comparison: {player1} vs {player2}"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+except Exception as e:
+    st.warning(f"Comparison feature skipped due to error: {e}")
+st.markdown("---")
 st.header("⚡ Auto Recommendation: Top Batters (Position-aware)")
 format = all_players['Format'].unique()
 selected_format = st.selectbox("Select the format" , format , key='select he format box')
@@ -331,7 +410,7 @@ except Exception:
     # fallback keep as strings
     positions += sorted([str(p) for p in positions_raw if str(p).strip() != ''])
 
-selected_pos = st.selectbox("Select Batting Position", positions, key='batting_order_select')
+selected_pos = st.selectbox("Select Batting Position", ['1', '2' , '3' , '4'  , '5' , '6' , '7' , '8' , '9' , '10' , '11' ], key='batting_order_select')
 
 # Prepare normalized fields in all_players
 all_players['matches'] = pd.to_numeric(all_players.get('matches', 0), errors='coerce').fillna(0)
@@ -366,7 +445,7 @@ base_filter_bowler_t20 = (
     (all_players['role'] == 'fast-bowler') &
     (all_players['matches'] >= 10) &
     (all_players['bowling_average'] <= 35) &
-    (all_players['economy'] < 8)
+    (all_players['economy'] < 9)
 )
 base_filter_bowler_test = (
     (all_players['role'] == 'fast-bowler') &
