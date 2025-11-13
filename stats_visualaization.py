@@ -12,12 +12,11 @@ from sklearn.model_selection import train_test_split
 # ---------------------------
 # Config / helpers
 # ---------------------------
-st.set_page_config(page_title="Cricket Analysis Dashboard" ,  page_icon="🏏", layout='wide')
+st.set_page_config(page_title="Cricket Analysis Dashboard" ,  page_icon="🏏", layout='wide' , initial_sidebar_state="expanded")
 hide_streamlit_style = """
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
     .viewerBadge_container__1QSob, .stDeployButton, .st-emotion-cache-1avcm0n {display: none !important;}
     </style>
 """
