@@ -451,8 +451,8 @@ elif menu == 'Select Playing 11':
         )
         base_filter_t20 = (
             (all_players['matches'] >= 10) &
-            (all_players['average'] >= 30) &
-            (all_players['strike_rate'] >= 130)
+            (all_players['average'] >= 35) &
+            (all_players['strike_rate'] >= 125)
         )
         base_filter_test = (
             (all_players['matches'] >= 10) &
@@ -460,19 +460,16 @@ elif menu == 'Select Playing 11':
         )
 
         base_filter_bowler_odi = (
-            (all_players['role'] == 'fast-bowler') &
             (all_players['matches'] >= 10) &
             (all_players['bowling_average'] <= 35) &
             (all_players['economy'] < 6)
         )
         base_filter_bowler_t20 = (
-            (all_players['role'] == 'fast-bowler') &
             (all_players['matches'] >= 10) &
             (all_players['bowling_average'] <= 35) &
             (all_players['economy'] < 9)
         )
         base_filter_bowler_test = (
-            (all_players['role'] == 'fast-bowler') &
             (all_players['matches'] >= 10) &
             (all_players['bowling_average'] <= 35)
         )
@@ -503,8 +500,8 @@ elif menu == 'Select Playing 11':
             elif selected_pos == '5':
                 filtered = all_players[
                     (all_players['matches'] >= min_matches) &
-                    (all_players['average'] >= (30)) &
-                    (all_players['strike_rate'] > (130)) &
+                    (all_players['average'] >= (25)) &
+                    (all_players['strike_rate'] > (135)) &
                     (all_players['batting_position'] == selected_pos) &
                     (all_players['role'].str.contains('wicket', na=False)) &
                     (all_players['Format'] == selected_format)
@@ -524,7 +521,6 @@ elif menu == 'Select Playing 11':
                 filtered = all_players[
                     (
                         (all_players['matches'] >= min_matches) &
-                        (all_players['average'] >= (100)) &
                         (all_players['strike_rate'] >= (120)) &
                         (all_players['batting_position'] == selected_pos) &
                         (all_players['Format'] == selected_format)
@@ -671,9 +667,7 @@ elif menu == 'Select Playing 11':
                         (all_players['Format'] == selected_format)
                     ) &
                     (
-                        (all_players['bowling_average'] < 35.0) |
-                        ((all_players['role'] != 'batsman')) &
-                        (all_players['role'] != 'wicket-keeper')
+                        ((all_players['role'] != 'batsman')) 
                     )
                 ]
 
