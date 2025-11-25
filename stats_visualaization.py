@@ -171,7 +171,6 @@ except Exception:
 # ---------------------------
 # Streamlit UI
 # ---------------------------
-st.set_page_config(page_title="Cricket Stats Dashboard", layout="wide")
 st.title("🏏 Cricket Analytics Dashboard")
 
 # Sidebar filters
@@ -226,6 +225,15 @@ if menu == 'Format Wise Analysis':
                         y='runs', color='Team',
                         title=f"🏆 Top 10 Run Scorers - {fmt}"
                         )
+                    fig1.update_traces(width=0.6)
+                    # Bigger chart
+                    fig1.update_layout(
+                        autosize=False,
+                        width=1300,
+                        height=450,
+                        xaxis=dict(tickangle=45),
+                        margin=dict(l=40, r=40, t=40, b=120)
+                        )
                     st.plotly_chart(fig1, use_container_width=True, key=f'top_runs_{fmt}')
                 else:
                     st.info(f"No batsman data for {fmt}.")
@@ -262,6 +270,15 @@ if menu == 'Format Wise Analysis':
                     y='average', color='Team',
                     title=f"Top 10 Batters by Average - {fmt}"
                     )
+                fig4.update_traces(width=0.6)
+                    # Bigger chart
+                fig4.update_layout(
+                    autosize=False,
+                    width=1300,
+                    height=450,
+                    xaxis=dict(tickangle=45),
+                    margin=dict(l=40, r=40, t=40, b=120)
+                    )
                 st.plotly_chart(fig4, use_container_width=True, key=f'bat_avg_{fmt}')
 
                 fig5 = px.bar(
@@ -269,6 +286,15 @@ if menu == 'Format Wise Analysis':
                     x='player',
                     y='strike_rate', color='Team',
                     title=f"Top 10 Batters by Strike Rate - {fmt}"
+                    )
+                fig5.update_traces(width=0.6)
+                    # Bigger chart
+                fig5.update_layout(
+                    autosize=False,
+                    width=1300,
+                    height=450,
+                    xaxis=dict(tickangle=45),
+                    margin=dict(l=40, r=40, t=40, b=120)
                     )
                 st.plotly_chart(fig5, use_container_width=True, key=f'bat_sr_{fmt}')
             else:
@@ -286,17 +312,36 @@ if menu == 'Format Wise Analysis':
                         y='wickets', color='Team',
                         title=f"Top 10 All-Rounders by Wickets - {fmt}"
                         )
+                    fig6.update_traces(width=0.6)
+                    # Bigger chart
+                    fig6.update_layout(
+                        autosize=False,
+                        width=1300,
+                        height=450,
+                        xaxis=dict(tickangle=45),
+                        margin=dict(l=40, r=40, t=40, b=120)
+                        )
                     st.plotly_chart(fig6, use_container_width=True, key=f'wickets_{fmt}')
                 else:
                     st.info(f"No all-rounder data for {fmt} format.")
 
             with col5:
                 if not fmt_all_rounders.empty:
+                    filtered_all_rounders = fmt_all_rounders[fmt_all_rounders['matches'] >= 10]
                     fig7 = px.bar(
-                        fmt_all_rounders.sort_values(by='bowling_average', ascending=True).head(10),
+                        filtered_all_rounders.sort_values(by='bowling_average', ascending=True).head(10),
                         x='player', 
                         y='bowling_average', color='Team',
                         title=f"Top 10 All-Rounders by Bowling Avg (Lower Better) - {fmt}"
+                        )
+                    fig7.update_traces(width=0.6)
+                    # Bigger chart
+                    fig7.update_layout(
+                        autosize=False,
+                        width=1300,
+                        height=450,
+                        xaxis=dict(tickangle=45),
+                        margin=dict(l=40, r=40, t=40, b=120)
                         )
                     st.plotly_chart(fig7, use_container_width=True, key=f'bowling_avg_{fmt}')
                 else:
@@ -317,6 +362,15 @@ if menu == 'Format Wise Analysis':
                         y='wickets', color='Team',
                         title=f"Top 10 Bowlers by Wickets - {fmt}"
                         )
+                    fig8.update_traces(width=0.6)
+                    # Bigger chart
+                    fig8.update_layout(
+                        autosize=False,
+                        width=1300,
+                        height=450,
+                        xaxis=dict(tickangle=45),
+                        margin=dict(l=40, r=40, t=40, b=120)
+                        )
                     st.plotly_chart(fig8, use_container_width=True, key=f'bowl_wickets_{fmt}')
 
                 with colB2:
@@ -325,6 +379,15 @@ if menu == 'Format Wise Analysis':
                         x='player', 
                         y='bowling_average', color='Team',
                         title=f"Top 10 Bowlers by Bowling Avg (Lower Better) - {fmt}"
+                        )
+                    fig9.update_traces(width=0.6)
+                    # Bigger chart
+                    fig9.update_layout(
+                        autosize=False,
+                        width=1300,
+                        height=450,
+                        xaxis=dict(tickangle=45),
+                        margin=dict(l=40, r=40, t=40, b=120)
                         )
                     st.plotly_chart(fig9, use_container_width=True, key=f'bowl_avg_{fmt}')
             else:
