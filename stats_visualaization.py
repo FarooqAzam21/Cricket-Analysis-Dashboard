@@ -216,6 +216,8 @@ if menu == 'Format Wise Analysis':
             col1, col2, col3 = st.columns(3)
 
             filtered_batsmen = fmt_all_players[(fmt_all_players['matches'] > 10) & (fmt_all_players['role'].isin(['Batsman' , 'wicket-keeper']))] if not fmt_all_players.empty else pd.DataFrame()
+            filtered_all_rounders = fmt_all_rounders[(fmt_all_rounders['matches'] > 10)] 
+            filtered_bowler = fmt_bowlers[(fmt_bowlers['matches'] > 10)]
             filtered_batsmen = filtered_batsmen.sort_values(by='runs', ascending=False)
             with col1:
                 if not filtered_batsmen.empty:
@@ -305,9 +307,9 @@ if menu == 'Format Wise Analysis':
             # ---------------------------
             col4, col5 = st.columns(2)
             with col4:
-                if not fmt_all_rounders.empty:
+                if not filtered_all_rounders.empty:
                     fig6 = px.bar(
-                        fmt_all_rounders.sort_values(by='wickets', ascending=False).head(10),
+                        filtered_all_rounders.sort_values(by='wickets', ascending=True).head(10),
                         x='player', 
                         y='wickets', color='Team',
                         title=f"Top 10 All-Rounders by Wickets - {fmt}"
@@ -326,8 +328,7 @@ if menu == 'Format Wise Analysis':
                     st.info(f"No all-rounder data for {fmt} format.")
 
             with col5:
-                if not fmt_all_rounders.empty:
-                    filtered_all_rounders = fmt_all_rounders[fmt_all_rounders['matches'] >= 10]
+                if not filtered_all_rounders.empty:
                     fig7 = px.bar(
                         filtered_all_rounders.sort_values(by='bowling_average', ascending=True).head(10),
                         x='player', 
@@ -354,10 +355,10 @@ if menu == 'Format Wise Analysis':
             st.subheader(f"⚡ Top 10 Bowlers - {fmt}")
             colB1, colB2 = st.columns(2)
 
-            if not fmt_bowlers.empty:
+            if not filtered_bowler.empty:
                 with colB1:
                     fig8 = px.bar(
-                        fmt_bowlers.sort_values(by='wickets', ascending=False).head(10),
+                        filtered_bowler.sort_values(by='wickets', ascending=False).head(10),
                         x='player', 
                         y='wickets', color='Team',
                         title=f"Top 10 Bowlers by Wickets - {fmt}"
@@ -375,7 +376,7 @@ if menu == 'Format Wise Analysis':
 
                 with colB2:
                     fig9 = px.bar(
-                        fmt_bowlers.sort_values(by='bowling_average', ascending=True).head(10),
+                        filtered_bowler.sort_values(by='bowling_average', ascending=True).head(10),
                         x='player', 
                         y='bowling_average', color='Team',
                         title=f"Top 10 Bowlers by Bowling Avg (Lower Better) - {fmt}"

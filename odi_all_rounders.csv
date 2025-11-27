@@ -15,6 +15,8 @@ Jacod Bethell,England,Odi,16,14,1,488,8,37.53,38.0,99.79,110,1,4,5,https://img1.
 Shadab Khan,Pakistan,Odi,70,44,11,855,85,25.9,34.82,85.75,86,0,4,8,https://img1.hscicdn.com/image/upload/f_autot_ds_w_1280q_80/lsci/db/PICTURES/CMS/384800/384836.jpg ,leg-spinner
 Wiaan Mulder,South Africa,Test,22,36,4,1170,38,36.56,25.07,58.52,367*,3,1,3,"",fast-bowler
 Wiaan Mulder,South Africa,Odi,30,24,6,338,26,18.77,38.23,84.92,64,0,2,4,https://img1.hscicdn.com/image/upload/f_autot_ds_w_1280q_80/lsci/db/PICTURES/CMS/403300/403345.jpg ,right-arm-medium-fast
+Sikander Raza,Zimbabwe,T20,127,122,10,2883,102,25.74,22.93,135.28,133*,16,4,"",spinner
+Sikander Raza,Zimbabwe,Test,22,42,0,1434,40,34.14,44.5,56.12,127,1,11,5,"",spinner
 Sikander Raza,Zimbabwe,Odi,153,144,23,4476,94,36.99,43.64,86.3,141,7,24,6,https://img1.hscicdn.com/image/upload/f_autot_ds_w_1280q_80/lsci/db/PICTURES/CMS/405500/405597.jpg ,right-arm-off-spinner
 James Neesham,New Zealand,T20,93,71,21,1010,56,20.20,23.71,149.62,48*,0,0,7,"",fast-bowler
 James Neesham,New Zealand,Odi,76,65,12,1495,71,28.2,36.0,99.93,97*,0,7,7,https://img1.hscicdn.com/image/upload/f_autot_ds_w_1280q_80/lsci/db/PICTURES/CMS/391300/391356.jpg ,right-arm-medium-fast
@@ -47,12 +49,12 @@ Cooper Conolly,Australia,Odi,8,5,2,94,6,31.33,22.83,73.43,61*,0,1,7,"https://img
 Justin Greaves,Windies,Odi,18,17,4,368,6,28.3,64.5,92.92,50,0,1,8,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/374200/374217.jpg",fast-bowler
 Khary Pierre,Windies,Odi,6,5,3,48,2,24.0,133.0,75.0,21,0,0,9,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/408000/408009.jpg",left-arm-spinner
 Faheem Ashraf,Pakistan,Test,17,31,1,687,25,26.42,39.64,54.17,91,0,4,8,"",fast-bowler
-Faheem Ashraf,Pakistan,T20,73,52,13,525,59,13.46,24.01,134.96,51,0,1,8,"",fast-bowler
+Faheem Ashraf,Pakistan,T20,75,54,13,535,60,13.04,24.61,134.08,51,0,1,8,"",fast-bowler
 Faheem Ashraf,Pakistan,Odi,38,27,3,322,28,13.41,46.96,84.96,73,0,1,8,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_wide_w_1280,q_70/lsci/db/PICTURES/CMS/406900/406969.6.jpg",fast-bowler
 Sam curran,England,Odi,36,28,3,603,33,24.12,42.42,91.5,95*,0,2,7,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/405900/405983.jpg",fast-bowler
 Muhammad Nawaz,Pakistan,Odi,44,33,8,538,49,21.52,36.51,89.51,59,0,2,7,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/406100/406121.jpg",left-arm-off=spinner
 Muhammad Nawaz,Pakistan,Test,6,10,1,144,16,16.00,31.00,41.61,45,0,0,8,"",left-arm-off-spineer
-Muhammad Nawaz,Pakistan,T20,83,58,15,808,81,18.79,22.06,135.34,45*,0,0,7,"",left-arm-off-spineer
+Muhammad Nawaz,Pakistan,T20,85,60,15,839,83,18.64,22.09,135.98,45*,0,0,7,"",left-arm-off-spineer
 George Linde,South Africa,Test,3,6,0,135,9,22.50,28.00,52.94,37,0,0,7,"",left-arm-off-spineer
 George Linde,South Africa,Odi,2,2,1,29,4,14.50,30.25,76.31,18,0,0,7,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/392700/392770.jpg",left-arm-off-spineer
 George Linde,South Africa,T20,25,20,3,270,27,15.88,21.18,137.75,48,0,0,7,"",left-arm-off-spineer
@@ -68,3 +70,11 @@ Curtis Campher,Ireland,Test,8,16,0,391,6,24.43,72.16,47.05,111,1,0,5,"",fast-bow
 Curtis Campher,Ireland,Odi,43,35,2,1113,32,33.72,34.43,78.99,120,1,7,5,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/358700/358788.jpg",fast-bowler
 Curtis Campher,Ireland,T20,63,53,8,926,32,20.57,34.25,125.13,72*,0,3,5,"",fast-bowler
 Ben Stokes,England,Test,116,208,9,7040,235,35.37,31.14,59.31,258,14,35,6,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_wide_w_1280,q_70/lsci/db/PICTURES/CMS/409600/409636.6.png",fast-bowler
+Ryan Burl,Zimbabwe,Test,3,5,0,24,4,4.80,26.75,34.28,16,0,0,6,"",spinner
+Ryan Burl,Zimbabwe,Odi,52,44,6,938,19,24.68,40.31,79.55,83,0,6,6,"",spinner
+Ryan Burl,Zimbabwe,T20,112,104,32,1885,60,26.18,22.76,125.08,67*,0,4,5,"",spinner
+Tony Munyonga,Zimbabwe,Odi,9,8,2,145,0,24.16,-,72.86,43*,0,0,6,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/343800/343888.jpg",spinner
+Tony Munyonga,Zimbabwe,T20,36,32,7,359,0,14.36,-,108.13,44,0,0,6,"",spinner
+Brad Evans,Zimbabwe,Test,2,3,1,42,7,21.00,23.57,65.62,35*,0,0,9,"",fast-bowler
+Brad Evans,Zimbabwe,Odi,17,15,3,129,15,10.75,42.13,82.69,33*,0,0,9,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_wide_w_1280,q_70/lsci/db/PICTURES/CMS/409500/409502.6.jpg",fast-bowler
+Brad Evans,Zimbabwe,T20,25,14,3,88,36,8.00,17.55,98.87,24,0,0,9,"",fast-bowler
