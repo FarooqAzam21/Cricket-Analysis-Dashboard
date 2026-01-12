@@ -45,6 +45,29 @@ file_path1 = os.path.join(BASE_DIR, "odi_batsman.csv")
 file_path2 = os.path.join(BASE_DIR, "odi_all_rounders.csv")
 file_path3 = os.path.join(BASE_DIR, "odi_bowler.csv")
 file_path4 = os.path.join(BASE_DIR, "yearwise_data.csv")
+# ---------------------------
+# Universal helper to sort top players for charts
+# ---------------------------
+def sort_players(df, top_n=10):
+    """
+    Sort DataFrame based on role and stats.
+    Returns top N players.
+    """
+    if df.empty:
+        return df
+    role_col = df.get('role', pd.Series([""]*len(df)))
+    role_col = role_col.astype(str).str.lower()
+
+    # Batsmen / WK
+    if role_col.str.contains('batsman|wicket', na=False).any():
+        sort_df = df.sort_values(by=['average', 'strike_rate', 'runs'] , ascending=[False , False , False] , kind="stable" , ignore_index=True)
+    # All-Rounder / Bowler
+    elif role_col.str.contains('all-rounder|bowler|spinner', na=False).any():
+        sort_df = df.sort_values(by=['wickets', 'bowling_average'] , ascending=[False , False] , kind="stable",ignore_index=True)
+    else:
+        sort_df = df.sort_values(by='average' , ascending=[False] , kind="stable",ignore_index=True )
+
+    return sort_df.head(top_n)
 
 st.sidebar.title("Cricket Analysis Menu")
 menu = st.sidebar.radio(
@@ -201,198 +224,206 @@ formats = ['Odi', 'T20', 'Test']  # Adjust according to your dataset values
 
 if menu == 'Format Wise Analysis':
     for fmt in formats:
-            st.markdown(f"## 🏏 {fmt} Format Analysis")
-            st.markdown("---")
+        st.markdown(f"## 🏏 {fmt} Format Analysis")
+        st.markdown("---")
 
-            # Filter data for this format
-            fmt_batsmen = batsmen[batsmen['Format'] == fmt]
-            fmt_all_rounders = all_rounders[all_rounders['Format'] == fmt]
-            fmt_bowlers = bowlers_data[bowlers_data['Format'] == fmt]
-            fmt_wicket_keepers = wicket_keepers[wicket_keepers['Format'] == fmt]
-            fmt_all_players = pd.concat([fmt_batsmen , fmt_all_rounders , fmt_wicket_keepers , fmt_bowlers])
-            # ---------------------------
-            # Top Batsmen Charts
-            # ---------------------------
-            col1, col2, col3 = st.columns(3)
+        # Filter data for this format
+        fmt_batsmen = batsmen[batsmen['Format'] == fmt]
+        fmt_all_rounders = all_rounders[all_rounders['Format'] == fmt]
+        fmt_bowlers = bowlers_data[bowlers_data['Format'] == fmt]
+        fmt_wicket_keepers = wicket_keepers[wicket_keepers['Format'] == fmt]
+        fmt_all_players = pd.concat([fmt_batsmen , fmt_all_rounders , fmt_wicket_keepers , fmt_bowlers])
 
-            filtered_batsmen = fmt_all_players[(fmt_all_players['matches'] > 10) & (fmt_all_players['role'].isin(['Batsman' , 'wicket-keeper']))] if not fmt_all_players.empty else pd.DataFrame()
-            filtered_all_rounders = fmt_all_rounders[(fmt_all_rounders['matches'] > 10)] 
-            filtered_bowler = fmt_bowlers[(fmt_bowlers['matches'] > 10)]
-            filtered_batsmen = filtered_batsmen.sort_values(by='runs', ascending=False)
-            with col1:
-                if not filtered_batsmen.empty:
-                    fig1 = px.bar(
-                        filtered_batsmen.sort_values(by='runs', ascending=False).head(10),
-                        x='player',
-                        y='runs', color='Team',
-                        title=f"🏆 Top 10 Run Scorers - {fmt}"
-                        )
-                    fig1.update_traces(width=0.6)
-                    # Bigger chart
-                    fig1.update_layout(
-                        autosize=False,
-                        width=1300,
-                        height=450,
-                        xaxis=dict(tickangle=45),
-                        margin=dict(l=40, r=40, t=40, b=120)
-                        )
-                    st.plotly_chart(fig1, use_container_width=True, key=f'top_runs_{fmt}')
-                else:
-                    st.info(f"No batsman data for {fmt}.")
-            with col2:
-                if not filtered_batsmen.empty:
-                    fig2 = px.scatter(
-                        filtered_batsmen, x='average', y='strike_rate', color='Team',
-                            size='matches', hover_name='player',
-                            title=f"📈 Avg vs SR  - {fmt}"
-                        )
-                    st.plotly_chart(fig2, use_container_width=True, key=f'avg_sr_{fmt}')
-                else:
-                    st.info(f"No Average vs Strike Rate data for {fmt}.")
-
-            with col3:
-                if not fmt_wicket_keepers.empty:
-                    fig3 = px.scatter(
-                        fmt_wicket_keepers, x='average', y='strike_rate', color='Team',
-                        size='matches', hover_name='player',
-                        title=f"📊 Wicket Keepers: Avg vs SR - {fmt}"
-                        )
-                    st.plotly_chart(fig3, use_container_width=True, key=f'wk_scatter_{fmt}')
-                else:
-                    st.info(f"No wicket-keeper data for {fmt}.")
-
-            # ---------------------------
-            # More Charts
-            # ---------------------------
-            st.markdown("---")
+        # ---------------------------
+        # Top Batsmen Charts
+        # ---------------------------
+        filtered_batsmen = fmt_all_players[(fmt_all_players['matches'] > 10) & 
+                                           (fmt_all_players['role'].str.lower().isin(['batsman' , 'wicket-keeper']))] \
+                                           if not fmt_all_players.empty else pd.DataFrame()
+        filtered_all_rounders = fmt_all_rounders[(fmt_all_rounders['matches'] > 10)] 
+        filtered_bowler = fmt_bowlers[(fmt_bowlers['matches'] > 10)]
+        col1, col2, col3 = st.columns(3)
+        # --- Column 1: Top Runs ---
+        with col1:
             if not filtered_batsmen.empty:
-                fig4 = px.bar(
-                    filtered_batsmen.sort_values(by='average', ascending=False).head(10),
+                top_runs = sort_players(filtered_batsmen, top_n=10)
+                fig1 = px.bar(
+                    top_runs,
                     x='player',
-                    y='average', color='Team',
-                    title=f"Top 10 Batters by Average - {fmt}"
-                    )
-                fig4.update_traces(width=0.6)
-                    # Bigger chart
-                fig4.update_layout(
+                    y='runs', color='Team',
+                    title=f"🏆 Top 10 Run Scorers - {fmt}"
+                )
+                fig1.update_traces(width=0.6)
+                fig1.update_layout(
                     autosize=False,
                     width=1300,
                     height=450,
                     xaxis=dict(tickangle=45),
                     margin=dict(l=40, r=40, t=40, b=120)
-                    )
-                st.plotly_chart(fig4, use_container_width=True, key=f'bat_avg_{fmt}')
+                )
+                st.plotly_chart(fig1, use_container_width=True, key=f'top_runs_{fmt}')
+            else:
+                st.info(f"No batsman data for {fmt}.")
 
-                fig5 = px.bar(
-                    filtered_batsmen.sort_values(by='strike_rate', ascending=False).head(10),
-                    x='player',
-                    y='strike_rate', color='Team',
-                    title=f"Top 10 Batters by Strike Rate - {fmt}"
-                    )
-                fig5.update_traces(width=0.6)
-                    # Bigger chart
-                fig5.update_layout(
+        # --- Column 2: Avg vs SR ---
+        with col2:
+            if not filtered_batsmen.empty:
+                top_avg_sr = sort_players(filtered_batsmen, top_n=100)  # show more points for scatter
+                fig2 = px.scatter(
+                    top_avg_sr, x='average', y='strike_rate', color='Team',
+                    size='matches', hover_name='player',
+                    title=f"📈 Avg vs SR  - {fmt}"
+                )
+                st.plotly_chart(fig2, use_container_width=True, key=f'avg_sr_{fmt}')
+            else:
+                st.info(f"No Average vs Strike Rate data for {fmt}.")
+
+        # --- Column 3: Wicket Keepers ---
+        with col3:
+            if not fmt_wicket_keepers.empty:
+                top_wk = sort_players(fmt_wicket_keepers, top_n=100)
+                fig3 = px.scatter(
+                    top_wk, x='average', y='strike_rate', color='Team',
+                    size='matches', hover_name='player',
+                    title=f"📊 Wicket Keepers: Avg vs SR - {fmt}"
+                )
+                st.plotly_chart(fig3, use_container_width=True, key=f'wk_scatter_{fmt}')
+            else:
+                st.info(f"No wicket-keeper data for {fmt}.")
+
+        # ---------------------------
+        # More Batsmen Charts
+        # ---------------------------
+        st.markdown("---")
+        if not filtered_batsmen.empty:
+            top_avg = sort_players(filtered_batsmen, top_n=10)
+            fig4 = px.bar(
+                top_avg.sort_values(by='average', ascending=False),
+                x='player',
+                y='average', color='Team',
+                title=f"Top 10 Batters by Average - {fmt}"
+            )
+            fig4.update_traces(width=0.6)
+            fig4.update_layout(
+                autosize=False,
+                width=1300,
+                height=450,
+                xaxis=dict(tickangle=45),
+                margin=dict(l=40, r=40, t=40, b=120)
+            )
+            st.plotly_chart(fig4, use_container_width=True, key=f'bat_avg_{fmt}')
+
+            top_sr = sort_players(filtered_batsmen, top_n=10)
+            fig5 = px.bar(
+                top_sr.sort_values(by='strike_rate', ascending=False),
+                x='player',
+                y='strike_rate', color='Team',
+                title=f"Top 10 Batters by Strike Rate - {fmt}"
+            )
+            fig5.update_traces(width=0.6)
+            fig5.update_layout(
+                autosize=False,
+                width=1300,
+                height=450,
+                xaxis=dict(tickangle=45),
+                margin=dict(l=40, r=40, t=40, b=120)
+            )
+            st.plotly_chart(fig5, use_container_width=True, key=f'bat_sr_{fmt}')
+        else:
+            st.info(f"No batting data for {fmt} format.")
+
+        # ---------------------------
+        # All-Rounders Charts
+        # ---------------------------
+        col4, col5 = st.columns(2)
+        with col4:
+            if not filtered_all_rounders.empty:
+                top_wickets = sort_players(filtered_all_rounders, top_n=10)
+                fig6 = px.bar(
+                    top_wickets,
+                    x='player', 
+                    y='wickets', color='Team',
+                    title=f"Top 10 All-Rounders by Wickets - {fmt}"
+                )
+                fig6.update_traces(width=0.6)
+                fig6.update_layout(
                     autosize=False,
                     width=1300,
                     height=450,
                     xaxis=dict(tickangle=45),
                     margin=dict(l=40, r=40, t=40, b=120)
-                    )
-                st.plotly_chart(fig5, use_container_width=True, key=f'bat_sr_{fmt}')
+                )
+                st.plotly_chart(fig6, use_container_width=True, key=f'wickets_{fmt}')
             else:
-                st.info(f"No batting data for {fmt} format.")
+                st.info(f"No all-rounder data for {fmt} format.")
 
-            # ---------------------------
-            # All-rounders
-            # ---------------------------
-            col4, col5 = st.columns(2)
-            with col4:
-                if not filtered_all_rounders.empty:
-                    fig6 = px.bar(
-                        filtered_all_rounders.sort_values(by='wickets', ascending=True).head(10),
-                        x='player', 
-                        y='wickets', color='Team',
-                        title=f"Top 10 All-Rounders by Wickets - {fmt}"
-                        )
-                    fig6.update_traces(width=0.6)
-                    # Bigger chart
-                    fig6.update_layout(
-                        autosize=False,
-                        width=1300,
-                        height=450,
-                        xaxis=dict(tickangle=45),
-                        margin=dict(l=40, r=40, t=40, b=120)
-                        )
-                    st.plotly_chart(fig6, use_container_width=True, key=f'wickets_{fmt}')
-                else:
-                    st.info(f"No all-rounder data for {fmt} format.")
-
-            with col5:
-                if not filtered_all_rounders.empty:
-                    fig7 = px.bar(
-                        filtered_all_rounders.sort_values(by='bowling_average', ascending=True).head(10),
-                        x='player', 
-                        y='bowling_average', color='Team',
-                        title=f"Top 10 All-Rounders by Bowling Avg (Lower Better) - {fmt}"
-                        )
-                    fig7.update_traces(width=0.6)
-                    # Bigger chart
-                    fig7.update_layout(
-                        autosize=False,
-                        width=1300,
-                        height=450,
-                        xaxis=dict(tickangle=45),
-                        margin=dict(l=40, r=40, t=40, b=120)
-                        )
-                    st.plotly_chart(fig7, use_container_width=True, key=f'bowling_avg_{fmt}')
-                else:
-                    st.info(f"No bowling average data for {fmt} format.")
-
-            # ---------------------------
-            # Bowlers Section
-            # ---------------------------
-            st.markdown("---")
-            st.subheader(f"⚡ Top 10 Bowlers - {fmt}")
-            colB1, colB2 = st.columns(2)
-
-            if not filtered_bowler.empty:
-                with colB1:
-                    fig8 = px.bar(
-                        filtered_bowler.sort_values(by='wickets', ascending=False).head(10),
-                        x='player', 
-                        y='wickets', color='Team',
-                        title=f"Top 10 Bowlers by Wickets - {fmt}"
-                        )
-                    fig8.update_traces(width=0.6)
-                    # Bigger chart
-                    fig8.update_layout(
-                        autosize=False,
-                        width=1300,
-                        height=450,
-                        xaxis=dict(tickangle=45),
-                        margin=dict(l=40, r=40, t=40, b=120)
-                        )
-                    st.plotly_chart(fig8, use_container_width=True, key=f'bowl_wickets_{fmt}')
-
-                with colB2:
-                    fig9 = px.bar(
-                        filtered_bowler.sort_values(by='bowling_average', ascending=True).head(10),
-                        x='player', 
-                        y='bowling_average', color='Team',
-                        title=f"Top 10 Bowlers by Bowling Avg (Lower Better) - {fmt}"
-                        )
-                    fig9.update_traces(width=0.6)
-                    # Bigger chart
-                    fig9.update_layout(
-                        autosize=False,
-                        width=1300,
-                        height=450,
-                        xaxis=dict(tickangle=45),
-                        margin=dict(l=40, r=40, t=40, b=120)
-                        )
-                    st.plotly_chart(fig9, use_container_width=True, key=f'bowl_avg_{fmt}')
+        with col5:
+            if not filtered_all_rounders.empty:
+                top_bowling_avg = sort_players(filtered_all_rounders, top_n=10)
+                fig7 = px.bar(
+                    top_bowling_avg.sort_values(by='bowling_average', ascending=True),
+                    x='player', 
+                    y='bowling_average', color='Team',
+                    title=f"Top 10 All-Rounders by Bowling Avg (Lower Better) - {fmt}"
+                )
+                fig7.update_traces(width=0.6)
+                fig7.update_layout(
+                    autosize=False,
+                    width=1300,
+                    height=450,
+                    xaxis=dict(tickangle=45),
+                    margin=dict(l=40, r=40, t=40, b=120)
+                )
+                st.plotly_chart(fig7, use_container_width=True, key=f'bowling_avg_{fmt}')
             else:
-                st.info(f"No bowling data available for {fmt} format.")
+                st.info(f"No bowling average data for {fmt} format.")
+
+        # ---------------------------
+        # Bowlers Section
+        # ---------------------------
+        st.markdown("---")
+        st.subheader(f"⚡ Top 10 Bowlers - {fmt}")
+        colB1, colB2 = st.columns(2)
+
+        if not filtered_bowler.empty:
+            top_bowl_wickets = sort_players(filtered_bowler, top_n=10)
+            with colB1:
+                fig8 = px.bar(
+                    top_bowl_wickets,
+                    x='player', 
+                    y='wickets', color='Team',
+                    title=f"Top 10 Bowlers by Wickets - {fmt}"
+                )
+                fig8.update_traces(width=0.6)
+                fig8.update_layout(
+                    autosize=False,
+                    width=1300,
+                    height=450,
+                    xaxis=dict(tickangle=45),
+                    margin=dict(l=40, r=40, t=40, b=120)
+                )
+                st.plotly_chart(fig8, use_container_width=True, key=f'bowl_wickets_{fmt}')
+
+            top_bowl_avg = sort_players(filtered_bowler, top_n=10)
+            with colB2:
+                fig9 = px.bar(
+                    top_bowl_avg.sort_values(by='bowling_average', ascending=True),
+                    x='player', 
+                    y='bowling_average', color='Team',
+                    title=f"Top 10 Bowlers by Bowling Avg (Lower Better) - {fmt}"
+                )
+                fig9.update_traces(width=0.6)
+                fig9.update_layout(
+                    autosize=False,
+                    width=1300,
+                    height=450,
+                    xaxis=dict(tickangle=45),
+                    margin=dict(l=40, r=40, t=40, b=120)
+                )
+                st.plotly_chart(fig9, use_container_width=True, key=f'bowl_avg_{fmt}')
+        else:
+            st.info(f"No bowling data available for {fmt} format.")
+
             
 elif menu == 'Player Comparison':
                 st.markdown("---")
