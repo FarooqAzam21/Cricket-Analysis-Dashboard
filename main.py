@@ -8,13 +8,70 @@ from src.ui.analysis import render_player_analysis
 from src.ui.predictions import render_predictions
 from src.ui.smart_scout import render_smart_scout
 from src.ui.ai_chat import render_ai_chat
+from src.auth import login, signup
+from src.database import init_db
+import os
+
+def render_auth():
+    st.title("🔐 Dashboard Login")
+    tab1, tab2 = st.tabs(["Login", "Sign Up"])
+    
+    with tab1:
+        with st.form("login_form"):
+            u = st.text_input("Username")
+            p = st.text_input("Password", type="password")
+            if st.form_submit_button("Login"):
+                success, res = login(u, p)
+                if success:
+                    st.session_state.authenticated = True
+                    st.session_state.username = u
+                    st.rerun()
+                else:
+                    st.error(res)
+                    
+    with tab2:
+        with st.form("signup_form"):
+            u = st.text_input("New Username")
+            p = st.text_input("New Password", type="password")
+            if st.form_submit_button("Create Account"):
+                success, msg = signup(u, p)
+                if success:
+                    st.success(msg)
+                else:
+                    st.error(msg)
 
 def main():
-    # 1. Setup config
+    # 0. Initialize DB and Auth state
+    init_db()
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
+
+    # 1. Setup config (with icon if available)
+    logo_path = os.path.join("assets", "logo.png")
+    page_icon = logo_path if os.path.exists(logo_path) else "🏏"
+    
+    st.set_page_config(
+        page_title="Cricket Analytics Dashboard",
+        page_icon=page_icon,
+        layout="wide"
+    )
+    
+    if not st.session_state.authenticated:
+        render_auth()
+        st.stop()
+
     apply_custom_styles()
     
     # 2. Sidebar elements
+    if os.path.exists(logo_path):
+        st.sidebar.image(logo_path, width=150)
     st.sidebar.title("Cricket Analysis Menu")
+    
+    st.sidebar.write(f"Welcome, **{st.session_state.username}**!")
+    if st.sidebar.button("Logout"):
+        st.session_state.authenticated = False
+        st.rerun()
+        
     menu = st.sidebar.radio("Navigate to", MENU_OPTIONS)
     st.sidebar.markdown("---")
     st.sidebar.info("Developed by **Farooq Azam**")

@@ -40,8 +40,36 @@ def init_db():
         )
     ''')
     
+    # Create Users Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT
+        )
+    ''')
+    
     conn.commit()
     conn.close()
+
+def add_user(username, password_hash):
+    """Add a new user with hashed password."""
+    conn = get_db_connection()
+    try:
+        conn.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password_hash))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+def get_user(username):
+    """Retrieve user details for authentication."""
+    conn = get_db_connection()
+    user = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+    conn.close()
+    return user
 
 def save_to_db(df):
     """Save/Update a dataframe to the players table."""
