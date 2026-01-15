@@ -40,11 +40,10 @@ def find_similar_players(df, player_name, top_n=5):
         return df.iloc[similar_indices], distances.flatten()[1:]
     except IndexError:
         return pd.DataFrame(), []
-
 def get_ollama_response(prompt, context_data=""):
     """Get a response from Ollama with data context."""
     try:
-        llm = Ollama(model="llama2") # Or "llama3" if available
+        llm = Ollama(model="qwen2.5:0.5b") 
         
         full_prompt = f"""
         You are a Cricket Expert Assistant. Use the following data context to answer the user's question.
@@ -58,4 +57,4 @@ def get_ollama_response(prompt, context_data=""):
         
         return llm.invoke(full_prompt)
     except Exception as e:
-        return f"Ollama Error: Make sure Ollama is running locally. Error: {e}"
+        return f"Ollama Error: Make sure Ollama is running locally. Error: {e}"        
