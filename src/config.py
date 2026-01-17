@@ -36,6 +36,8 @@ MENU_OPTIONS = [
     "Select Playing 11",
     "Player Comparison",
     "Player Analysis",
+    "🎯 Next Match Prediction",
+    "📈 Yearly Performance Prediction",
     "Smart Scout (AI)",
     "Ask Expert (AI)",
 ]

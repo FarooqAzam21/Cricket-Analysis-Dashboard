@@ -7,7 +7,11 @@ def render_smart_scout(all_players):
     st.header("🔎 AI Smart Scout (Player Similarity)")
     st.info("Select a player to find others with a similar statistical profile.")
     
-    player_list = sorted(all_players['player'].unique().tolist())
+    # Cache player list in session state to avoid recomputing
+    if 'cached_player_list' not in st.session_state:
+        st.session_state.cached_player_list = sorted(all_players['player'].unique().tolist())
+    
+    player_list = st.session_state.cached_player_list
     selected_player = st.selectbox("Select Player to Find Look-alikes", player_list)
     
     if selected_player:
@@ -18,7 +22,8 @@ def render_smart_scout(all_players):
         fmt_data = all_players[all_players['Format'] == selected_fmt].reset_index(drop=True)
         
         if st.button("Find Similar Players"):
-            similar_df, scores = find_similar_players(fmt_data, selected_player)
+            with st.spinner("Finding similar players..."):
+                similar_df, scores = find_similar_players(fmt_data, selected_player)
             
             if not similar_df.empty:
                 st.subheader(f"Top 5 Players Similar to {selected_player} in {selected_fmt}")

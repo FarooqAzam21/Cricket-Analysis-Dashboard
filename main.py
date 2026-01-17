@@ -45,16 +45,18 @@ def main():
     init_db()
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
-
-    # 1. Setup config (with icon if available)
-    logo_path = os.path.join("assets", "logo.png")
-    page_icon = logo_path if os.path.exists(logo_path) else "🏏"
     
-    st.set_page_config(
-        page_title="Cricket Analytics Dashboard",
-        page_icon=page_icon,
-        layout="wide"
-    )
+    # 1. Set page config only once and cache it in session state
+    if 'page_config_set' not in st.session_state:
+        logo_path = os.path.join("assets", "logo.png")
+        page_icon = logo_path if os.path.exists(logo_path) else "🏏"
+        
+        st.set_page_config(
+            page_title="Cricket Analytics Dashboard",
+            page_icon=page_icon,
+            layout="wide"
+        )
+        st.session_state.page_config_set = True
     
     if not st.session_state.authenticated:
         render_auth()
@@ -63,6 +65,7 @@ def main():
     apply_custom_styles()
     
     # 2. Sidebar elements
+    logo_path = os.path.join("assets", "logo.png")
     if os.path.exists(logo_path):
         st.sidebar.image(logo_path, width=150)
     st.sidebar.title("Cricket Analysis Menu")
@@ -70,13 +73,14 @@ def main():
     st.sidebar.write(f"Welcome, **{st.session_state.username}**!")
     if st.sidebar.button("Logout"):
         st.session_state.authenticated = False
+        st.session_state.clear()
         st.rerun()
         
     menu = st.sidebar.radio("Navigate to", MENU_OPTIONS)
     st.sidebar.markdown("---")
     st.sidebar.info("Developed by **Farooq Azam**")
     
-    # 3. Load Data
+    # 3. Load Data (automatically cached for 1 hour via @st.cache_data)
     all_players, df_batsman, df_allrounder, df_bowler, year_wise, batsmen, all_rounders, wicket_keepers = load_all_data()
     
     if all_players is None:
@@ -102,8 +106,12 @@ def main():
         render_comparison(all_players)
     elif menu == "Player Analysis":
         render_player_analysis(all_players)
-    elif menu == "Predict Runs":
-        render_predictions(df_batsman, year_wise)
+    elif menu == "🎯 Next Match Prediction":
+        from src.ui.predictions import render_next_match_prediction
+        render_next_match_prediction(df_batsman, df_allrounder, df_bowler, wicket_keepers)
+    elif menu == "📈 Yearly Performance Prediction":
+        from src.ui.predictions import render_yearly_prediction
+        render_yearly_prediction(year_wise)
     elif menu == "Smart Scout (AI)":
         render_smart_scout(all_players)
     elif menu == "Ask Expert (AI)":

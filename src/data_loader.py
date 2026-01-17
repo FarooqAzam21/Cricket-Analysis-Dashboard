@@ -4,8 +4,9 @@ import os
 from .config import DATA_PATHS
 from .database import fetch_all_players_from_db
 
+@st.cache_data(ttl=3600)
 def load_all_data():
-    """Load, merge, and preprocess all cricket data files. Prefers DB."""
+    """Load, merge, and preprocess all cricket data files. Prefers DB. Cached for 1 hour."""
     all_players = pd.DataFrame()
     
     # 1. Try DB first
@@ -49,7 +50,17 @@ def load_all_data():
     # Load yearwise separately
     try:
         df_year = pd.read_csv(DATA_PATHS["yearwise"])
-    except:
+        if not df_year.empty:
+            # Ensure 'player' column exists and clean it
+            if 'player' in df_year.columns:
+                df_year['player'] = df_year['player'].astype(str).str.strip()
+            # Convert numeric columns
+            numeric_cols = ['year', 'matches', 'innings', 'runs', 'average', 'SR', '100s', '50s']
+            for col in numeric_cols:
+                if col in df_year.columns:
+                    df_year[col] = pd.to_numeric(df_year[col], errors='coerce')
+    except Exception as year_error:
+        print(f"Year-wise data loading error: {year_error}")
         df_year = pd.DataFrame()
 
     # Classification logic

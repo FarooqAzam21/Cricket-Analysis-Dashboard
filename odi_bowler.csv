@@ -41,7 +41,9 @@ Shaheen Shah Afridi,Pakistan,Odi,67,66,276,132,13.80,24.51,26.0,5.65,9,3,"https:
 Kuldeep Yadav,India,Test,17,32,225,76,11.84,22.42,38.0,3.53,10,5,"",left-arm-wrist-spin
 Kuldeep Yadav,India,T20,49,47,47,88,9.40,13.34,11.7,6.83,10,2,"",left-arm-wrist-spin
 Kuldeep Yadav,India,Odi,117,114,207,191,9.85,26.29,31.3,5.02,10,2,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/407600/407672.jpg",left-arm-wrist-spin,,,
-Will O'Rourkee,NewZeland,Odi,17,17,,6,22.0,,38.3,5.67,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/397800/397825.jpg",fast-bowler,,,
+Will O'Rourkee,NewZeland,Test,11,20,18,39,3.00,24.28,40.0,3.63,11,2,"",fast-bowler
+Will O'Rourkee,NewZeland,T20,7,7,0,7,0.0,26.85,23.1,6.96,11,0,"",fast-bowler
+Will O'Rourkee,NewZeland,Odi,17,17,6,22,3.00,36.27,38.3,5.67,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/397800/397825.jpg",fast-bowler,,,
 Jasprit Bumrah,India,Test,50,95,341,226,6.55,19.83,42.7,2.78,10,15,"",fast-bowler
 Jasprit Bumrah,India,T20,79,77,8,99,2,18.11,17.0,6.36,10,0,"",fast-bowler
 Jasprit Bumrah,India,Odi,89,88,91.0,149,7.58,23.55,30.7,4.59,10,2,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/407100/407112.jpg",fast-bowler,,,
@@ -225,3 +227,12 @@ Hassan Ali,Pakistan,Test,25,48,382,80,11.93,27.66,54.4,3.04,2,10,"",fast-bowler
 Hassan Ali,Pakistan,T20,57,56,147,72,13.36,23.30,16.0,8.71,1,10,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/401200/401272.jpg",fast-bowler
 Hassan Ali,Pakistan,Odi,68,66,383,102,13.67,31.16,32.2,5.80,2,10,"",fast-bowler
 Ihsan Ullah,Pakistan,T20,4,4,6,6,-,18.00,14.8,7.28,0,11,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/379200/379227.jpg",fast-bowler
+Sandeep Lamichhane,Nepal,Odi,66,64,497,135,14.61,19.93,26.6,4.48,9,3,"",leg-spinner
+Sandeep Lamichhane,Nepal,T20,68,68,79,6.07,129,12.14,12.0,6.03,9,2,"",leg-spinner
+Lalit Rajbanshi,Nepal,Odi,41,36,43,47,25.38,4.77,38.6,3.94,10,1,"",left-arm-spinner	
+Lalit Rajbanshi,Nepal,T20,37,37,8,36,4.00,21.58,20.3,6.37,10,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/278700/278789.jpg",left-arm-spinner
+Nandan Yadav,Nepal,Odi,3,3,12,5,6.00,28.40,33.6,5.07,11,0,"",fast-bowler
+Nandan Yadav,Nepal,T20,12,12,68,15,34.00,16.93,13.9,7.29,11,0,"",fast-bowler	
+Abdollah Ahmadzai,Afghanistan,T20,7,7,6,11,6.00,18.63,11.8,9.46,11,0,"",fast-bowler
+Ziaur Rehman,Afghanistan,Test,1,1,0,7,13.85,0.00,27.4,3.03,11,1,"",fast-bowler
+Ziaur Rehman,Afghanistan,T20,1,1,-,2,-,21.00,12.0,10.50,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_wide_w_1280,q_70/lsci/db/PICTURES/CMS/408100/408195.6.jpg",fast-bowler

@@ -7,7 +7,7 @@ Rohit Sharma,India,Odi,279,271,37,11516,9,49.21,59.22,92.85,264,33,61,2,https://
 Kane Williamson,NewZeland,Test,106,188,17,9337,30,54.60,40.23,51.74,251,33,38,4,"",Batsman
 Kane Williamson,NewZeland,T20,93,90,13,2575,6,33.44,27.33,123.08,95,0,18,3,"",Batsman
 Kane Williamson,NewZeland,Odi,175,167,18,7256,37,48.69,35.40,81.59,148,15,47,4,https://tse3.mm.bing.net/th/id/OIP.-8NBj1JgirQtv5o46gUukQAAAA?pid=Api&P=0&h=220 ,Batsman,0
-Joe Root,England,160,292,25,13704,73,51.32,47.63,57.54,262,40,66,4,"",Batsman
+Joe Root,England,Test,160,292,25,13704,73,51.32,47.63,57.54,262,40,66,4,"",Batsman
 Joe Root,England,T20,32,30,5,893,6,35.72,23.16,126.30,90*,0,5,3,"",Batsman
 Joe Root,England,Odi,186,175,24,7330,28,48.54,61.85,87.65,166*,19,43,4,https://wallpapers.com/images/hd/joe-root-portrait-31krp0eo0xyw2om5.jpg ,Batsman,0
 Ryan Rickelton,South Africa,Test,13,23,3,793,0,39.65,0,52.65,259,2,1,1,"",wicket-keeper
@@ -301,3 +301,18 @@ Dhananjaya de Silva,Srilanka,T20,47,46,4,879,17,20.92,20.76,116.26,0,3,4,"",Bats
 Dhananjaya de Silva,Srilanka,Test,65,115,9,4133,43,38.99,53.51,58.30,173,12,19,4,"",Batsman
 Dhananjaya de Silva,Srilanka,Odi,90,82,10,1865,44,25.90,43.34,78.59,93,0,10,4,"",Batsman
 Khawaja Nafay,Pakistan,T20,	1,1,0,26,-,26.00,-,173.33,26,0,0,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/376300/376376.jpg",wicket-keeper
+Aarif Sheikh,Nepal,Odi,65,56,6,1405,9,28.10,79.33,65.34,84,0,9,1,"",Batsman
+Aarif Sheikh,Nepal,T20,45,36,7,553,4,19.06,33.00,112.39,39*,0,0,1,"",Batsman
+Aasif Sheikh,Nepal,Odi,63,63,5,1677,-,28.91,-,76.40,110,1,13,2,"",wicket-keeper
+Aasif Sheikh,Nepal,T20,68,67,3,1639,-,25.60,-,120.51,69,0,10,2,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/366600/366640.jpg",wicket-keeper
+Dipendra Singh Airee,Nepal,Odi,68,64,7,1241,42,21.77,35.33,74.31,105,1,5,4,"",Batsman	
+Dipendra Singh Airee,Nepal,T20,90,78,17,1956,58,32.06,19.32,139.11,110*,1,1,4,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/273900/273985.jpg",Batsman
+Basir Ahmed,Nepal,T20,7,4,2,123,2,61.50,24.50,135.16,80,0,1,5,"",Batsman
+Basir Ahmed,Nepal,Odi,4,3,0,14,2,4.66,35.50,36.84,11,0,0,5,"",Batsman
+Kushal Bhurtel,Nepal,Odi,65,64,1,1454,17,23.07,27.58,80.64,115,1,9,2,"",Batsman
+Kushal Bhurtel,Nepal,T20,70,68,6,1807,30,29.14,12.90,127.34,104*,1,13,2,"",Batsman
+Sundeep Jora,Nepal,T20,38,32,6,489,-,18.80,-,120.14,63,0,4,4,"",Batsman
+Sundeep Jora,Nepal,Odi,5,5,0,56,-,11.20,-,83.58,28,0,0,4,"",Batsman
+Lokesh Bam,Nepal,T20,18,15,3,160,-,13.33,-,145.45,39*,0,0,6,"",Batsman
+Darwish Rasooli,Afghanistan,T20,21,19,2,287,-,16.88,-,113.88,66,0,2,3,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/392900/392937.jpg",Batsman
+Muhammad Ishaq,Afghanistan,T20,8,8,1,104,-,14.85,-,104.00,32,0,0,4,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/382200/382224.jpg",wicket-keeper
