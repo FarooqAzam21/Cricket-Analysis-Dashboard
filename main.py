@@ -1,5 +1,6 @@
 import streamlit as st
 from src.config import apply_custom_styles, MENU_OPTIONS
+from src.data_loader import load_all_data, _get_csv_mtime
 from src.ui.format_wise import render_format_analysis
 from src.ui.team_builder import render_team_builder
 from src.ui.comparison import render_comparison
@@ -44,6 +45,8 @@ def main():
     init_db()
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
+    if 'username' not in st.session_state:
+        st.session_state.username = None
     
     # 1. Set page config only once and cache it in session state
     if 'page_config_set' not in st.session_state:
@@ -77,8 +80,6 @@ def main():
         st.session_state.clear()
         st.rerun()
         
-    from src.data_loader import load_all_data, _get_csv_mtime
-    
     menu = st.sidebar.radio("Navigate to", MENU_OPTIONS)
     st.sidebar.markdown("---")
     st.sidebar.info("Developed by **Farooq Azam**")
