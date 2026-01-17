@@ -4,22 +4,42 @@ import os
 from .config import DATA_PATHS
 from .database import fetch_all_players_from_db
 
-def _get_csv_mtime():
-    """Get combined modification time of CSV files for cache invalidation."""
+# Store last known mtimes
+_last_mtimes = {}
+
+def _check_csv_changes():
+    """Check if any CSV files have been modified and clear cache if so."""
+    global _last_mtimes
+    
     csv_files = [
         'odi_batsman.csv',
         'odi_bowler.csv',
         'odi_all_rounders.csv',
         'yearwise_data.csv'
     ]
-    mtime_sum = 0
+    
+    current_mtimes = {}
+    cache_invalidated = False
+    
     for csv_file in csv_files:
         if os.path.exists(csv_file):
-            mtime_sum += os.path.getmtime(csv_file)
-    return mtime_sum
+            mtime = os.path.getmtime(csv_file)
+            current_mtimes[csv_file] = mtime
+            
+            # Check if this file was modified
+            if csv_file in _last_mtimes and _last_mtimes[csv_file] != mtime:
+                print(f"🔄 CSV changed detected: {csv_file}")
+                cache_invalidated = True
+            
+            _last_mtimes[csv_file] = mtime
+    
+    if cache_invalidated:
+        st.cache_data.clear()
+    
+    return cache_invalidated
 
 @st.cache_data
-def load_all_data(_csv_cache_key=None):
+def load_all_data():
     """Load, merge, and preprocess all cricket data files. Auto-invalidates when CSV files change."""
     all_players = pd.DataFrame()
     
