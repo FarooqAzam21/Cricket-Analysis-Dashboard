@@ -4,9 +4,23 @@ import os
 from .config import DATA_PATHS
 from .database import fetch_all_players_from_db
 
-@st.cache_data(ttl=3600)
-def load_all_data():
-    """Load, merge, and preprocess all cricket data files. Prefers DB. Cached for 1 hour."""
+def _get_csv_mtime():
+    """Get combined modification time of CSV files for cache invalidation."""
+    csv_files = [
+        'odi_batsman.csv',
+        'odi_bowler.csv',
+        'odi_all_rounders.csv',
+        'yearwise_data.csv'
+    ]
+    mtime_sum = 0
+    for csv_file in csv_files:
+        if os.path.exists(csv_file):
+            mtime_sum += os.path.getmtime(csv_file)
+    return mtime_sum
+
+@st.cache_data
+def load_all_data(_csv_cache_key=None):
+    """Load, merge, and preprocess all cricket data files. Auto-invalidates when CSV files change."""
     all_players = pd.DataFrame()
     
     # 1. Try DB first

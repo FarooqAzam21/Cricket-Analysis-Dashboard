@@ -1,6 +1,5 @@
 import streamlit as st
 from src.config import apply_custom_styles, MENU_OPTIONS
-from src.data_loader import load_all_data
 from src.ui.format_wise import render_format_analysis
 from src.ui.team_builder import render_team_builder
 from src.ui.comparison import render_comparison
@@ -71,17 +70,21 @@ def main():
     st.sidebar.title("Cricket Analysis Menu")
     
     st.sidebar.write(f"Welcome, **{st.session_state.username}**!")
+    
+    # Logout button
     if st.sidebar.button("Logout"):
         st.session_state.authenticated = False
         st.session_state.clear()
         st.rerun()
         
+    from src.data_loader import load_all_data, _get_csv_mtime
+    
     menu = st.sidebar.radio("Navigate to", MENU_OPTIONS)
     st.sidebar.markdown("---")
     st.sidebar.info("Developed by **Farooq Azam**")
     
-    # 3. Load Data (automatically cached for 1 hour via @st.cache_data)
-    all_players, df_batsman, df_allrounder, df_bowler, year_wise, batsmen, all_rounders, wicket_keepers = load_all_data()
+    # 3. Load Data (automatically cached, invalidates when CSV files change)
+    all_players, df_batsman, df_allrounder, df_bowler, year_wise, batsmen, all_rounders, wicket_keepers = load_all_data(_csv_cache_key=_get_csv_mtime())
     
     if all_players is None:
         st.stop()
