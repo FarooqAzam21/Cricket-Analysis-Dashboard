@@ -1,6 +1,6 @@
 import streamlit as st
 from src.config import apply_custom_styles, MENU_OPTIONS
-from src.data_loader import load_all_data, _check_csv_changes
+from src.data_loader import load_all_data, _get_csv_mtime_key
 from src.ui.format_wise import render_format_analysis
 from src.ui.team_builder import render_team_builder
 from src.ui.comparison import render_comparison
@@ -84,18 +84,16 @@ def main():
     st.sidebar.markdown("---")
     st.sidebar.info("Developed by **Farooq Azam**")
     
-    # 3. Check for CSV changes and invalidate cache if needed
-    _check_csv_changes()
-    
-    # 4. Load Data (cached, auto-invalidates when CSV files change)
-    all_players, df_batsman, df_allrounder, df_bowler, year_wise, batsmen, all_rounders, wicket_keepers = load_all_data()
+    # 3. Load Data (cached, but auto-invalidates when CSV files change)
+    # The _get_csv_mtime_key() computes fresh on every page load, changing the cache key when files change
+    all_players, df_batsman, df_allrounder, df_bowler, year_wise, batsmen, all_rounders, wicket_keepers = load_all_data(_csv_mtime_key=_get_csv_mtime_key())
     
     if all_players is None:
         st.stop()
 
     st.title("🏏 Cricket Analytics Dashboard")
 
-    # 5. Global Filters
+    # 4. Global Filters
     teams = ['All']
     if 'Team' in all_players.columns:
         teams += sorted(all_players['Team'].dropna().unique().tolist())
@@ -104,7 +102,7 @@ def main():
     # Note: Filtering 'data' here if needed, but many sub-pages use their own filters
     # For now, we pass the dataframes as needed.
 
-    # 6. Routing
+    # 5. Routing
     if menu == "Format Wise Analysis":
         render_format_analysis(batsmen, all_rounders, df_bowler, wicket_keepers)
     elif menu == "Select Playing 11":

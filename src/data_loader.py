@@ -4,43 +4,29 @@ import os
 from .config import DATA_PATHS
 from .database import fetch_all_players_from_db
 
-# Store last known mtimes
-_last_mtimes = {}
-
-def _check_csv_changes():
-    """Check if any CSV files have been modified and clear cache if so."""
-    global _last_mtimes
-    
+def _get_csv_mtime_key():
+    """Get combined modification time of CSV files to use as cache key.
+    This ensures the cache is invalidated when ANY CSV file changes."""
     csv_files = [
         'odi_batsman.csv',
         'odi_bowler.csv',
         'odi_all_rounders.csv',
         'yearwise_data.csv'
     ]
-    
-    current_mtimes = {}
-    cache_invalidated = False
-    
+    mtime_list = []
     for csv_file in csv_files:
         if os.path.exists(csv_file):
             mtime = os.path.getmtime(csv_file)
-            current_mtimes[csv_file] = mtime
-            
-            # Check if this file was modified
-            if csv_file in _last_mtimes and _last_mtimes[csv_file] != mtime:
-                print(f"🔄 CSV changed detected: {csv_file}")
-                cache_invalidated = True
-            
-            _last_mtimes[csv_file] = mtime
+            mtime_list.append((csv_file, mtime))
     
-    if cache_invalidated:
-        st.cache_data.clear()
-    
-    return cache_invalidated
+    # Return as tuple for consistent hashing
+    return tuple(mtime_list)
 
 @st.cache_data
-def load_all_data():
-    """Load, merge, and preprocess all cricket data files. Auto-invalidates when CSV files change."""
+def load_all_data(_csv_mtime_key=None):
+    """Load, merge, and preprocess all cricket data files. 
+    Cache invalidates when CSV files change (via _csv_mtime_key parameter).
+    """
     all_players = pd.DataFrame()
     
     # 1. Try DB first
