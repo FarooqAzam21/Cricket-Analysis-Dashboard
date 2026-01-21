@@ -2,7 +2,10 @@ import streamlit as st
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
-from langchain_community.llms import Ollama
+try:
+    from langchain_community.llms import Ollama
+except ImportError:
+    Ollama = None
 
 def find_similar_players(df, player_name, top_n=5):
     """Find players with similar statistical profiles and roles using KNN."""
