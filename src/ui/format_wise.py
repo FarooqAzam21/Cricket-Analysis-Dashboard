@@ -21,8 +21,9 @@ def render_format_analysis(batsmen, all_rounders, bowlers_data, wicket_keepers):
 
         # For charts, we use these format-specific subsets
         filtered_batsmen = fmt_batsmen[fmt_batsmen['matches'] > 10]
-        filtered_all_rounders = fmt_all_rounders[fmt_all_rounders['matches'] > 10]
-        filtered_bowlers = fmt_bowlers[fmt_bowlers['matches'] > 10]
+        # Filter all-rounders and bowlers: 10+ matches AND 30+ wickets
+        filtered_all_rounders = fmt_all_rounders[(fmt_all_rounders['matches'] > 10) & (fmt_all_rounders['wickets'] >= 30)]
+        filtered_bowlers = fmt_bowlers[(fmt_bowlers['matches'] > 10) & (fmt_bowlers['wickets'] >= 30)]
 
         # --- Top 3 Visualizations ---
         col1, col2, col3 = st.columns(3)

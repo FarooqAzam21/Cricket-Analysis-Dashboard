@@ -49,8 +49,51 @@ def init_db():
         )
     ''')
     
+    # Create Scout Feedback Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS scout_feedback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            source_player TEXT,
+            similar_player TEXT,
+            format TEXT,
+            rating TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
     conn.commit()
     conn.close()
+
+def save_scout_feedback(username, source_player, similar_player, format_type, rating):
+    """Save user feedback on similarity results."""
+    conn = get_db_connection()
+    try:
+        conn.execute(
+            "INSERT INTO scout_feedback (username, source_player, similar_player, format, rating) VALUES (?, ?, ?, ?, ?)",
+            (username, source_player, similar_player, format_type, rating)
+        )
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error saving feedback: {e}")
+        return False
+    finally:
+        conn.close()
+
+def get_feedback_stats():
+    """Get statistics on feedback for model improvement."""
+    conn = get_db_connection()
+    try:
+        df = pd.read_sql_query(
+            "SELECT source_player, similar_player, format, rating, COUNT(*) as count FROM scout_feedback GROUP BY source_player, similar_player, format, rating",
+            conn
+        )
+        return df
+    except:
+        return pd.DataFrame()
+    finally:
+        conn.close()
 
 def add_user(username, password_hash):
     """Add a new user with hashed password."""
