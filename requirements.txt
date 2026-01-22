@@ -6,3 +6,4 @@ scikit-learn
 matplotlib
 langchain
 langchain-community
+tabulate

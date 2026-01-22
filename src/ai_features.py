@@ -44,43 +44,57 @@ def find_similar_players(df, player_name, top_n=5):
         return df.iloc[similar_indices], distances.flatten()[1:]
     except IndexError:
         return pd.DataFrame(), []
-def get_ollama_response(prompt, context_data=""):
-    """Get a response from Ollama with data context. Supports multiple model fallbacks."""
-    try:
-        # Try to use llama2 first (most common), then fallback to other models
-        model_options = ["llama2", "mistral", "neural-chat"]
-        llm = None
-        
-        for model in model_options:
-            try:
-                llm = Ollama(model=model, base_url="http://localhost:11434")
-                # Quick connectivity check
-                response = llm.invoke("ping")
-                if response:
-                    break
-            except:
-                continue
-        
-        if llm is None:
-            # If Ollama is not available, use a simple rule-based response
-            return generate_cricket_response(prompt, context_data)
-        
-        full_prompt = f"""You are a Cricket Expert Assistant. Use the following data context to answer the user's question concisely (1-2 sentences).
+def stream_ollama_response(prompt, context_data=""):
+    """Stream a response from Ollama for better UI responsiveness."""
+    if Ollama is None:
+        yield generate_cricket_response(prompt, context_data)
+        return
 
-Data Context Summary:
+    try:
+        model_options = ["llama3", "llama2", "mistral"]
+        active_model = st.session_state.get('active_ollama_model')
+        
+        # If no active model, try to find one and cache it
+        if not active_model:
+            for model in model_options:
+                try:
+                    test_llm = Ollama(model=model, base_url="http://localhost:11434", timeout=5)
+                    test_llm.invoke("Hi")
+                    st.session_state.active_ollama_model = model
+                    active_model = model
+                    break
+                except:
+                    continue
+        
+        if not active_model:
+            yield generate_cricket_response(prompt, context_data)
+            return
+
+        llm = Ollama(model=active_model, base_url="http://localhost:11434")
+        
+        full_prompt = f"""You are a professional Cricket Analyst and Expert. Use the following context to answer the user's question.
+If the context doesn't contain the answer, use your general cricket knowledge but prioritize the data provided.
+
+--- DATA CONTEXT ---
 {context_data}
+--- END CONTEXT ---
 
 User Question: {prompt}
 
-Answer:"""
+Provide a detailed but concise insight (2-4 sentences). Use professional cricket terminology."""
         
-        response = llm.invoke(full_prompt)
-        return response if response else generate_cricket_response(prompt, context_data)
+        for chunk in llm.stream(full_prompt):
+            yield chunk
+            
     except Exception as e:
-        # Fallback to rule-based response if Ollama fails
-        import traceback
-        print(f"Ollama Error: {traceback.format_exc()}")
-        return generate_cricket_response(prompt, context_data)
+        yield generate_cricket_response(prompt, context_data)
+
+def get_ollama_response(prompt, context_data=""):
+    """Get a response from Ollama with data context. Supports multiple model fallbacks."""
+    response = ""
+    for chunk in stream_ollama_response(prompt, context_data):
+        response += chunk
+    return response
 
 
 def generate_cricket_response(prompt, context_data=""):
