@@ -62,13 +62,13 @@ Aiden Makram,South Africa,T20,62,58,8,1467,15,29.34,34.73,145.82,70,0,9,1,"",Bat
 Aiden Makram,South Africa,Odi,86,82,9,2708,20,37.09,61.35,97.90,175,4,14,3,https://circleofcricket.com/post_image/post_image_a3dad1b.jpg ,Batsman,0
 Will Young,NewZeland,Test,23,41,3,1215,-,31.97,-,46.83,89,0,11,5,"",Batsman
 Will Young,NewZeland,Odi,52,52,5,1694,-,36.04,-,85.81,120,4,10,2,https://tse1.mm.bing.net/th/id/OIP.XzMOIE7kXJOKdWGkurbXdAHaJJ?pid=Api&P=0&h=220 ,Batsman,0
-Ibrahim Zadran,Afghanistan,T20,58,58,7,1558,0,30.54,0,110.88,72*,0,13,1,"",Batsman
+Ibrahim Zadran,Afghanistan,T20,61,61,8,1695,1,31.98,13.00,112.62,87*,0,14,1,"",Batsman
 Ibrahim Zadran,Afghanistan,Test,8,16,0,602,1,37.62,13.00,48.78,114,1,4,1,"",Batsman 
-Ibrahim Zadran,Afghanistan,Odi,36,36,3,1656,0.0,50.18,0.0,83.09,177,6,7,1,https://tse2.mm.bing.net/th/id/OIF.HzyCxaZWNkLIOZRIZdBJbg?pid=Api&P=0&h=220 ,Batsman,0
-SediqUllah Atal,Afghanistan,T20,22,22,2,470,0,23.50,0,117.79,73*,0,3,1,"",Batsman
+Ibrahim Zadran,Afghanistan,Odi,39,39,3,1869,-,51.91,-,82.37,177,6,9,1,https://tse2.mm.bing.net/th/id/OIF.HzyCxaZWNkLIOZRIZdBJbg?pid=Api&P=0&h=220 ,Batsman,0
+SediqUllah Atal,Afghanistan,T20,25,25,2,532,-,23.13,-,116.66,73*,0,4,1,"",Batsman
 SediqUllah Atal,Afghanistan,Odi,9,8,0,335,0.0,41.87,0.0,82.1,104,1,2,3,https://img1.hscicdn.com/image/upload/f_autot_ds_square_w_640q_50/lsci/db/PICTURES/CMS/383200/383242.png ,Batsman,0
 Rahman Ulllah Gurbaz,Afghanistan,Test,2,4,0,97,0,24.25,0,56.72,46,0,0,1,"",wicket-keeper
-Rahman Ulllah Gurbaz,Afghanistan,T20,80,80,0,2067,0,25.83,0,134.83,100,1,11,1,"",wicket-keeper
+Rahman Ulllah Gurbaz,Afghanistan,T20,83,83,0,2139,-,25.77,-,134.02,100,1,12,2,"",wicket-keeper
 Rahman Ulllah Gurbaz,Afghanistan,Odi,49,49,1,1785,0.0,37.18,0.0,87.8,151,8,6,2,https://img1.hscicdn.com/image/upload/f_autot_ds_square_w_640q_50/lsci/db/PICTURES/CMS/383200/383237.png ,Batsman,0
 Pathum Nissanka,Srilanka,Test,18,31,2,1305,0,45.00,0,56.76,187,4,7,1,"",Batsman
 Pathum Nissanka,Srilanka,T20,76,75,3,2228,0,30.94,0,125.52,107,1,17,1,"",Batsman	
@@ -314,7 +314,7 @@ Kushal Bhurtel,Nepal,T20,70,68,6,1807,30,29.14,12.90,127.34,104*,1,13,2,"",Batsm
 Sundeep Jora,Nepal,T20,38,32,6,489,-,18.80,-,120.14,63,0,4,4,"",Batsman
 Sundeep Jora,Nepal,Odi,5,5,0,56,-,11.20,-,83.58,28,0,0,4,"",Batsman
 Lokesh Bam,Nepal,T20,18,15,3,160,-,13.33,-,145.45,39*,0,0,6,"",Batsman
-Darwish Rasooli,Afghanistan,T20,21,19,2,287,-,16.88,-,113.88,66,0,2,3,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/392900/392937.jpg",Batsman
+Darwish Rasooli,Afghanistan,T20,24,22,2,-,22.15,-,124.43,84,0,4,3,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/392900/392937.jpg",Batsman
 Muhammad Ishaq,Afghanistan,T20,8,8,1,104,-,14.85,-,104.00,32,0,0,4,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/382200/382224.jpg",wicket-keeper
 Navneet Dhaliwal,Canada,Odi,18,17,0,456,0,26.82,-,57.07,87,0,4,4,"",Batsman
 Navneet Dhaliwal,Canada,T20,45,43,6,1197,4,32.35,14.75,129.26,70*,0,9,4,"",Batsman	
@@ -343,3 +343,26 @@ Jan Balt,Namabia,Odi,3,3,1,35,0,17.50,-,58.33,35*,0,0,4,"",Batsman
 Jan Balt,Namabia,T20,6,4,1,43,2,14.33,35.00,79.6,22,0,0,4,"",Batsman
 Zane Green,Namabia,Odi,51,44,3,942,-,22.97,-,75.78,75*,0,3,5,"",wicket-keeper
 Zane Green,Namabia,T20,73,50,15,620,-,17.71,-,109.15,52*,0,1,5,"",wicket-keeper
+Malan Kruger,Namabia,T20,28,26,2,402,-,16.75,-,105.23,59*,0,1,1,"",Batsman
+Malan Kruger,Namabia,Odi,18,17,0,393,-,23.11,-,69.68,80,0,2,1,"",Batsman
+Dylan Leicher,Namabia,T20,14,10,5,106,3,21.20,38.66,89.83,42*,0,0,4,"",Batsman
+Dylan LeicherNamabia,Odi,5,4,1,111,1,37.00,71.00,68.09,58,0,1,4,"",Batsman
+Louren Steenkamp,Namabia,T20,7,7,0,137,-,19.57,-,126.85,51,0,1,2,"",Batsman
+Wayne Madsen,Italy,T20,5,5,0,105,-,21.00,-,132.91,52,0,1,4,"",Batsman
+Marcus Campopiano,Italy,T20,23,20,5,467,2,31.13,20.00,120.98,87*,0,3,4,"",Batsman
+Anthony Mosca,Italy,T20,16,15,5,399,-,39.90,-,120.18,78,0,2,2,"",Batsman
+Justin Mosca,Italy,T20,18,18,2,365,-,22.81,-,146.58,72,0,3,3,"",Batsman	
+Syed Naqvi,Italy,T20,4,4,0,7,-,1.75,-,43.75,4,0,0,5,"",Batsman
+Scott Edward,Netherlands,Odi,69,64,9,2108,-,38.32,-,87.65,86,0,20,4,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/383000/383052.jpg",wicket-keeper
+Scott Edward,Netherlands,T20,82,73,19,1226,-,22.70,-,125.35,99,0,2,4,"",wicket-keeper
+Noah Croes,Netherlands,Odi,21,19,2,390,-,22.94,-,79.75,50,0,1,5,"",Batsman
+Noah Croes,Netherlands,T20,20,14,4,203,-,20.30,-,126.08,52*,0,1,5,"",Batsman
+Michael Levitt,Netherlands,Odi,17,17,0,443,9,26.05,39.44,83.90,57,0,1,2,"",Batsman
+Michael Levitt,Netherlands,T20,26,25,1,866,5,36.08,27.80,142.20,135,1,6,2,"",Batsman
+Max O'Dowd,Netherlands,Odi,65,64,4,2153,1,35.88,149.00,75.38,158*,1,15,2,"",Batsman
+Max O'Dowd,Netherlands,T20,87,84,7,2309,4,29.98,38.50,122.29,133*,1,16,2,"",Batsman
+Colin Ackermann,Netherlands,Odi,21,19,1,505,4,28.05,35.60,76.39,81,0,4,5,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/370100/370114.jpg",Batsman
+Colin Ackermann,Netherlands,T20,25,25,4,515,11,24.52,25.81,114.69,62,0,1,5,"",Batsman
+Ross Adair,Ireland,T20,15,15,0,388,-,25.86,-,138.07,100,1,1,2,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/406300/406326.jpg",Batsman
+Ben Calitz,Ireland,T20,4,4,1,54,-,18.00,-,110.20,22,0,0,4,"",Batsman
+Tim Tector,Ireland,T20,5,4,0,94,-,23.50,-,149.20,38,0,0,2,"",Batsman

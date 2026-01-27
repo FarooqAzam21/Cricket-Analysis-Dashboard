@@ -48,61 +48,62 @@ def main():
     if 'username' not in st.session_state:
         st.session_state.username = None
     
-    # 1. Set page config only once and cache it in session state
-    if 'page_config_set' not in st.session_state:
-        logo_path = os.path.join("assets", "logo.png")
-        page_icon = logo_path if os.path.exists(logo_path) else "🏏"
-        
-        st.set_page_config(
-            page_title="Cricket Analytics Dashboard",
-            page_icon=page_icon,
-            layout="wide"
-        )
-        st.session_state.page_config_set = True
+    # 1. Set page config at the very beginning
+    logo_path = os.path.join("assets", "logo.png")
+    page_icon = logo_path if os.path.exists(logo_path) else "🏏"
+
+    st.set_page_config(
+        page_title="Cricket Pro Analytics",
+        page_icon=page_icon,
+        layout="wide",
+        initial_sidebar_state="auto"
+    )
     
     if not st.session_state.authenticated:
         render_auth()
         st.stop()
 
+    # Apply Premium Theme
     apply_custom_styles()
     
     # 2. Sidebar elements
-    logo_path = os.path.join("assets", "logo.png")
-    if os.path.exists(logo_path):
-        st.sidebar.image(logo_path, width=150)
-    st.sidebar.title("Cricket Analysis Menu")
-    
-    st.sidebar.write(f"Welcome, **{st.session_state.username}**!")
-    
-    # Logout button
-    if st.sidebar.button("Logout"):
-        st.session_state.authenticated = False
-        st.session_state.clear()
-        st.rerun()
+    with st.sidebar:
+        logo_path = os.path.join("assets", "logo.png")
+        if os.path.exists(logo_path):
+            st.image(logo_path, use_container_width=True)
         
-    menu = st.sidebar.radio("Navigate to", MENU_OPTIONS)
-    st.sidebar.markdown("---")
-    st.sidebar.info("Developed by **Farooq Azam**")
-    
-    # 3. Load Data (cached, but auto-invalidates when CSV files change)
-    # The _get_csv_mtime_key() computes fresh on every page load, changing the cache key when files change
-    all_players, df_batsman, df_allrounder, df_bowler, year_wise, batsmen, all_rounders, wicket_keepers = load_all_data(_csv_mtime_key=_get_csv_mtime_key())
-    
+        st.markdown(f"### Welcome, **{st.session_state.username}**")
+        st.markdown("---")
+        
+        menu = st.radio("Navigate to", MENU_OPTIONS)
+        
+        st.markdown("---")
+        # Global Filters in Sidebar
+        st.subheader("Team Preference")
+        all_players, df_batsman, df_allrounder, df_bowler, year_wise, batsmen, all_rounders, wicket_keepers = load_all_data(_csv_mtime_key=_get_csv_mtime_key())
+        
+        teams = ['All']
+        if all_players is not None and 'Team' in all_players.columns:
+            teams += sorted(all_players['Team'].dropna().unique().tolist())
+        selected_team = st.selectbox("Select Display Team", teams)
+        
+        st.markdown("---")
+        if st.button("🚪 Logout"):
+            st.session_state.authenticated = False
+            st.session_state.clear()
+            st.rerun()
+            
+        st.info("Developed by **Farooq Azam**")
+
+    # 3. Main Dashboard Layout
+    st.title("🏏 Cricket Pro Analytics")
+    st.markdown("*Advanced Player Performance Insights & AI Scouts*")
+    st.markdown("---")
+
     if all_players is None:
         st.stop()
 
-    st.title("🏏 Cricket Analytics Dashboard")
-
-    # 4. Global Filters
-    teams = ['All']
-    if 'Team' in all_players.columns:
-        teams += sorted(all_players['Team'].dropna().unique().tolist())
-    selected_team = st.sidebar.selectbox("Select Team", teams)
-
-    # Note: Filtering 'data' here if needed, but many sub-pages use their own filters
-    # For now, we pass the dataframes as needed.
-
-    # 5. Routing
+    # 4. Routing
     if menu == "Format Wise Analysis":
         render_format_analysis(batsmen, all_rounders, df_bowler, wicket_keepers)
     elif menu == "Select Playing 11":
