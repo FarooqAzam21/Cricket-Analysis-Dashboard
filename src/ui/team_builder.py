@@ -104,13 +104,52 @@ def render_team_builder(all_players):
         # Get full data for selected players
         playing_xi = all_players[all_players['player'].isin(all_selected_names) & (all_players['Format'] == selected_format)].drop_duplicates(subset=['player'])
         
-        # Display cards
+        # Initialize session state for position overrides
+        if 'position_overrides' not in st.session_state:
+            st.session_state.position_overrides = {}
+        
+        # Step 1: Display selected players in a table with position editing
+        with st.expander("✏️ Step 3: Customize Player Positions", expanded=True):
+            st.info("💡 You can change the batting position for each player. This helps optimize your team composition.")
+            
+            # Create editable dataframe
+            edit_data = []
+            all_positions = ['Opening', 'Top Order', 'Middle Order', 'Lower Middle', 'Tail']
+            
+            for idx, (p_idx, player) in enumerate(playing_xi.reset_index().iterrows()):
+                current_pos = st.session_state.position_overrides.get(player['player'], 
+                                                                       str(player.get('batting_position', 'Middle Order')))
+                
+                col1, col2, col3 = st.columns([2, 2, 1])
+                with col1:
+                    st.write(f"**{player['player']}** ({player['Team']})")
+                with col2:
+                    new_pos = st.selectbox(
+                        "Batting Position",
+                        all_positions,
+                        index=all_positions.index(current_pos) if current_pos in all_positions else 2,
+                        key=f"pos_{idx}_{player['player']}",
+                        label_visibility="collapsed"
+                    )
+                    st.session_state.position_overrides[player['player']] = new_pos
+                with col3:
+                    role_icon = "🧤" if "wicket-keeper" in str(player['role_lower']) else \
+                                "🏏" if "batsman" in str(player['role_lower']) else \
+                                "⚡" if "all-rounder" in str(player['role_lower']) else "⚾"
+                    st.write(role_icon)
+        
+        # Step 2: Display cards with updated positions
+        st.subheader("📋 Your Playing XI Details")
         cols = st.columns(3)
         for idx, (p_idx, player) in enumerate(playing_xi.reset_index().iterrows()):
             with cols[idx % 3]:
                 role_icon = "🧤" if "wicket-keeper" in str(player['role_lower']) else \
                             "🏏" if "batsman" in str(player['role_lower']) else \
                             "⚡" if "all-rounder" in str(player['role_lower']) else "⚾"
+                
+                # Get custom position or default
+                custom_pos = st.session_state.position_overrides.get(player['player'], 
+                                                                     str(player.get('batting_position', 'Middle Order')))
                 
                 img_url = player.get('image_url', "https://via.placeholder.com/150?text=No+Image")
                 
@@ -131,6 +170,7 @@ def render_team_builder(all_players):
                         </div>
                         <div style='display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; margin-bottom: 8px;'>
                             <span>{role_icon} {player['role']}</span>
+                            <span style='background: #10B981; color: #000; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;'>{custom_pos}</span>
                         </div>
                         <hr style='margin: 8px 0; border: none; border-top: 1px solid rgba(255,255,255,0.1);'>
                         <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.75rem;'>
