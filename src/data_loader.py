@@ -1,32 +1,39 @@
 import pandas as pd
 import streamlit as st
 import os
+import hashlib
 from .config import DATA_PATHS
 from .database import fetch_all_players_from_db
 
-def _get_csv_mtime_key():
-    """Get combined modification time of CSV files to use as cache key.
-    This ensures the cache is invalidated when ANY CSV file changes."""
+def _get_csv_cache_key():
+    """Get cache key based on CSV file content hash.
+    Works on both local and Streamlit Cloud deployments.
+    Cache invalidates when ANY CSV file changes."""
     csv_files = [
         'odi_batsman.csv',
         'odi_bowler.csv',
         'odi_all_rounders.csv',
         'yearwise_data.csv'
     ]
-    mtime_list = []
+    
+    hash_obj = hashlib.md5()
     for csv_file in csv_files:
         if os.path.exists(csv_file):
-            mtime = os.path.getmtime(csv_file)
-            mtime_list.append((csv_file, mtime))
+            try:
+                with open(csv_file, 'rb') as f:
+                    # Read file in chunks to handle large files
+                    for chunk in iter(lambda: f.read(4096), b''):
+                        hash_obj.update(chunk)
+            except Exception as e:
+                print(f"Warning: Could not hash {csv_file}: {e}")
     
-    # Return as tuple for consistent hashing
-    return tuple(mtime_list)
+    return hash_obj.hexdigest()
 
 @st.cache_data
-def load_all_data(_csv_mtime_key=None):
+def load_all_data(_csv_cache_key=None):
     """Load, merge, and preprocess all cricket data files. 
-    Cache invalidates when CSV files change (via _csv_mtime_key parameter).
-    """
+    Cache invalidates when CSV files change (via _csv_cache_key parameter).
+    Uses content-based hashing for reliable cache invalidation everywhere."""
     all_players = pd.DataFrame()
     
     # 1. Try DB first

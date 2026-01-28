@@ -1,6 +1,6 @@
 import streamlit as st
 from src.config import apply_custom_styles, MENU_OPTIONS
-from src.data_loader import load_all_data, _get_csv_mtime_key
+from src.data_loader import load_all_data, _get_csv_cache_key
 from src.ui.format_wise import render_format_analysis
 from src.ui.team_builder import render_team_builder
 from src.ui.comparison import render_comparison
@@ -80,7 +80,7 @@ def main():
         st.markdown("---")
         # Global Filters in Sidebar
         st.subheader("Team Preference")
-        all_players, df_batsman, df_allrounder, df_bowler, year_wise, batsmen, all_rounders, wicket_keepers = load_all_data(_csv_mtime_key=_get_csv_mtime_key())
+        all_players, df_batsman, df_allrounder, df_bowler, year_wise, batsmen, all_rounders, wicket_keepers = load_all_data(_csv_cache_key=_get_csv_cache_key())
         
         teams = ['All']
         if all_players is not None and 'Team' in all_players.columns:
