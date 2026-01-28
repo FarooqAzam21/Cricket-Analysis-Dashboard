@@ -8,6 +8,10 @@ from src.ui.analysis import render_player_analysis
 from src.ui.predictions import render_predictions
 from src.ui.smart_scout import render_smart_scout
 from src.ui.ai_chat import render_ai_chat
+from src.ui.tournament_home import show_tournament_home
+from src.ui.fantasy_cricket import show_fantasy_cricket
+from src.ui.leaderboard import show_leaderboard
+from src.ui.admin_tournament import show_admin_panel
 from src.auth import login, signup
 from src.database import init_db
 import os
@@ -75,53 +79,88 @@ def main():
         st.markdown(f"### Welcome, **{st.session_state.username}**")
         st.markdown("---")
         
-        menu = st.radio("Navigate to", MENU_OPTIONS)
+        # Show admin option only for admin user
+        menu_options = MENU_OPTIONS.copy()
+        if st.session_state.username == 'admin':
+            menu_options = ["🏏 Cricket Analysis", "🏆 Tournament", "⚙️ Admin Panel"]
+        else:
+            menu_options = ["🏏 Cricket Analysis", "🏆 Tournament"]
         
-        st.markdown("---")
-        # Global Filters in Sidebar
-        st.subheader("Team Preference")
-        all_players, df_batsman, df_allrounder, df_bowler, year_wise, batsmen, all_rounders, wicket_keepers = load_all_data(_csv_cache_key=_get_csv_cache_key())
+        menu = st.radio("Navigate to", menu_options)
         
-        teams = ['All']
-        if all_players is not None and 'Team' in all_players.columns:
-            teams += sorted(all_players['Team'].dropna().unique().tolist())
-        selected_team = st.selectbox("Select Display Team", teams)
-        
-        st.markdown("---")
-        if st.button("🚪 Logout"):
-            st.session_state.authenticated = False
-            st.session_state.clear()
-            st.rerun()
-            
-        st.info("Developed by **Farooq Azam**")
-
-    # 3. Main Dashboard Layout
+# 3. Main Dashboard Layout
     st.title("🏏 Cricket Pro Analytics")
     st.markdown("*Advanced Player Performance Insights & AI Scouts*")
     st.markdown("---")
 
-    if all_players is None:
-        st.stop()
-
-    # 4. Routing
-    if menu == "Format Wise Analysis":
-        render_format_analysis(batsmen, all_rounders, df_bowler, wicket_keepers)
-    elif menu == "Select Playing 11":
-        render_team_builder(all_players)
-    elif menu == "Player Comparison":
-        render_comparison(all_players)
-    elif menu == "Player Analysis":
-        render_player_analysis(all_players)
-    elif menu == "🎯 Next Match Prediction":
-        from src.ui.predictions import render_next_match_prediction
-        render_next_match_prediction(df_batsman, df_allrounder, df_bowler, wicket_keepers)
-    elif menu == "📈 Yearly Performance Prediction":
-        from src.ui.predictions import render_yearly_prediction
-        render_yearly_prediction(year_wise)
-    elif menu == "Smart Scout (AI)":
-        render_smart_scout(all_players)
-    elif menu == "Ask Expert (AI)":
-        render_ai_chat(all_players)
+    # 4. Main routing based on menu selection
+    if menu == "🏏 Cricket Analysis":
+        # Sub-menu for cricket analysis
+        analysis_options = [
+            "Format Wise Analysis", "Select Playing 11", "Player Comparison",
+            "Player Analysis", "🎯 Next Match Prediction",
+            "📈 Yearly Performance Prediction", "Smart Scout (AI)", "Ask Expert (AI)"
+        ]
+        
+        analysis_menu = st.sidebar.selectbox("Cricket Analysis", analysis_options)
+        
+        all_players, df_batsman, df_allrounder, df_bowler, year_wise, batsmen, all_rounders, wicket_keepers = load_all_data(_csv_cache_key=_get_csv_cache_key())
+        
+        if all_players is None:
+            st.stop()
+        
+        # Sidebar filters for analysis
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("Team Preference")
+        teams = ['All']
+        if all_players is not None and 'Team' in all_players.columns:
+            teams += sorted(all_players['Team'].dropna().unique().tolist())
+        selected_team = st.sidebar.selectbox("Select Display Team", teams)
+        
+        # Routing for cricket analysis features
+        if analysis_menu == "Format Wise Analysis":
+            render_format_analysis(batsmen, all_rounders, df_bowler, wicket_keepers)
+        elif analysis_menu == "Select Playing 11":
+            render_team_builder(all_players)
+        elif analysis_menu == "Player Comparison":
+            render_comparison(all_players)
+        elif analysis_menu == "Player Analysis":
+            render_player_analysis(all_players)
+        elif analysis_menu == "🎯 Next Match Prediction":
+            from src.ui.predictions import render_next_match_prediction
+            render_next_match_prediction(df_batsman, df_allrounder, df_bowler, wicket_keepers)
+        elif analysis_menu == "📈 Yearly Performance Prediction":
+            from src.ui.predictions import render_yearly_prediction
+            render_yearly_prediction(year_wise)
+        elif analysis_menu == "Smart Scout (AI)":
+            render_smart_scout(all_players)
+        elif analysis_menu == "Ask Expert (AI)":
+            render_ai_chat(all_players)
+    
+    elif menu == "🏆 Tournament":
+        # Tournament menu for all users
+        tournament_options = ["Tournament Home", "Fantasy Cricket", "Leaderboard"]
+        tournament_menu = st.sidebar.selectbox("Tournament", tournament_options)
+        
+        if tournament_menu == "Tournament Home":
+            show_tournament_home()
+        elif tournament_menu == "Fantasy Cricket":
+            show_fantasy_cricket()
+        elif tournament_menu == "Leaderboard":
+            show_leaderboard()
+    
+    elif menu == "⚙️ Admin Panel":
+        # Admin panel - only for admin
+        show_admin_panel()
+    
+    # Logout button
+    st.sidebar.markdown("---")
+    if st.sidebar.button("🚪 Logout"):
+        st.session_state.authenticated = False
+        st.session_state.clear()
+        st.rerun()
+        
+    st.sidebar.info("Developed by **Farooq Azam**")
 
 if __name__ == "__main__":
     main()
