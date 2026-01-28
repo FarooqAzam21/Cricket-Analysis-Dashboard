@@ -424,3 +424,39 @@ def get_leaderboard(tournament_id):
     """, (tournament_id,)).fetchall()
     conn.close()
     return leaderboard
+
+def delete_tournament(tournament_id):
+    """Delete tournament and all related data (cascade)"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Delete in order of dependencies
+        cursor.execute("DELETE FROM leaderboard WHERE tournament_id = ?", (tournament_id,))
+        cursor.execute("DELETE FROM fantasy_scores WHERE fantasy_team_id IN (SELECT id FROM fantasy_teams WHERE tournament_id = ?)", (tournament_id,))
+        cursor.execute("DELETE FROM fantasy_teams WHERE tournament_id = ?", (tournament_id,))
+        cursor.execute("DELETE FROM tournament_matches WHERE tournament_id = ?", (tournament_id,))
+        cursor.execute("DELETE FROM tournament_teams WHERE tournament_id = ?", (tournament_id,))
+        cursor.execute("DELETE FROM tournaments WHERE id = ?", (tournament_id,))
+        
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Error deleting tournament: {e}")
+        return False
+
+def update_team_squad(team_id, players_json):
+    """Update team squad with player list"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE tournament_teams SET squad = ? WHERE id = ?", (players_json, team_id))
+    conn.commit()
+    conn.close()
+
+def get_team_details(team_id):
+    """Get team details including squad"""
+    conn = get_db_connection()
+    team = conn.execute("SELECT * FROM tournament_teams WHERE id = ?", (team_id,)).fetchone()
+    conn.close()
+    return team
