@@ -13,7 +13,7 @@ from database import (
     create_tournament, get_tournament, add_team_to_tournament, get_tournament_teams,
     create_tournament_match, get_tournament_matches, update_match_result,
     delete_tournament, update_team_squad, get_team_details, fetch_all_players_from_db,
-    get_db_connection
+    get_db_connection, update_match_date, get_group_stage_matches
 )
 
 def check_admin_access():
@@ -260,8 +260,68 @@ def show_admin_panel():
                             
                             st.success("✅ Group stage matches scheduled!")
                             st.info("📍 Matches will be played in round-robin format within each group")
+                            st.balloons()
                         except Exception as e:
                             st.error(f"Error scheduling matches: {e}")
+                    
+                    # Edit generated matches
+                    st.divider()
+                    st.subheader("Edit Match Schedule")
+                    
+                    group_matches = get_group_stage_matches(tournament_id)
+                    
+                    if group_matches:
+                        st.write(f"Found {len(group_matches)} group stage matches. Edit dates and numbers below:")
+                        
+                        # Create editable table
+                        match_data = []
+                        for idx, m in enumerate(group_matches, 1):
+                            team1 = next((t['team_name'] for t in all_teams if t['id'] == m['team1_id']), f"Team {m['team1_id']}")
+                            team2 = next((t['team_name'] for t in all_teams if t['id'] == m['team2_id']), f"Team {m['team2_id']}")
+                            
+                            match_data.append({
+                                'Match #': idx,
+                                'ID': m['id'],
+                                'Team 1': team1,
+                                'Team 2': team2,
+                                'Current Date': m['match_date'],
+                                'Group': m['group_letter']
+                            })
+                        
+                        st.dataframe(pd.DataFrame(match_data), use_container_width=True, hide_index=True)
+                        
+                        st.write("**Edit Match Dates:**")
+                        
+                        # Create columns for editing
+                        edit_cols = st.columns([2, 2, 1])
+                        
+                        with edit_cols[0]:
+                            match_to_edit = st.selectbox(
+                                "Select Match to Edit",
+                                options=[f"Match {idx}: {md['Team 1']} vs {md['Team 2']}" for idx, md in enumerate(match_data, 1)],
+                                key="edit_match_select"
+                            )
+                        
+                        match_idx = int(match_to_edit.split(':')[0].split()[1]) - 1
+                        selected_match = group_matches[match_idx]
+                        
+                        with edit_cols[1]:
+                            new_date = st.date_input(
+                                "New Date",
+                                value=datetime.strptime(selected_match['match_date'], "%Y-%m-%d").date(),
+                                key="new_match_date"
+                            )
+                        
+                        with edit_cols[2]:
+                            if st.button("Update Date", key="update_date_btn"):
+                                try:
+                                    update_match_date(selected_match['id'], new_date.strftime("%Y-%m-%d"))
+                                    st.success(f"✅ Match date updated to {new_date}")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Error updating date: {e}")
+                    else:
+                        st.info("No group stage matches generated yet. Click 'Auto-Generate Group Stage Matches' first.")
                     
                     st.divider()
                     st.subheader("Create Knockout Matches")

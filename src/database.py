@@ -460,3 +460,21 @@ def get_team_details(team_id):
     team = conn.execute("SELECT * FROM tournament_teams WHERE id = ?", (team_id,)).fetchone()
     conn.close()
     return team
+
+def update_match_date(match_id, new_date):
+    """Update match date"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE tournament_matches SET match_date = ? WHERE id = ?", (new_date, match_id))
+    conn.commit()
+    conn.close()
+
+def get_group_stage_matches(tournament_id):
+    """Get only group stage matches"""
+    conn = get_db_connection()
+    matches = conn.execute(
+        "SELECT * FROM tournament_matches WHERE tournament_id = ? AND stage = 'group' ORDER BY match_date",
+        (tournament_id,)
+    ).fetchall()
+    conn.close()
+    return matches
