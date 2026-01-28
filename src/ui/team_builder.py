@@ -30,9 +30,13 @@ def render_team_builder(all_players):
             min_matches = st.number_input("Min Matches Played", 0, 500, 10)
             min_bat_avg = st.slider("Min Batting Avg", 0.0, 60.0, 25.0, 1.0)
             
-            # Position filter for Batters/ARs/WKs
-            positions = sorted([str(p) for p in all_players['batting_position'].dropna().unique()])
-            selected_positions = st.multiselect("Filter Batting Positions", positions, default=positions)
+            # Batting position 1-11 selector
+            selected_positions = st.multiselect(
+                "Filter Batting Positions", 
+                list(range(1, 12)), 
+                default=list(range(1, 12)),
+                help="1=Opener, 2-5=Middle order, 6-7=Lower middle, 8-11=Lower order"
+            )
 
         with col3:
             min_sr = st.slider("Min Strike Rate", 50.0, 200.0, 80.0, 5.0)
@@ -56,29 +60,29 @@ def render_team_builder(all_players):
 
     with col_wk:
         wk_pool = df[df['role_lower'].str.contains('wicket-keeper', na=False)]
-        # Filter WK by position and bat criteria
-        wk_pool = wk_pool[(wk_pool['batting_position'].astype(str).isin(selected_positions)) & 
-                          (wk_pool['average'] >= min_bat_avg) & (wk_pool['strike_rate'] >= min_sr)]
+        # Filter WK by criteria
+        wk_pool = wk_pool[(wk_pool['average'] >= min_bat_avg) & (wk_pool['strike_rate'] >= min_sr)]
+        # Also filter by position if possible
+        if pd.notna(wk_pool['batting_position']).any():
+            wk_pool = wk_pool[(wk_pool['batting_position'].astype(float, errors='ignore').isin(selected_positions)) | (wk_pool['batting_position'].isna())]
         selected_wk_names = st.multiselect(f"🧤 Wicket Keepers ({len(wk_pool)})", wk_pool['player'].tolist())
     
     with col_bt:
         bt_pool = df[df['role_lower'].str.contains('batsman', na=False)]
-        # Filter BT by position and bat criteria
-        bt_pool = bt_pool[(bt_pool['batting_position'].astype(str).isin(selected_positions)) & 
-                          (bt_pool['average'] >= min_bat_avg) & (bt_pool['strike_rate'] >= min_sr)]
+        # Filter BT by criteria
+        bt_pool = bt_pool[(bt_pool['average'] >= min_bat_avg) & (bt_pool['strike_rate'] >= min_sr)]
+        # Also filter by position if possible
+        if pd.notna(bt_pool['batting_position']).any():
+            bt_pool = bt_pool[(bt_pool['batting_position'].astype(float, errors='ignore').isin(selected_positions)) | (bt_pool['batting_position'].isna())]
         selected_bt_names = st.multiselect(f"🏏 Batsmen ({len(bt_pool)})", bt_pool['player'].tolist())
 
     with col_ar:
         ar_pool = df[df['role_lower'].str.contains('all-rounder', na=False)]
-        # Filter ARs by batting criteria (less strict on bowling to show more options)
-        ar_pool = ar_pool[(ar_pool['batting_position'].astype(str).isin(selected_positions)) & 
-                          (ar_pool['average'] >= min_bat_avg) & 
-                          (ar_pool['strike_rate'] >= min_sr)]
-        # Optional bowling filters (if they have data)
-        ar_pool_with_bowling = ar_pool[(ar_pool['bowling_average'].fillna(999) <= max_bowl_avg) & 
-                                       (ar_pool['wickets'].fillna(0) >= min_wickets)]
-        # Use filtered pool if available, otherwise use batting-only filtered
-        ar_pool = ar_pool_with_bowling if len(ar_pool_with_bowling) > 0 else ar_pool
+        # Filter ARs by batting criteria (lenient on bowling)
+        ar_pool = ar_pool[(ar_pool['average'] >= min_bat_avg) & (ar_pool['strike_rate'] >= min_sr)]
+        # Also filter by position if possible
+        if pd.notna(ar_pool['batting_position']).any():
+            ar_pool = ar_pool[(ar_pool['batting_position'].astype(float, errors='ignore').isin(selected_positions)) | (ar_pool['batting_position'].isna())]
         selected_ar_names = st.multiselect(f"⚡ All-Rounders ({len(ar_pool)})", ar_pool['player'].tolist())
 
     with col_bw:
@@ -113,46 +117,55 @@ def render_team_builder(all_players):
         
         # Step 1: Display selected players in a table with position editing
         with st.expander("✏️ Step 3: Customize Player Positions", expanded=True):
-            st.info("💡 You can change the batting position for each player. This helps optimize your team composition.")
+            st.info("💡 Assign batting position (1-11) for each player to optimize your team composition.")
             
-            # Create editable dataframe
-            edit_data = []
-            all_positions = ['Opening', 'Top Order', 'Middle Order', 'Lower Middle', 'Tail']
+            # Create position selector
+            position_assignments = {}
+            position_cols = st.columns(2)
+            col_idx = 0
             
             for idx, (p_idx, player) in enumerate(playing_xi.reset_index().iterrows()):
                 current_pos = st.session_state.position_overrides.get(player['player'], 
-                                                                       str(player.get('batting_position', 'Middle Order')))
+                                                                       int(player.get('batting_position', 5)))
                 
-                col1, col2, col3 = st.columns([2, 2, 1])
-                with col1:
-                    st.write(f"**{player['player']}** ({player['Team']})")
-                with col2:
-                    new_pos = st.selectbox(
-                        "Batting Position",
-                        all_positions,
-                        index=all_positions.index(current_pos) if current_pos in all_positions else 2,
+                with position_cols[col_idx % 2]:
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.write(f"**{player['player']}** ({player['Team']})")
+                    with col2:
+                        role_icon = "🧤" if "wicket-keeper" in str(player['role_lower']).lower() else \
+                                    "🏏" if "batsman" in str(player['role_lower']).lower() else \
+                                    "⚡" if "all-rounder" in str(player['role_lower']).lower() else "⚾"
+                        st.write(role_icon)
+                    
+                    new_pos = st.number_input(
+                        "Position",
+                        min_value=1,
+                        max_value=11,
+                        value=int(current_pos) if isinstance(current_pos, int) else 5,
                         key=f"pos_{idx}_{player['player']}",
-                        label_visibility="collapsed"
+                        help="1=Opener, 2-5=Middle order, 6-7=Lower middle, 8-11=Lower order"
                     )
                     st.session_state.position_overrides[player['player']] = new_pos
-                with col3:
-                    role_icon = "🧤" if "wicket-keeper" in str(player['role_lower']) else \
-                                "🏏" if "batsman" in str(player['role_lower']) else \
-                                "⚡" if "all-rounder" in str(player['role_lower']) else "⚾"
-                    st.write(role_icon)
+                    position_assignments[player['player']] = new_pos
+                    col_idx += 1
         
         # Step 2: Display cards with updated positions
-        st.subheader("📋 Your Playing XI Details")
+        st.subheader("📋 Your Playing XI with Assigned Positions")
+        
+        # Sort by assigned position
+        sorted_players = sorted(playing_xi.reset_index().iterrows(), 
+                               key=lambda x: position_assignments.get(x[1]['player'], 5))
+        
         cols = st.columns(3)
-        for idx, (p_idx, player) in enumerate(playing_xi.reset_index().iterrows()):
+        for idx, (p_idx, player) in enumerate(sorted_players):
             with cols[idx % 3]:
-                role_icon = "🧤" if "wicket-keeper" in str(player['role_lower']) else \
-                            "🏏" if "batsman" in str(player['role_lower']) else \
-                            "⚡" if "all-rounder" in str(player['role_lower']) else "⚾"
+                role_icon = "🧤" if "wicket-keeper" in str(player['role_lower']).lower() else \
+                            "🏏" if "batsman" in str(player['role_lower']).lower() else \
+                            "⚡" if "all-rounder" in str(player['role_lower']).lower() else "⚾"
                 
-                # Get custom position or default
-                custom_pos = st.session_state.position_overrides.get(player['player'], 
-                                                                     str(player.get('batting_position', 'Middle Order')))
+                # Get assigned position
+                assigned_pos = position_assignments.get(player['player'], int(player.get('batting_position', 5)))
                 
                 img_url = player.get('image_url', "https://via.placeholder.com/150?text=No+Image")
                 
@@ -173,7 +186,7 @@ def render_team_builder(all_players):
                         </div>
                         <div style='display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; margin-bottom: 8px;'>
                             <span>{role_icon} {player['role']}</span>
-                            <span style='background: #10B981; color: #000; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;'>{custom_pos}</span>
+                            <span style='background: #10B981; color: #000; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;'>Position #{assigned_pos}</span>
                         </div>
                         <hr style='margin: 8px 0; border: none; border-top: 1px solid rgba(255,255,255,0.1);'>
                         <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.75rem;'>
