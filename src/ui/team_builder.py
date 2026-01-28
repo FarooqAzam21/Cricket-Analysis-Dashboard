@@ -70,12 +70,15 @@ def render_team_builder(all_players):
 
     with col_ar:
         ar_pool = df[df['role_lower'].str.contains('all-rounder', na=False)]
-        # Filter ARs by ALL criteria: Bat Avg, SR, Position, Bowl Avg, Wickets
+        # Filter ARs by batting criteria (less strict on bowling to show more options)
         ar_pool = ar_pool[(ar_pool['batting_position'].astype(str).isin(selected_positions)) & 
                           (ar_pool['average'] >= min_bat_avg) & 
-                          (ar_pool['strike_rate'] >= min_sr) &
-                          (ar_pool['bowling_average'] <= max_bowl_avg) & (ar_pool['bowling_average'] > 0) &
-                          (ar_pool['wickets'] >= min_wickets)]
+                          (ar_pool['strike_rate'] >= min_sr)]
+        # Optional bowling filters (if they have data)
+        ar_pool_with_bowling = ar_pool[(ar_pool['bowling_average'].fillna(999) <= max_bowl_avg) & 
+                                       (ar_pool['wickets'].fillna(0) >= min_wickets)]
+        # Use filtered pool if available, otherwise use batting-only filtered
+        ar_pool = ar_pool_with_bowling if len(ar_pool_with_bowling) > 0 else ar_pool
         selected_ar_names = st.multiselect(f"⚡ All-Rounders ({len(ar_pool)})", ar_pool['player'].tolist())
 
     with col_bw:
