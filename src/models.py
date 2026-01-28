@@ -5,15 +5,19 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 import numpy as np
 
-def train_predict_runs(df_format, features, target):
-    """Train RF and predict runs for a player in a specific format. Optimized model."""
+def train_predict_metric(df_format, features, target):
+    """Train RF and predict a metric for a player. Optimized model."""
     x = df_format[features].fillna(0)
-    y = df_format[target] / df_format['matches'].replace(0, 1) # runs per match
+    
+    # Logic for target: Runs are predicted as 'per match', SR is predicted directly
+    if target == 'runs':
+        y = df_format[target] / df_format['matches'].replace(0, 1)
+    else:
+        y = df_format[target].fillna(0)
 
     scaler = StandardScaler()
     x_scaled = scaler.fit_transform(x)
 
-    # Optimized: reduced n_estimators from 200 to 100, added max_depth and parallel processing
     rf_model = RandomForestRegressor(n_estimators=100, max_depth=15, random_state=42, n_jobs=-1)
     rf_model.fit(x_scaled, y)
     
