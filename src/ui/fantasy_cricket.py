@@ -12,10 +12,10 @@ from database import (
     save_fantasy_team, get_user_fantasy_teams, get_db_connection, fetch_all_players_from_db
 )
 
-def get_completed_matches(tournament_id):
-    """Get all completed matches from a tournament"""
+def get_upcoming_and_scheduled_matches(tournament_id):
+    """Get all scheduled/upcoming matches (not completed)"""
     matches = get_tournament_matches(tournament_id)
-    return [m for m in matches if m['status'] == 'completed']
+    return [m for m in matches if m['status'] != 'completed']
 
 def get_match_squads(match_id):
     """Get all players from both teams in a match"""
@@ -82,28 +82,29 @@ def show_fantasy_cricket():
     
     tournament = get_tournament(tournament_id)
     
-    # Get completed matches
-    completed_matches = get_completed_matches(tournament_id)
+    # Get upcoming/scheduled matches (not completed yet)
+    upcoming_matches = get_upcoming_and_scheduled_matches(tournament_id)
     
-    if not completed_matches:
-        st.warning("⏳ No completed matches yet. Fantasy teams become available after matches finish.")
+    if not upcoming_matches:
+        st.warning("⏳ No upcoming matches. Check back when matches are scheduled!")
         return
     
     # Select match
-    st.subheader("Select Match")
+    st.subheader("Select Match to Create Fantasy Team")
     all_teams = get_tournament_teams(tournament_id)
     
     match_options = {}
-    for match in completed_matches:
+    for match in upcoming_matches:
         team1 = next((t['team_name'] for t in all_teams if t['id'] == match['team1_id']), f"Team {match['team1_id']}")
         team2 = next((t['team_name'] for t in all_teams if t['id'] == match['team2_id']), f"Team {match['team2_id']}")
-        match_options[f"{team1} vs {team2} ({match['match_date']})"] = match['id']
+        status_badge = "🔴 Scheduled" if match['status'] == 'scheduled' else "🟡 Live"
+        match_options[f"{team1} vs {team2} ({match['match_date']}) {status_badge}"] = match['id']
     
     selected_match_display = st.selectbox("Pick a Match", match_options.keys())
     match_id = match_options[selected_match_display]
     
     # Get match details
-    selected_match = next((m for m in completed_matches if m['id'] == match_id), None)
+    selected_match = next((m for m in upcoming_matches if m['id'] == match_id), None)
     
     if not selected_match:
         st.error("Match not found")
@@ -112,16 +113,23 @@ def show_fantasy_cricket():
     team1 = next((t['team_name'] for t in all_teams if t['id'] == selected_match['team1_id']), "Team 1")
     team2 = next((t['team_name'] for t in all_teams if t['id'] == selected_match['team2_id']), "Team 2")
     
-    # Display match result
+    # Display match info
     col1, col2, col3 = st.columns([2, 1, 2])
     with col1:
         st.write(f"### {team1}")
-        st.metric("Runs", selected_match['team1_score'])
+        if selected_match['status'] == 'completed':
+            st.metric("Runs", selected_match['team1_score'])
+        else:
+            st.info("Match not started yet")
     with col2:
         st.write("**VS**")
+        st.write(f"📅 {selected_match['match_date']}")
     with col3:
         st.write(f"### {team2}")
-        st.metric("Runs", selected_match['team2_score'])
+        if selected_match['status'] == 'completed':
+            st.metric("Runs", selected_match['team2_score'])
+        else:
+            st.info("Match not started yet")
     
     st.divider()
     

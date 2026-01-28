@@ -13,7 +13,7 @@ from database import (
     create_tournament, get_tournament, add_team_to_tournament, get_tournament_teams,
     create_tournament_match, get_tournament_matches, update_match_result,
     delete_tournament, update_team_squad, get_team_details, fetch_all_players_from_db,
-    get_db_connection, update_match_date, get_group_stage_matches
+    get_db_connection, update_match_date, get_group_stage_matches, calculate_and_save_fantasy_points
 )
 
 def check_admin_access():
@@ -468,6 +468,7 @@ def show_admin_panel():
                         try:
                             update_match_result(match_id, winner_id, team1_score, team2_score)
                             st.success("✅ Match score updated successfully!")
+                            st.info("🎯 Fantasy points calculated and leaderboard updated!")
                             st.balloons()
                         except Exception as e:
                             st.error(f"Error updating score: {e}")

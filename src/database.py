@@ -366,6 +366,116 @@ def update_match_result(match_id, winner_id, team1_score, team2_score):
     
     conn.commit()
     conn.close()
+    
+    # Calculate fantasy points for all users who created teams for this match
+    calculate_and_save_fantasy_points(match_id)
+
+def calculate_and_save_fantasy_points(match_id):
+    """Calculate fantasy points for all teams created for this match"""
+    try:
+        conn = get_db_connection()
+        
+        # Get all fantasy teams for this match
+        fantasy_teams = conn.execute(
+            "SELECT id, players_json FROM fantasy_teams WHERE match_id = ?",
+            (match_id,)
+        ).fetchall()
+        
+        if not fantasy_teams:
+            conn.close()
+            return
+        
+        # Get match details
+        match = conn.execute(
+            "SELECT * FROM tournament_matches WHERE id = ?",
+            (match_id,)
+        ).fetchone()
+        
+        # Simple scoring: Award points based on winning team players
+        winning_team_id = match['winner_id']
+        points_per_winning_player = 25  # 25 points for each player in winning team
+        
+        for fantasy_team in fantasy_teams:
+            players_data = json.loads(fantasy_team['players_json'])
+            players = players_data.get('players', [])
+            captain = players_data.get('captain', '')
+            vice_captain = players_data.get('vice_captain', '')
+            
+            # Get all players from winning team
+            winning_team = conn.execute(
+                "SELECT squad FROM tournament_teams WHERE id = ?",
+                (winning_team_id,)
+            ).fetchone()
+            
+            winning_squad = []
+            if winning_team and winning_team['squad']:
+                try:
+                    winning_squad = json.loads(winning_team['squad'])
+                except:
+                    winning_squad = []
+            
+            # Calculate points
+            total_points = 0
+            
+            for player in players:
+                if player in winning_squad:
+                    points = points_per_winning_player
+                    
+                    # Captain gets 2x, Vice-Captain gets 1.5x
+                    if player == captain:
+                        points = int(points * 2)
+                    elif player == vice_captain:
+                        points = int(points * 1.5)
+                    
+                    total_points += points
+            
+            # Save or update fantasy score
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT id FROM fantasy_scores WHERE fantasy_team_id = ?",
+                (fantasy_team['id'],)
+            )
+            existing = cursor.fetchone()
+            
+            if existing:
+                cursor.execute(
+                    "UPDATE fantasy_scores SET total_score = ?, updated_at = CURRENT_TIMESTAMP WHERE fantasy_team_id = ?",
+                    (total_points, fantasy_team['id'])
+                )
+            else:
+                cursor.execute(
+                    "INSERT INTO fantasy_scores (fantasy_team_id, total_score) VALUES (?, ?)",
+                    (fantasy_team['id'], total_points)
+                )
+            
+            # Update user leaderboard
+            user_id = conn.execute(
+                "SELECT user_id FROM fantasy_teams WHERE id = ?",
+                (fantasy_team['id'],)
+            ).fetchone()['user_id']
+            
+            tournament_id = match['tournament_id']
+            
+            # Get total points for user in this tournament
+            total_user_points = conn.execute(
+                "SELECT COALESCE(SUM(fs.total_score), 0) as total FROM fantasy_scores fs "
+                "JOIN fantasy_teams ft ON fs.fantasy_team_id = ft.id "
+                "WHERE ft.user_id = ? AND ft.tournament_id = ?",
+                (user_id, tournament_id)
+            ).fetchone()['total']
+            
+            cursor.execute(
+                "INSERT OR REPLACE INTO leaderboard (user_id, tournament_id, total_points, updated_at) "
+                "VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+                (user_id, tournament_id, total_user_points)
+            )
+        
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Error calculating fantasy points: {e}")
+        return False
 
 def save_fantasy_team(user_id, tournament_id, match_id, players_json, captain_id=None, vice_captain_id=None):
     """Save user's fantasy team"""
