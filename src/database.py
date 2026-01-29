@@ -605,3 +605,154 @@ def update_match_number(match_id, new_match_number):
     cursor.execute("UPDATE tournament_matches SET match_number = ? WHERE id = ?", (new_match_number, match_id))
     conn.commit()
     conn.close()
+
+def calculate_nrr(team_id, tournament_id):
+    """Calculate Net Run Rate for a team in a tournament"""
+    conn = get_db_connection()
+    
+    # Get all completed matches for this team
+    matches = conn.execute("""
+        SELECT * FROM tournament_matches 
+        WHERE tournament_id = ? AND status = 'completed'
+        AND (team1_id = ? OR team2_id = ?)
+    """, (tournament_id, team_id, team_id)).fetchall()
+    
+    runs_for = 0
+    runs_against = 0
+    overs_played = 0
+    overs_faced = 0
+    
+    for match in matches:
+        if match['team1_id'] == team_id:
+            runs_for += match['team1_score']
+            runs_against += match['team2_score']
+        else:
+            runs_for += match['team2_score']
+            runs_against += match['team1_score']
+        
+        # Assume 20 overs per T20 match
+        overs_played += 20
+        overs_faced += 20
+    
+    conn.close()
+    
+    # Calculate NRR
+    if overs_played == 0:
+        return 0.0
+    
+    run_rate_for = runs_for / (overs_played / 6)  # Convert overs to decimal
+    run_rate_against = runs_against / (overs_faced / 6)
+    nrr = run_rate_for - run_rate_against
+    
+    return round(nrr, 2)
+
+def get_group_standings_with_nrr(tournament_id, group_letter):
+    """Get group standings with NRR for qualification"""
+    conn = get_db_connection()
+    
+    # Get all teams in the group
+    teams = conn.execute("""
+        SELECT * FROM tournament_teams 
+        WHERE tournament_id = ? AND group_letter = ?
+        ORDER BY points DESC, wins DESC
+    """, (tournament_id, group_letter)).fetchall()
+    
+    standings = []
+    for team in teams:
+        nrr = calculate_nrr(team['id'], tournament_id)
+        standings.append({
+            'team_id': team['id'],
+            'team_name': team['team_name'],
+            'matches_played': team['matches_played'],
+            'wins': team['wins'],
+            'losses': team['losses'],
+            'points': team['points'],
+            'nrr': nrr
+        })
+    
+    # Sort by points first, then NRR
+    standings = sorted(standings, key=lambda x: (x['points'], x['nrr']), reverse=True)
+    
+    conn.close()
+    return standings
+
+def get_super8_qualified_teams(tournament_id):
+    """Get top 2 teams from each group for Super 8 stage"""
+    qualified_teams = []
+    
+    for group in ['A', 'B', 'C', 'D']:
+        standings = get_group_standings_with_nrr(tournament_id, group)
+        if len(standings) >= 2:
+            qualified_teams.append(standings[0])
+            qualified_teams.append(standings[1])
+    
+    return qualified_teams
+
+def create_super8_matches(tournament_id):
+    """Create Super 8 matches from qualified teams"""
+    try:
+        qualified = get_super8_qualified_teams(tournament_id)
+        
+        if len(qualified) < 8:
+            return False
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get tournament details
+        tournament = conn.execute("SELECT * FROM tournaments WHERE id = ?", (tournament_id,)).fetchone()
+        
+        # Create round-robin for Super 8 (8 teams = 28 matches)
+        from datetime import datetime, timedelta
+        base_date = datetime.strptime(tournament['start_date'], "%Y-%m-%d")
+        
+        # Assume group stage ends and Super 8 starts 20 days after tournament start
+        super8_start_date = base_date + timedelta(days=20)
+        match_counter = 1
+        
+        for i in range(len(qualified)):
+            for j in range(i + 1, len(qualified)):
+                team1_id = qualified[i]['team_id']
+                team2_id = qualified[j]['team_id']
+                match_date = (super8_start_date + timedelta(days=match_counter)).strftime("%Y-%m-%d")
+                
+                cursor.execute("""
+                    INSERT INTO tournament_matches 
+                    (tournament_id, team1_id, team2_id, match_date, stage, match_number)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (tournament_id, team1_id, team2_id, match_date, 'super8', match_counter))
+                
+                match_counter += 1
+        
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Error creating Super 8 matches: {e}")
+        return False
+
+def update_tournament_format(tournament_id, stages):
+    """Update tournament format/stages (flexible)"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    stages_json = json.dumps(stages)
+    cursor.execute("""
+        UPDATE tournaments SET tournament_format = ? WHERE id = ?
+    """, (stages_json, tournament_id))
+    conn.commit()
+    conn.close()
+
+def get_tournament_format(tournament_id):
+    """Get tournament format/stages"""
+    conn = get_db_connection()
+    tournament = conn.execute("SELECT tournament_format FROM tournaments WHERE id = ?", (tournament_id,)).fetchone()
+    conn.close()
+    
+    if tournament and tournament['tournament_format']:
+        try:
+            return json.loads(tournament['tournament_format'])
+        except:
+            return ['group', 'semi-final', 'final']
+    
+    return ['group', 'semi-final', 'final']
+    conn.close()

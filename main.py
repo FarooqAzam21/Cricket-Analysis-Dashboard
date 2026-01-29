@@ -12,6 +12,7 @@ from src.ui.tournament_home import show_tournament_home
 from src.ui.fantasy_cricket import show_fantasy_cricket
 from src.ui.leaderboard import show_leaderboard
 from src.ui.admin_tournament import show_admin_panel
+from src.ui.home_page import show_home_page
 from src.auth import login, signup
 from src.database import init_db
 import os
@@ -51,6 +52,8 @@ def main():
         st.session_state.authenticated = False
     if 'username' not in st.session_state:
         st.session_state.username = None
+    if 'page' not in st.session_state:
+        st.session_state.page = "🏠 Home"
     
     # 1. Set page config at the very beginning
     logo_path = os.path.join("assets", "logo.png")
@@ -80,21 +83,24 @@ def main():
         st.markdown("---")
         
         # Show admin option only for admin user
-        menu_options = MENU_OPTIONS.copy()
+        menu_options = ["🏠 Home", "🏏 Cricket Analysis", "🏆 Tournament"]
         if st.session_state.username == 'admin':
-            menu_options = ["🏏 Cricket Analysis", "🏆 Tournament", "⚙️ Admin Panel"]
-        else:
-            menu_options = ["🏏 Cricket Analysis", "🏆 Tournament"]
+            menu_options = ["🏠 Home", "🏏 Cricket Analysis", "🏆 Tournament", "⚙️ Admin Panel"]
         
         menu = st.radio("Navigate to", menu_options)
+        st.session_state.page = menu
         
-# 3. Main Dashboard Layout
-    st.title("🏏 Cricket Pro Analytics")
-    st.markdown("*Advanced Player Performance Insights & AI Scouts*")
-    st.markdown("---")
-
-    # 4. Main routing based on menu selection
-    if menu == "🏏 Cricket Analysis":
+        st.markdown("---")
+        if st.button("🚪 Logout", use_container_width=True):
+            st.session_state.authenticated = False
+            st.session_state.username = None
+            st.rerun()
+    
+    # 3. Main routing based on menu selection
+    if st.session_state.page == "🏠 Home":
+        show_home_page()
+    
+    elif st.session_state.page == "🏏 Cricket Analysis":
         # Sub-menu for cricket analysis
         analysis_options = [
             "Format Wise Analysis", "Select Playing 11", "Player Comparison",
@@ -137,8 +143,9 @@ def main():
         elif analysis_menu == "Ask Expert (AI)":
             render_ai_chat(all_players)
     
-    elif menu == "🏆 Tournament":
+    elif st.session_state.page == "🏆 Tournament":
         # Tournament menu for all users
+        st.title("🏆 T20 World Cup Fantasy League")
         tournament_options = ["Tournament Home", "Fantasy Cricket", "Leaderboard"]
         tournament_menu = st.sidebar.selectbox("Tournament", tournament_options)
         
@@ -149,16 +156,9 @@ def main():
         elif tournament_menu == "Leaderboard":
             show_leaderboard()
     
-    elif menu == "⚙️ Admin Panel":
+    elif st.session_state.page == "⚙️ Admin Panel":
         # Admin panel - only for admin
         show_admin_panel()
-    
-    # Logout button
-    st.sidebar.markdown("---")
-    if st.sidebar.button("🚪 Logout"):
-        st.session_state.authenticated = False
-        st.session_state.clear()
-        st.rerun()
         
     st.sidebar.info("Developed by **Farooq Azam**")
 
