@@ -249,8 +249,9 @@ def create_tournament(name, start_date, end_date):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO tournaments (name, start_date, end_date) VALUES (?, ?, ?)",
-                      (name, start_date, end_date))
+        cursor.execute("""INSERT INTO tournaments (name, start_date, end_date, status) 
+                         VALUES (?, ?, ?, ?)""",
+                      (name, start_date, end_date, 'planning'))
         conn.commit()
         tournament_id = cursor.lastrowid
         conn.close()
