@@ -13,7 +13,8 @@ from database import (
     create_tournament, get_tournament, add_team_to_tournament, get_tournament_teams,
     create_tournament_match, get_tournament_matches, update_match_result,
     delete_tournament, update_team_squad, get_team_details, fetch_all_players_from_db,
-    get_db_connection, update_match_date, get_group_stage_matches, calculate_and_save_fantasy_points
+    get_db_connection, update_match_date, get_group_stage_matches, calculate_and_save_fantasy_points,
+    update_team_name, update_match_number
 )
 
 def check_admin_access():
@@ -111,17 +112,48 @@ def show_admin_panel():
                 
                 if all_tournament_teams:
                     groups_dict = {}
+                    team_id_map = {}
                     for team in all_tournament_teams:
                         group = team['group_letter']
                         if group not in groups_dict:
                             groups_dict[group] = []
                         groups_dict[group].append(team['team_name'])
+                        team_id_map[team['team_name']] = team['id']
                     
                     for group in ['A', 'B', 'C', 'D']:
                         teams = groups_dict.get(group, [])
                         st.write(f"**Group {group}** ({len(teams)}/5)")
                         for team in teams:
-                            st.write(f"  • {team}")
+                            col1, col2 = st.columns([3, 1])
+                            with col1:
+                                st.write(f"  • {team}")
+                            with col2:
+                                if st.button("✏️ Edit", key=f"edit_team_{team_id_map[team]}"):
+                                    st.session_state[f"editing_team_{team_id_map[team]}"] = True
+                    
+                    # Edit team name section
+                    st.divider()
+                    st.subheader("🔧 Edit Team Name")
+                    
+                    edit_team_options = {f"{t['team_name']} (Group {t['group_letter']})": t['id'] for t in all_tournament_teams}
+                    
+                    if edit_team_options:
+                        edit_team_display = st.selectbox("Select Team to Rename", edit_team_options.keys(), key="edit_team_select")
+                        edit_team_id = edit_team_options[edit_team_display]
+                        edit_team_old_name = edit_team_display.split(' (')[0]
+                        
+                        new_team_name = st.text_input("New Team Name", value=edit_team_old_name, key="new_team_name_input")
+                        
+                        if st.button("Update Team Name", key="update_team_name_btn"):
+                            if new_team_name and new_team_name != edit_team_old_name:
+                                try:
+                                    update_team_name(edit_team_id, new_team_name)
+                                    st.success(f"✅ Team renamed from '{edit_team_old_name}' to '{new_team_name}'")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Error updating team name: {e}")
+                            else:
+                                st.warning("Please enter a different team name")
             else:
                 st.error("Tournament not found")
     
@@ -266,7 +298,7 @@ def show_admin_panel():
                     
                     # Edit generated matches
                     st.divider()
-                    st.subheader("Edit Match Schedule")
+                    st.subheader("🔧 Edit Match Schedule")
                     
                     group_matches = get_group_stage_matches(tournament_id)
                     
@@ -290,14 +322,14 @@ def show_admin_panel():
                         
                         st.dataframe(pd.DataFrame(match_data), use_container_width=True, hide_index=True)
                         
-                        st.write("**Edit Match Dates:**")
+                        st.write("**Edit Match Date:**")
                         
-                        # Create columns for editing
+                        # Create columns for editing date
                         edit_cols = st.columns([2, 2, 1])
                         
                         with edit_cols[0]:
                             match_to_edit = st.selectbox(
-                                "Select Match to Edit",
+                                "Select Match to Edit Date",
                                 options=[f"Match {idx}: {md['Team 1']} vs {md['Team 2']}" for idx, md in enumerate(match_data, 1)],
                                 key="edit_match_select"
                             )
@@ -320,6 +352,64 @@ def show_admin_panel():
                                     st.rerun()
                                 except Exception as e:
                                     st.error(f"Error updating date: {e}")
+                        
+                        # Edit match numbers for same-date matches
+                        st.divider()
+                        st.write("**Edit Match Number (for multiple matches on same date):**")
+                        
+                        # Group matches by date to show which have multiple matches
+                        date_groups = {}
+                        for idx, m in enumerate(group_matches, 1):
+                            date = m['match_date']
+                            if date not in date_groups:
+                                date_groups[date] = []
+                            date_groups[date].append({'index': idx, 'match': m, 'id': m['id']})
+                        
+                        # Show dates with multiple matches
+                        multi_match_dates = {date: matches for date, matches in date_groups.items() if len(matches) > 1}
+                        
+                        if multi_match_dates:
+                            col1, col2, col3 = st.columns([2, 1, 1])
+                            
+                            with col1:
+                                date_to_edit = st.selectbox(
+                                    "Select Date with Multiple Matches",
+                                    options=list(multi_match_dates.keys()),
+                                    key="select_date_for_numbers"
+                                )
+                                
+                                st.write(f"**Matches on {date_to_edit}:**")
+                                for m_info in multi_match_dates[date_to_edit]:
+                                    team1 = next((t['team_name'] for t in all_teams if t['id'] == m_info['match']['team1_id']), f"Team {m_info['match']['team1_id']}")
+                                    team2 = next((t['team_name'] for t in all_teams if t['id'] == m_info['match']['team2_id']), f"Team {m_info['match']['team2_id']}")
+                                    st.write(f"  Match {m_info['index']}: {team1} vs {team2}")
+                            
+                            with col2:
+                                selected_match_for_number = st.selectbox(
+                                    "Select Match",
+                                    options=[f"Match {m['index']}" for m in multi_match_dates[date_to_edit]],
+                                    key="select_match_for_number"
+                                )
+                                selected_match_number = int(selected_match_for_number.split()[1])
+                            
+                            with col3:
+                                new_match_number = st.number_input(
+                                    "New Match #",
+                                    min_value=1,
+                                    value=selected_match_number,
+                                    key="new_match_number"
+                                )
+                                
+                                if st.button("Update Number", key="update_number_btn"):
+                                    try:
+                                        match_to_update = multi_match_dates[date_to_edit][selected_match_number - 1]
+                                        update_match_number(match_to_update['id'], new_match_number)
+                                        st.success(f"✅ Match number updated to {new_match_number}")
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"Error updating match number: {e}")
+                        else:
+                            st.info("ℹ️ No multiple matches on same date yet")
                     else:
                         st.info("No group stage matches generated yet. Click 'Auto-Generate Group Stage Matches' first.")
                     

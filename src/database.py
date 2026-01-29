@@ -588,3 +588,19 @@ def get_group_stage_matches(tournament_id):
     ).fetchall()
     conn.close()
     return matches
+
+def update_team_name(team_id, new_name):
+    """Update tournament team name"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE tournament_teams SET team_name = ? WHERE id = ?", (new_name, team_id))
+    conn.commit()
+    conn.close()
+
+def update_match_number(match_id, new_match_number):
+    """Update match number (sequential number for same date matches)"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE tournament_matches SET match_number = ? WHERE id = ?", (new_match_number, match_id))
+    conn.commit()
+    conn.close()
