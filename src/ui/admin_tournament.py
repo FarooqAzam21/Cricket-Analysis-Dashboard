@@ -14,7 +14,8 @@ from database import (
     create_tournament_match, get_tournament_matches, update_match_result,
     delete_tournament, update_team_squad, get_team_details, fetch_all_players_from_db,
     get_db_connection, update_match_date, get_group_stage_matches, calculate_and_save_fantasy_points,
-    update_team_name, update_match_number
+    update_team_name, update_match_number, add_player_performance, get_match_performances,
+    calculate_team_strength, get_team_strength_rating, calculate_updated_fantasy_scores
 )
 
 def check_admin_access():
@@ -217,6 +218,18 @@ def show_admin_panel():
                             )
                             
                             st.info(f"Selected: {len(selected_players)}/15 players")
+                            
+                            # Display team strength
+                            if selected_players:
+                                team_strength = calculate_team_strength(selected_players, tournament_id)
+                                
+                                # Color coded strength indicator
+                                if team_strength >= 70:
+                                    st.success(f"⚡ Team Strength: {team_strength}/100 - STRONG 🟢")
+                                elif team_strength >= 50:
+                                    st.warning(f"⚡ Team Strength: {team_strength}/100 - MEDIUM 🟡")
+                                else:
+                                    st.error(f"⚡ Team Strength: {team_strength}/100 - WEAK 🔴")
                             
                             if st.button(f"Save Squad for {team_details['team_name']}", key=f"save_squad_{team_id}"):
                                 if len(selected_players) > 0:
@@ -504,7 +517,7 @@ def show_admin_panel():
     
     # ========== TAB 6: UPDATE SCORES ==========
     with tab6:
-        st.header("Update Match Scores")
+        st.header("Update Match Scores & Player Performance")
         
         tournament_id = st.number_input("Tournament ID", min_value=1, step=1, key="score_tournament")
         
@@ -529,6 +542,8 @@ def show_admin_panel():
                     match_id = match_options[selected_match_display]
                     match = next(m for m in incomplete_matches if m['id'] == match_id)
                     
+                    # Step 1: Update Match Score
+                    st.subheader("Step 1: Match Result")
                     col1, col2, col3 = st.columns([3, 1, 3])
                     
                     with col1:
@@ -558,14 +573,154 @@ def show_admin_panel():
                         try:
                             update_match_result(match_id, winner_id, team1_score, team2_score)
                             st.success("✅ Match score updated successfully!")
-                            st.info("🎯 Fantasy points calculated and leaderboard updated!")
                             st.balloons()
                         except Exception as e:
                             st.error(f"Error updating score: {e}")
+                    
+                    st.divider()
+                    
+                    # Step 2: Add Player Performance
+                    st.subheader("Step 2: Player Performance Tracking")
+                    
+                    # Get completed matches for performance entry
+                    completed_matches = [m for m in matches if m['status'] == 'completed']
+                    
+                    if completed_matches:
+                        perf_match_options = {}
+                        for m in completed_matches:
+                            team1 = next((t['team_name'] for t in all_teams if t['id'] == m['team1_id']), f"Team {m['team1_id']}")
+                            team2 = next((t['team_name'] for t in all_teams if t['id'] == m['team2_id']), f"Team {m['team2_id']}")
+                            perf_match_options[f"{team1} vs {team2} ({m['match_date']})"] = m['id']
+                        
+                        perf_selected_match = st.selectbox("Select Match for Performance Entry", perf_match_options.keys(), key="perf_select_match")
+                        perf_match_id = perf_match_options[perf_selected_match]
+                        
+                        perf_match = next(m for m in completed_matches if m['id'] == perf_match_id)
+                        perf_team1_name = next((t['team_name'] for t in all_teams if t['id'] == perf_match['team1_id']), f"Team {perf_match['team1_id']}")
+                        perf_team2_name = next((t['team_name'] for t in all_teams if t['id'] == perf_match['team2_id']), f"Team {perf_match['team2_id']}")
+                        
+                        # Display existing performances
+                        existing_perfs = get_match_performances(perf_match_id)
+                        if existing_perfs:
+                            st.info(f"📊 Already recorded performances for this match:")
+                            perf_df = pd.DataFrame([{
+                                'Player': p['player_name'],
+                                'Team': perf_team1_name if p['team_id'] == perf_match['team1_id'] else perf_team2_name,
+                                'Runs': p['runs'],
+                                'Balls': p['balls_faced'],
+                                'Fours': p['fours'],
+                                'Sixes': p['sixes'],
+                                'Wickets': p['wickets']
+                            } for p in existing_perfs])
+                            st.dataframe(perf_df, use_container_width=True)
+                        
+                        st.subheader("Add New Player Performance")
+                        
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            perf_team = st.selectbox("Select Team", [perf_team1_name, perf_team2_name], key="perf_team_select")
+                            perf_team_id = perf_match['team1_id'] if perf_team == perf_team1_name else perf_match['team2_id']
+                        
+                        with col2:
+                            # Get team players
+                            team_details = get_team_details(perf_team_id)
+                            team_players = team_details['players'].split(',') if team_details and team_details['players'] else []
+                            
+                            if team_players:
+                                perf_player = st.selectbox("Select Player", team_players, key="perf_player_select")
+                            else:
+                                st.error("No players found for this team")
+                                perf_player = None
+                        
+                        if perf_player:
+                            st.write(f"**Recording performance for {perf_player}**")
+                            
+                            perf_col1, perf_col2, perf_col3, perf_col4 = st.columns(4)
+                            
+                            with perf_col1:
+                                perf_runs = st.number_input("Runs", min_value=0, step=1, key="perf_runs")
+                            
+                            with perf_col2:
+                                perf_balls = st.number_input("Balls Faced", min_value=0, step=1, key="perf_balls")
+                            
+                            with perf_col3:
+                                perf_fours = st.number_input("Fours", min_value=0, step=1, key="perf_fours")
+                            
+                            with perf_col4:
+                                perf_sixes = st.number_input("Sixes", min_value=0, step=1, key="perf_sixes")
+                            
+                            if st.button("Add Performance", key="add_perf"):
+                                try:
+                                    add_player_performance(
+                                        perf_match_id, 
+                                        perf_player, 
+                                        perf_team_id,
+                                        perf_runs,
+                                        perf_balls,
+                                        perf_fours,
+                                        perf_sixes
+                                    )
+                                    st.success(f"✅ Performance recorded for {perf_player}")
+                                except Exception as e:
+                                    st.error(f"Error recording performance: {e}")
+                            
+                            st.divider()
+                            
+                            # Calculate SR
+                            if perf_balls > 0:
+                                sr = (perf_runs / perf_balls) * 100
+                                st.metric("Strike Rate", f"{sr:.2f}")
+                        
+                        # Recalculate fantasy scores
+                        if st.button("🔄 Recalculate Fantasy Points (After all performances recorded)", key="recalc_fantasy"):
+                            try:
+                                calculate_updated_fantasy_scores(tournament_id)
+                                st.success("✅ Fantasy points recalculated based on performance data!")
+                                st.balloons()
+                            except Exception as e:
+                                st.error(f"Error recalculating fantasy points: {e}")
+                    else:
+                        st.info("No completed matches yet. Complete some matches first to record performances.")
                 else:
                     st.info("✅ All matches completed!")
             else:
                 st.error("Tournament not found")
+    
+    # ========== TEAM STRENGTH DISPLAY ==========
+    st.divider()
+    st.subheader("⚡ AI Team Strength Analysis")
+    
+    strength_tournament_id = st.number_input("Tournament ID for Team Strength", min_value=1, step=1, key="strength_tournament")
+    
+    if strength_tournament_id:
+        strength_tournament = get_tournament(strength_tournament_id)
+        if strength_tournament:
+            strength_teams = get_tournament_teams(strength_tournament_id)
+            
+            if strength_teams:
+                st.write(f"**{strength_tournament['name']}** - Team Strength Ratings")
+                
+                strength_data = []
+                for team in strength_teams:
+                    strength = get_team_strength_rating(strength_tournament_id, team['id'])
+                    strength_data.append({
+                        'Team': team['team_name'],
+                        'Group': team['group_letter'],
+                        'Players': len(team['players'].split(',')) if team['players'] else 0,
+                        'Strength': strength,
+                        'Rating': '🟢 Strong' if strength >= 70 else '🟡 Medium' if strength >= 50 else '🔴 Weak'
+                    })
+                
+                strength_df = pd.DataFrame(strength_data).sort_values('Strength', ascending=False)
+                st.dataframe(strength_df, use_container_width=True)
+                
+                # Visual representation
+                st.bar_chart(strength_df.set_index('Team')['Strength'])
+            else:
+                st.info("No teams found in this tournament")
+        else:
+            st.error("Tournament not found")
     
     # ========== DELETE TOURNAMENT ==========
     st.divider()

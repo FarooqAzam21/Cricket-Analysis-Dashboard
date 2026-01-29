@@ -149,6 +149,25 @@ def init_db():
         )
     ''')
     
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS match_player_performance (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            match_id INTEGER,
+            player_name TEXT,
+            team_id INTEGER,
+            runs INTEGER DEFAULT 0,
+            balls_faced INTEGER DEFAULT 0,
+            fours INTEGER DEFAULT 0,
+            sixes INTEGER DEFAULT 0,
+            wickets INTEGER DEFAULT 0,
+            economy REAL DEFAULT 0,
+            performance_type TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(match_id) REFERENCES tournament_matches(id),
+            FOREIGN KEY(team_id) REFERENCES tournament_teams(id)
+        )
+    ''')
+    
     conn.commit()
     conn.close()
 
@@ -755,4 +774,280 @@ def get_tournament_format(tournament_id):
             return ['group', 'semi-final', 'final']
     
     return ['group', 'semi-final', 'final']
+
+# ==================== PERFORMANCE TRACKING ====================
+
+def add_player_performance(match_id, player_name, team_id, runs, balls_faced, fours, sixes, wickets=0, economy=0):
+    """Add player performance for a match"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Determine performance type
+        if balls_faced > 0:
+            performance_type = 'batsman'
+        else:
+            performance_type = 'bowler'
+        
+        cursor.execute("""
+            INSERT INTO match_player_performance 
+            (match_id, player_name, team_id, runs, balls_faced, fours, sixes, wickets, economy, performance_type)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (match_id, player_name, team_id, runs, balls_faced, fours, sixes, wickets, economy, performance_type))
+        
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Error adding player performance: {e}")
+        return False
+
+def get_match_performances(match_id):
+    """Get all performances for a match"""
+    conn = get_db_connection()
+    conn.row_factory = sqlite3.Row
+    performances = conn.execute(
+        "SELECT * FROM match_player_performance WHERE match_id = ? ORDER BY created_at DESC",
+        (match_id,)
+    ).fetchall()
     conn.close()
+    return performances
+
+def calculate_batsman_fantasy_points(runs, fours, sixes, balls_faced, is_captain=False, is_vice_captain=False):
+    """Calculate fantasy points for batsman performance"""
+    points = 0
+    
+    # Runs - 1 point per run
+    points += runs * 1
+    
+    # Fours - bonus points
+    points += fours * 1
+    
+    # Sixes - double bonus
+    points += sixes * 2
+    
+    # Strike rate bonus (if SR > 120)
+    if balls_faced > 0:
+        sr = (runs / balls_faced) * 100
+        if sr > 150:
+            points += 10
+        elif sr > 120:
+            points += 5
+    
+    # Runs bonus
+    if runs >= 50:
+        points += 50 if runs >= 50 else 0
+    if runs >= 100:
+        points += 100
+    
+    # Captain/Vice Captain multiplier
+    if is_captain:
+        points *= 2
+    elif is_vice_captain:
+        points *= 1.5
+    
+    return points
+
+def calculate_bowler_fantasy_points(wickets, economy, is_captain=False, is_vice_captain=False):
+    """Calculate fantasy points for bowler performance"""
+    points = 0
+    
+    # Wickets - points
+    points += wickets * 25
+    
+    # Economy bonus (better economy = more points)
+    if economy < 6:
+        points += 10
+    elif economy < 8:
+        points += 5
+    
+    # Captain/Vice Captain multiplier
+    if is_captain:
+        points *= 2
+    elif is_vice_captain:
+        points *= 1.5
+    
+    return points
+
+def calculate_updated_fantasy_scores(tournament_id):
+    """Recalculate fantasy scores based on performance data"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        conn.row_factory = sqlite3.Row
+        
+        # Get all fantasy teams for this tournament
+        fantasy_teams = conn.execute("""
+            SELECT * FROM fantasy_teams WHERE tournament_id = ?
+        """, (tournament_id,)).fetchall()
+        
+        for team in fantasy_teams:
+            total_points = 0
+            team_id = team['team_id']
+            players = team['team_composition'].split(',')
+            
+            # Get matches for this team in tournament
+            matches = conn.execute("""
+                SELECT * FROM tournament_matches 
+                WHERE tournament_id = ? AND (team1_id = ? OR team2_id = ?)
+                AND match_status = 'completed'
+            """, (tournament_id, team_id, team_id)).fetchall()
+            
+            for match in matches:
+                match_performances = conn.execute("""
+                    SELECT * FROM match_player_performance WHERE match_id = ?
+                """, (match['id'],)).fetchall()
+                
+                for performance in match_performances:
+                    if performance['player_name'] in players:
+                        if performance['performance_type'] == 'batsman':
+                            points = calculate_batsman_fantasy_points(
+                                performance['runs'],
+                                performance['fours'],
+                                performance['sixes'],
+                                performance['balls_faced']
+                            )
+                        else:
+                            points = calculate_bowler_fantasy_points(
+                                performance['wickets'],
+                                performance['economy']
+                            )
+                        
+                        total_points += points
+            
+            # Update fantasy scores
+            cursor.execute("""
+                UPDATE fantasy_scores SET total_points = ? 
+                WHERE fantasy_team_id = ?
+            """, (total_points, team['id']))
+        
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Error updating fantasy scores: {e}")
+        return False
+
+# ==================== AI TEAM STRENGTH ANALYSIS ====================
+
+def get_player_stats(player_name):
+    """Get player career stats from players table"""
+    conn = get_db_connection()
+    conn.row_factory = sqlite3.Row
+    player = conn.execute(
+        "SELECT * FROM players WHERE name = ? LIMIT 1",
+        (player_name,)
+    ).fetchone()
+    conn.close()
+    return player
+
+def calculate_team_strength(team_players, tournament_id):
+    """Calculate AI team strength (0-100) based on player selection"""
+    try:
+        if not team_players:
+            return 0
+        
+        total_strength = 0
+        player_count = len(team_players)
+        
+        # Player role weights
+        role_weights = {
+            'batsman': 1.0,
+            'bowler': 1.0,
+            'all-rounder': 1.3,  # All-rounders are more valuable
+            'wicket-keeper': 1.1
+        }
+        
+        batsmen_count = 0
+        bowlers_count = 0
+        all_rounders_count = 0
+        
+        for player_name in team_players:
+            player = get_player_stats(player_name)
+            
+            if player:
+                player_strength = 0
+                
+                # Get player role
+                role = player.get('role', 'batsman').lower()
+                weight = role_weights.get(role, 1.0)
+                
+                # Base strength from stats
+                avg = float(player.get('average', 0)) or 0
+                sr = float(player.get('strike_rate', 100)) or 100
+                
+                # Normalize stats
+                avg_strength = min(avg / 60 * 100, 100)  # 60 is considered excellent average
+                sr_strength = min(sr / 150 * 100, 100)   # 150 is considered excellent SR
+                
+                # Combine for batting strength
+                if role in ['batsman', 'all-rounder', 'wicket-keeper']:
+                    player_strength = (avg_strength * 0.6 + sr_strength * 0.4) * weight
+                
+                # Bowling stats
+                if role in ['bowler', 'all-rounder']:
+                    bowling_avg = float(player.get('bowling_average', 0)) or 0
+                    economy = float(player.get('economy', 0)) or 0
+                    
+                    # Normalize bowling
+                    bowling_strength = min((40 - bowling_avg) / 25 * 100, 100) if bowling_avg > 0 else 50
+                    economy_strength = min((10 - economy) / 6 * 100, 100) if economy > 0 else 50
+                    
+                    bowling_component = (bowling_strength * 0.5 + economy_strength * 0.5) * weight
+                    
+                    if role == 'all-rounder':
+                        player_strength = (player_strength * 0.5 + bowling_component * 0.5)
+                    else:
+                        player_strength = bowling_component
+                
+                total_strength += player_strength
+                
+                # Count player types for balance bonus
+                if role == 'all-rounder':
+                    all_rounders_count += 1
+                elif role == 'batsman':
+                    batsmen_count += 1
+                else:
+                    bowlers_count += 1
+        
+        # Calculate average strength
+        avg_team_strength = total_strength / player_count
+        
+        # Balance bonus (well-rounded teams get bonus)
+        if batsmen_count > 0 and bowlers_count > 0 and all_rounders_count > 0:
+            balance_bonus = 10
+        elif batsmen_count > 0 and bowlers_count > 0:
+            balance_bonus = 5
+        else:
+            balance_bonus = 0
+        
+        # Final strength (0-100 scale)
+        team_strength = min(avg_team_strength + balance_bonus, 100)
+        
+        return round(team_strength, 1)
+    except Exception as e:
+        print(f"Error calculating team strength: {e}")
+        return 0
+
+def get_team_strength_rating(tournament_id, team_id):
+    """Get strength rating for a tournament team"""
+    try:
+        conn = get_db_connection()
+        conn.row_factory = sqlite3.Row
+        
+        # Get team players
+        team = conn.execute(
+            "SELECT * FROM tournament_teams WHERE id = ?",
+            (team_id,)
+        ).fetchone()
+        conn.close()
+        
+        if team:
+            players = team['players'].split(',') if team['players'] else []
+            strength = calculate_team_strength(players, tournament_id)
+            return strength
+        
+        return 0
+    except Exception as e:
+        print(f"Error getting team strength: {e}")
+        return 0
