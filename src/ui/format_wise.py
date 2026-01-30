@@ -34,14 +34,30 @@ def render_format_analysis(batsmen, all_rounders, bowlers_data, wicket_keepers):
             fmt_wicket_keepers = wicket_keepers[wicket_keepers['Format'] == fmt]
 
             # Apply Team Filter if selected
-            if include_teams:
+            if include_teams and len(include_teams) > 0:
                 fmt_batsmen = fmt_batsmen[fmt_batsmen['Team'].isin(include_teams)]
                 fmt_all_rounders = fmt_all_rounders[fmt_all_rounders['Team'].isin(include_teams)]
                 fmt_bowlers = fmt_bowlers[fmt_bowlers['Team'].isin(include_teams)]
                 fmt_wicket_keepers = fmt_wicket_keepers[fmt_wicket_keepers['Team'].isin(include_teams)]
 
+            # Check if any data exists for this format
             if fmt_batsmen.empty and fmt_all_rounders.empty and fmt_bowlers.empty:
-                st.info(f"No data available for {fmt} format with selected filters.")
+                st.warning(f"❌ No data available for {fmt} format. Please check the data.")
+                continue
+            
+            # Check if all data is filtered out
+            filtered_batsmen = fmt_batsmen[(fmt_batsmen['matches'] >= min_matches) & (fmt_batsmen['runs'] >= min_runs)]
+            filtered_bowlers = fmt_bowlers[(fmt_bowlers['matches'] >= min_matches) & (fmt_bowlers['wickets'] >= min_wickets)]
+            filtered_all_rounders = fmt_all_rounders[(fmt_all_rounders['matches'] >= min_matches) & 
+                                                    ((fmt_all_rounders['runs'] >= min_runs) | (fmt_all_rounders['wickets'] >= min_wickets))]
+            
+            if filtered_batsmen.empty and filtered_bowlers.empty and filtered_all_rounders.empty:
+                with st.expander(f"ℹ️ No data available for {fmt} format with selected filters - Click to adjust", expanded=False):
+                    st.info(f"Try adjusting the filters above:")
+                    st.write(f"• Current Min Matches: {min_matches}")
+                    st.write(f"• Current Min Runs: {min_runs}")
+                    st.write(f"• Current Min Wickets: {min_wickets}")
+                    st.write(f"• Selected Teams: {include_teams if include_teams else 'All Teams'}")
                 continue
 
             # --- Apply Interactive Filters ---

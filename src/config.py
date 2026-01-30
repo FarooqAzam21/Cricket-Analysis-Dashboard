@@ -32,8 +32,15 @@ def apply_custom_styles():
         .stApp {
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-            color: #1f2937;
+            color: #000000 !important;
             line-height: 1.6;
+        }
+
+        /* Ensure all text is black except in sidebar */
+        .stApp p, .stApp span, .stApp div, .stApp label, 
+        .stApp h1, .stApp h2, .stApp h3, .stApp h4, 
+        .stApp h5, .stApp h6, .stApp a {
+            color: #000000 !important;
         }
 
         /* ============= HIDE DEFAULT ELEMENTS ============= */
