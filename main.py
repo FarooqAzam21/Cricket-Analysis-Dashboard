@@ -324,7 +324,12 @@ def main():
     
     # Main content area - responsive routing
     if st.session_state.page == "🏠 Home":
-        show_home_page()
+        # Load data for home page stats
+        try:
+            home_data, _, _, _, _, _, _, _ = load_all_data(_csv_cache_key=_get_csv_cache_key())
+        except:
+            home_data = None
+        show_home_page(home_data)
     
     elif st.session_state.page == "🏏 Cricket Analysis":
         # Cricket analysis sub-menu

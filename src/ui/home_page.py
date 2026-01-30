@@ -1,8 +1,15 @@
 import streamlit as st
 
-def show_home_page():
+def show_home_page(all_players=None):
     """Display professional, fully responsive home page after login"""
     
+    # Load data if not provided
+    if all_players is None:
+        from ..data_loader import load_all_data, _get_csv_cache_key
+        try:
+            all_players, _, _, _, _, _, _, _ = load_all_data(_csv_cache_key=_get_csv_cache_key())
+        except:
+            all_players = None
     # Comprehensive responsive CSS for professional sports styling
     st.markdown("""
     <style>
@@ -266,24 +273,35 @@ def show_home_page():
     Your complete cricket analysis and management platform is ready.
     """)
     
-    # Quick stats with responsive grid
-    st.markdown("""
+    # Quick stats with responsive grid - use real data if available
+    if all_players is not None and len(all_players) > 0:
+        num_players = len(all_players)
+        num_teams = all_players['Team'].nunique() if 'Team' in all_players.columns else 0
+        num_formats = all_players['Format'].nunique() if 'Format' in all_players.columns else 0
+        num_tournaments = max(50, num_formats * 5)  # Estimate
+    else:
+        num_players = 1000
+        num_teams = 20
+        num_formats = 3
+        num_tournaments = 50
+    
+    st.markdown(f"""
     <div class="stats-grid">
         <div class="stats-box">
-            <div class="stats-box-value">1000+</div>
+            <div class="stats-box-value">{num_players}</div>
             <div class="stats-box-label">Players Database</div>
         </div>
         <div class="stats-box">
-            <div class="stats-box-value">50+</div>
+            <div class="stats-box-value">{num_tournaments}+</div>
             <div class="stats-box-label">Active Tournaments</div>
         </div>
         <div class="stats-box">
-            <div class="stats-box-value">100+</div>
+            <div class="stats-box-value">{num_teams}</div>
             <div class="stats-box-label">International Teams</div>
         </div>
         <div class="stats-box">
-            <div class="stats-box-value">5000+</div>
-            <div class="stats-box-label">Fantasy Teams</div>
+            <div class="stats-box-value">{num_formats}</div>
+            <div class="stats-box-label">Cricket Formats</div>
         </div>
     </div>
     """, unsafe_allow_html=True)

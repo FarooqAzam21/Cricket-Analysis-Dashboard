@@ -56,53 +56,65 @@ def load_all_data(_csv_cache_key=None):
     # 2. If DB empty or missing, load from CSVs
     if all_players.empty:
         try:
+            # Load CSVs
             df_bat = pd.read_csv(DATA_PATHS["batsman"]) if os.path.exists(DATA_PATHS["batsman"]) else pd.DataFrame()
             df_ar = pd.read_csv(DATA_PATHS["all_rounder"]) if os.path.exists(DATA_PATHS["all_rounder"]) else pd.DataFrame()
             df_bowl = pd.read_csv(DATA_PATHS["bowler"]) if os.path.exists(DATA_PATHS["bowler"]) else pd.DataFrame()
             
-            # Clean and combine (re-using the logic we had before)
-            def clean(df):
+            print(f"DEBUG CSV Load: batsman={len(df_bat)}, all_rounder={len(df_ar)}, bowler={len(df_bowl)}")
+            
+            # Simple cleaning function
+            def clean(df, default_role=''):
                 if df.empty: 
                     return df
-                # Create a copy to avoid SettingWithCopyWarning
                 df = df.copy()
-                # Strip column names
                 df.columns = [col.strip() for col in df.columns]
-                # Clean specific columns that have text content
-                for c in ['player', 'Team', 'Format', 'role']:
+                
+                # Clean text columns
+                text_cols = ['player', 'Team', 'Format', 'role']
+                for c in text_cols:
                     if c in df.columns:
-                        # Chain all operations without in-place modification
                         df[c] = (df[c]
                                 .astype(str)
                                 .str.strip()
                                 .str.replace(r'[\t\r\n"\']', '', regex=True)
                                 .str.replace(r'\s+', ' ', regex=True)
                                 .str.strip())
+                
+                # Ensure role column exists
+                if 'role' not in df.columns:
+                    df['role'] = default_role
+                    
                 return df
-
-            # Load, clean, and combine all data sources
-            dfs_to_combine = []
-            if not df_bat.empty:
-                dfs_to_combine.append(clean(df_bat))
-            if not df_ar.empty:
-                dfs_to_combine.append(clean(df_ar))
-            if not df_bowl.empty:
-                dfs_to_combine.append(clean(df_bowl))
             
-            if dfs_to_combine:
-                composite = pd.concat(dfs_to_combine, ignore_index=True, sort=False)
-                # Remove duplicates - keep ROW WITH NON-EMPTY ROLE if available
-                # First, sort so non-empty roles come after empty ones, then keep last
-                if 'role' in composite.columns:
-                    composite['_has_role'] = composite['role'].fillna('').astype(str).str.len() > 0
-                    composite = composite.sort_values('_has_role').drop('_has_role', axis=1)
-                    all_players = composite.drop_duplicates(subset=['player', 'Team', 'Format'], keep='last').reset_index(drop=True)
-                else:
-                    all_players = composite.drop_duplicates(subset=['player', 'Team', 'Format'], keep='first').reset_index(drop=True)
+            # Clean each with appropriate role
+            df_bat = clean(df_bat, 'Batsman')
+            df_ar = clean(df_ar, 'All-rounder')
+            df_bowl = clean(df_bowl, 'Bowler')
+            
+            print(f"DEBUG After clean: batsman roles={df_bat['role'].unique()[:3] if len(df_bat)>0 else []}")
+            print(f"DEBUG After clean: bowler roles={df_bowl['role'].unique()[:3] if len(df_bowl)>0 else []}")
+            
+            # Combine - use pandas concat with all columns
+            dfs = [df for df in [df_bat, df_ar, df_bowl] if not df.empty]
+            
+            if dfs:
+                # Use simple concat - all columns will be preserved
+                all_players = pd.concat(dfs, ignore_index=True, sort=False)
+                # Remove exact duplicates (same player, team, format)
+                all_players = all_players.drop_duplicates(subset=['player', 'Team', 'Format'], keep='first')
+                all_players = all_players.reset_index(drop=True)
+                
+                print(f"DEBUG After concat: {len(all_players)} players")
+                print(f"DEBUG Sample data - runs: {all_players['runs'].head(3).tolist()}")
+                print(f"DEBUG Sample data - wickets: {all_players['wickets'].head(3).tolist()}")
+                print(f"DEBUG Sample data - roles: {all_players['role'].head(3).tolist()}")
             else:
                 all_players = pd.DataFrame()
         except Exception as csv_e:
-            print(f"CSV fallback also failed: {csv_e}")
+            print(f"CSV load error: {csv_e}")
+            import traceback
+            traceback.print_exc()
 
     # Load yearwise separately
     try:
