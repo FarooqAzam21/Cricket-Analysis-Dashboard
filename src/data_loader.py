@@ -91,8 +91,14 @@ def load_all_data(_csv_cache_key=None):
             
             if dfs_to_combine:
                 composite = pd.concat(dfs_to_combine, ignore_index=True, sort=False)
-                # Remove duplicates - keep all rows but deduplicate by player+Team+Format
-                all_players = composite.drop_duplicates(subset=['player', 'Team', 'Format'], keep='first').reset_index(drop=True)
+                # Remove duplicates - keep ROW WITH NON-EMPTY ROLE if available
+                # First, sort so non-empty roles come after empty ones, then keep last
+                if 'role' in composite.columns:
+                    composite['_has_role'] = composite['role'].fillna('').astype(str).str.len() > 0
+                    composite = composite.sort_values('_has_role').drop('_has_role', axis=1)
+                    all_players = composite.drop_duplicates(subset=['player', 'Team', 'Format'], keep='last').reset_index(drop=True)
+                else:
+                    all_players = composite.drop_duplicates(subset=['player', 'Team', 'Format'], keep='first').reset_index(drop=True)
             else:
                 all_players = pd.DataFrame()
         except Exception as csv_e:
@@ -120,8 +126,13 @@ def load_all_data(_csv_cache_key=None):
         numeric_cols = ['wickets', 'runs', 'average', 'strike_rate', 'Innings', 'bowling_average', 'economy', 'matches']
         for col in numeric_cols:
             if col in all_players.columns:
+                # Replace '-' with 0 before converting
+                all_players[col] = all_players[col].astype(str).str.replace('-', '0', regex=False).str.strip()
                 all_players[col] = pd.to_numeric(all_players[col], errors='coerce').fillna(0)
 
+        print(f"DEBUG: Sample runs after conversion: {all_players['runs'].head(5).tolist()}")
+        print(f"DEBUG: Sample wickets after conversion: {all_players['wickets'].head(5).tolist()}")
+        
         # Ensure 'role' column exists, if not create it as empty
         if 'role' not in all_players.columns:
             print("WARNING: 'role' column missing, creating empty role column")
@@ -132,13 +143,16 @@ def load_all_data(_csv_cache_key=None):
         
         print(f"DEBUG: Total players: {len(all_players)}")
         print(f"DEBUG: Unique roles (first 10): {list(all_players['role_lower'].unique()[:10])}")
+        print(f"DEBUG: Non-empty roles: {(all_players['role_lower'].str.len() > 0).sum()}")
         print(f"DEBUG: Role value counts:\n{all_players['role_lower'].value_counts().head(10)}")
         
         # Classify players by role - be more lenient with classification
         batsmen = all_players[all_players['role_lower'].str.contains('batsman|batter', na=False, regex=False)]
         wicket_keepers = all_players[all_players['role_lower'].str.contains('wicket|keeper', na=False, regex=False)]
-        all_rounders = all_players[all_players['role_lower'].str.contains('all-rounder|all rounder|allrounder|fast-bowling|spinner|arm', na=False)]
-        bowlers_data = all_players[all_players['role_lower'].str.contains('bowler|spinner|fast|seam|pace', na=False) | (all_players.get('wickets', 0) > 0)]
+        all_rounders = all_players[all_players['role_lower'].str.contains('all-rounder|all rounder|allrounder|fast-bowling|spinning|spinner|arm', na=False)]
+        bowlers_data = all_players[all_players['role_lower'].str.contains('bowler|spinner|fast|seam|pace', na=False) | (all_players['wickets'] > 0)]
+        
+        print(f"DEBUG: Primary classification - Batsmen: {len(batsmen)}, Bowlers: {len(bowlers_data)}")
         
         # If no batsmen found, classify by positive runs as fallback
         if len(batsmen) == 0 and 'runs' in all_players.columns:
@@ -150,7 +164,16 @@ def load_all_data(_csv_cache_key=None):
             bowlers_data = all_players[all_players['wickets'] > 0]
             print(f"DEBUG: Using wickets-based fallback for bowlers, found {len(bowlers_data)}")
         
-        print(f"DEBUG: Classified - Batsmen: {len(batsmen)}, Bowlers: {len(bowlers_data)}, All-rounders: {len(all_rounders)}, WK: {len(wicket_keepers)}")
+        # Ultimate fallback: if STILL no data, use all players
+        if len(batsmen) == 0:
+            batsmen = all_players.copy()
+            print(f"DEBUG: ULTIMATE FALLBACK - using all {len(batsmen)} players as batsmen")
+        
+        if len(bowlers_data) == 0:
+            bowlers_data = all_players.copy()
+            print(f"DEBUG: ULTIMATE FALLBACK - using all {len(bowlers_data)} players as bowlers")
+        
+        print(f"DEBUG: Final - Batsmen: {len(batsmen)}, Bowlers: {len(bowlers_data)}, All-rounders: {len(all_rounders)}, WK: {len(wicket_keepers)}")
         
         return all_players, batsmen, all_rounders, bowlers_data, df_year, batsmen, all_rounders, wicket_keepers
     
