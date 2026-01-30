@@ -625,7 +625,7 @@ def show_admin_panel():
                         with col2:
                             # Get team players
                             team_details = get_team_details(perf_team_id)
-                            team_players = team_details['players'].split(',') if team_details and team_details['players'] else []
+                            team_players = team_details['squad'].split(',') if team_details and team_details['squad'] else []
                             
                             if team_players:
                                 perf_player = st.selectbox("Select Player", team_players, key="perf_player_select")
@@ -707,7 +707,7 @@ def show_admin_panel():
                     strength_data.append({
                         'Team': team['team_name'],
                         'Group': team['group_letter'],
-                        'Players': len(team['players'].split(',')) if team['players'] else 0,
+                        'Players': len(team['squad'].split(',')) if team['squad'] else 0,
                         'Strength': strength,
                         'Rating': '🟢 Strong' if strength >= 70 else '🟡 Medium' if strength >= 50 else '🔴 Weak'
                     })

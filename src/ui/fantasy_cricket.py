@@ -68,7 +68,7 @@ def show_fantasy_cricket():
     
     # Get active tournaments
     conn = get_db_connection()
-    tournaments = conn.execute("SELECT * FROM tournaments WHERE status IN ('planning', 'active')").fetchall()
+    tournaments = conn.execute("SELECT * FROM tournaments ORDER BY id DESC").fetchall()
     conn.close()
     
     if not tournaments:

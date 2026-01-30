@@ -8,11 +8,11 @@ Muhammad Sairaj,India,Odi,47,46,55.0,73,7.85,24.67,28.6,5.17,11,1,"https://img1.
 Mitchell Starc,Australia,T20,65,65,98,79,9.8,23.81,18.4,7.74,9,0,"",fast-bowler
 Mitchell Starc,Australia,Test,102,196,2411,420,20.60,26.46,46.3,3.42,9,18,"",fast-bowler
 Mitchell Starc,Australia,Odi,130,130,583.0,247,11.66,23.58,26.8,5.26,9,9,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/402700/402778.jpg",fast-bowler,0.0,0.0,0.0
-Josh Hazlewood,Australia,Odi,76,143,565,295,11.53,24.21,52.2,2.77,10,13,"",fast-bowler
+Josh Hazlewood,Australia,Test,76,143,565,295,11.53,24.21,52.2,2.77,10,13,"",fast-bowler
 Josh Hazlewood,Australia,Odi,60,59,29,9.66,79,21.26,17.0,7.47,10,0,"",fast-bowler
-Josh Hazlewood,Australia,Odi,95,94,135.0,142,15.0,27.66,35.0,4.73,10,3,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/405400/405467.png",fast-bowler,0.0,0.0,0.0
+Josh Hazlewood,Australia,T20,95,94,135.0,142,15.0,27.66,35.0,4.73,10,3,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/405400/405467.png",fast-bowler,0.0,0.0,0.0
 Nathan Ellis,Australia,Odi,30,30,30,47,6.00,18.14,13.7,7.92,11,0,"",fast-bowler
-Nathan Ellis,Australia,Odi,17,17,106.0,18,13.25,43.27,46.5,5.58,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/404400/404422.jpg",fast-bowler,0.0,0.0,0.0
+Nathan Ellis,Australia,T20,17,17,106.0,18,13.25,43.27,46.5,5.58,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/404400/404422.jpg",fast-bowler,0.0,0.0,0.0
 Fazal Haq Farooqui,Afghanistan,T20,51,51,17,63,5.66,19.77,17.1,6.93,10,1,"",fast-bowler
 Fazal Haq Farooqui,Afghanistan,Odi,42,42,21.0,52,3.5,33.5,34.1,5.88,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/395000/395009.jpg",fast-bowler,0.0,0.0,0.0
 Kagiso Rabada,South Africa,Test,73,134,1102,340,12.24,22.03,39.5,3.34,9,17,"",fast-bowler
@@ -72,6 +72,8 @@ Muhammad shami,India,Odi,108,107,205.0,206,7.75,24.05,25.8,5.58,10,6,"https://im
 Pat Cummins,Australia,Test,71,132,1548,309,16.82,22.10,45.9,2.88,9,14,"",fast-bowler
 Pat Cummins,Australia,T20,57,57,158,66,10.53,23.57,19.0,7.44,10,0,"",fast-bowler
 Pat Cummins,Australia,Odi,90,90,537.0,143,14.21,28.78,32.7,5.27,9,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/401900/401998.jpg",fast-bowler,,,
+Blessing Muzzarabani,Zimbabwe,Test,18,27,288,67,12.52,26.20,47.1,3.33,9,3,"",fast-bowler
+Blessing Muzzarabani,Zimbabwe,T20,83,80,50,93,3.12,22.31,18.6,7.18,9,0,"",fast-bowler
 Blessing Muzzarabani,Zimbabwe,Odi,57,55,134.0,70,5.15,33.35,38.8,5.15,10,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/399700/399704.jpg",fast-bowler,,,
 Mujeeb ur Rehman,Afghanistan,T20,58,58,81,76,11.57,18.26,16.9,6.46,10,1,"",right-arm-mystery-spinner
 Mujeeb ur Rehman,Afghanistan,Odi,75,74,236.0,101,9.07,28.34,39.2,4.32,10,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/373800/373830.jpg",right-arm-mystery-spinner,,,
@@ -270,7 +272,7 @@ Ben Manenti,Italy,T20,8,8,93,3,13.28,76.66,60.0,7.66,9,0,"",rigt-arm-off-spinner
 Thomas Draca,Italy,T20,8,8,4,10,-,14.90,16.2,5.51,10,0,"",fast-bowler
 Crishan Kalugamage,Italy,T20,16,16,25,16,8.33,19.25,18.6,6.18,11,0,"",leg-spinner
 Zain Ali,Italy,T20,3,2,0,4,0,10.75,12.0,5.37,10,0,"",fast-bowler
-Aryan Dutt,Netherlands,Odi,53,52,221,62,7.62,32.88,40.7,4.84,9,1,"",right-arm-off-spinner
+Aryan Dutt,Netherlands,T20,53,52,221,62,7.62,32.88,40.7,4.84,9,1,"",right-arm-off-spinner
 Aryan Dutt,Netherlands,Odi,26,26,14,25,16.28,23.44,20.2,6.94,9,0,"",right-arm-off-spinner
 Fred Klaassen,Netherlands,Odi,20,20,75,32,9.87,25.40,34.5,4.40,10,0,"",fast-bowler
 Fred Klaassen,Netherlands,T20,39,38,45,43,4.5,23.44,18.6,7.52,10,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_wide_w_1280,q_70/lsci/db/PICTURES/CMS/405800/405867.6.jpg",fast-bowler
@@ -303,3 +305,16 @@ Simranjeet Sing,UAE,T20,16,16,2,19,1.00,16.05,15.9,6.03,11,0,"https://img1.hscic
 Matthew Kuhnemann,Australia,Test,5,9,18,25,4.5,22.20,41.0,3.24,11,2,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/396200/396226.jpg",left-arm-off-spinner
 Matthew Kuhnemann,Australia,Odi,5,5,16,8,8.00,27.12,31.5,5.16,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/396200/396226.jpg",left-arm-off-spinner
 Matthew Kuhnemann,Australia,T20,4,4,-,0,-,-,-,8.33,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/396200/396226.jpg",left-arm-off-spinner
+Ben White,Ireland,Test,3,4,1,4,0.5,109.00,114.7,5.69,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/328700/328716.jpg",fast-bowler
+Ben White,Ireland,Odi,2,2,-,1,-,118.00,108.0,6.55,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/328700/328716.jpg",fast-bowler
+Ben White,Ireland,T20,38,36,27,36,13.50,27.38,20.0,8.21,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/328700/328716.jpg",fast-bowler
+Josh Little,Ireland,Odi,42,40,81,61,8.1,34.34,33.1,6.21,10,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/365700/365760.jpg",fast-bowler
+Josh Little,Ireland,T20,76,75,132,82,11.00,25.87,20.3,7.63,10,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/365700/365760.jpg",fast-bowler
+Ali Khan,USA,Odi,15,15,20,33,3.33,16.42,20.6,4.77,10,2,"",fast-bowler
+Ali Khan,USA,T20,18,18,15,16,7.50,33.87,24.0,8.44,10,0,"",fast-bowler
+Jasdeep Singh,USA,Odi,45,44,304,54,12.66,34.42,37.0,5.57,11,0,"",fast-bowler
+Jasdeep Singh,USA,T20,30,30,91,31,7.58,28.67,20.1,8.54,11,0,"",fast-bowler
+Nosthush Kenjige,USA,Odi,61,60,413,69,17.20,30.36,43.0,4.23,9,1,"",fast-bowler
+Nosthush Kenjige,USA,T20,23,22,10,21,2.00,25.42,20.1,7.55,9,0,"",fast-bowler
+Saurabh Netravalkar,USA,Odi,67,66,150,108,9.33,21.23,31.8,3.99,11,2,"",fast-bowler
+Saurabh Netravalkar,USA,T20,41,41,42,4,7.00,22.92,20.0,6.85,11,1,"",fast-bowler

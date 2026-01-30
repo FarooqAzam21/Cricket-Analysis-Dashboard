@@ -20,7 +20,7 @@ def show_tournament_home():
     # In production, you'd select from available tournaments
     from database import get_db_connection
     conn = get_db_connection()
-    tournaments = conn.execute("SELECT * FROM tournaments WHERE status != 'archived'").fetchall()
+    tournaments = conn.execute("SELECT * FROM tournaments ORDER BY id DESC").fetchall()
     conn.close()
     
     if not tournaments:
