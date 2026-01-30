@@ -288,6 +288,9 @@ def main():
         # Create responsive columns for buttons
         nav_cols = st.columns(min(len(menu_options), 2))
         
+        # Track page changes
+        prev_page = st.session_state.get('prev_page', st.session_state.page)
+        
         for idx, (icon, label) in enumerate(menu_options):
             col_idx = idx % len(nav_cols)
             with nav_cols[col_idx]:
@@ -305,6 +308,7 @@ def main():
                         st.session_state.page = "🏆 Tournament"
                     elif label == "Admin":
                         st.session_state.page = "⚙️ Admin Panel"
+                    st.session_state.prev_page = st.session_state.page
                     st.rerun()
         
         st.markdown("---")

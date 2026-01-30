@@ -131,15 +131,26 @@ def load_all_data(_csv_cache_key=None):
         all_players['role_lower'] = all_players['role'].fillna('').astype(str).str.lower()
         
         print(f"DEBUG: Total players: {len(all_players)}")
-        print(f"DEBUG: Unique roles: {all_players['role_lower'].unique()[:10]}")
+        print(f"DEBUG: Unique roles (first 10): {list(all_players['role_lower'].unique()[:10])}")
+        print(f"DEBUG: Role value counts:\n{all_players['role_lower'].value_counts().head(10)}")
         
-        # Classify players by role
-        batsmen = all_players[all_players['role_lower'].str.contains('batsman', na=False, regex=False)]
-        wicket_keepers = all_players[all_players['role_lower'].str.contains('wicket-keeper', na=False, regex=False)]
-        all_rounders = all_players[all_players['role_lower'].str.contains('all-rounder|fast-bowling|spinner|arm', na=False)]
-        bowlers_data = all_players[all_players['role_lower'].str.contains('bowler|spinner|fast|arm', na=False) | (all_players.get('wickets', 0) > 0)]
+        # Classify players by role - be more lenient with classification
+        batsmen = all_players[all_players['role_lower'].str.contains('batsman|batter', na=False, regex=False)]
+        wicket_keepers = all_players[all_players['role_lower'].str.contains('wicket|keeper', na=False, regex=False)]
+        all_rounders = all_players[all_players['role_lower'].str.contains('all-rounder|all rounder|allrounder|fast-bowling|spinner|arm', na=False)]
+        bowlers_data = all_players[all_players['role_lower'].str.contains('bowler|spinner|fast|seam|pace', na=False) | (all_players.get('wickets', 0) > 0)]
         
-        print(f"DEBUG: Batsmen: {len(batsmen)}, Bowlers: {len(bowlers_data)}, All-rounders: {len(all_rounders)}")
+        # If no batsmen found, classify by positive runs as fallback
+        if len(batsmen) == 0 and 'runs' in all_players.columns:
+            batsmen = all_players[all_players['runs'] > 0]
+            print(f"DEBUG: Using runs-based fallback for batsmen, found {len(batsmen)}")
+        
+        # If no bowlers found, classify by positive wickets as fallback
+        if len(bowlers_data) == 0 and 'wickets' in all_players.columns:
+            bowlers_data = all_players[all_players['wickets'] > 0]
+            print(f"DEBUG: Using wickets-based fallback for bowlers, found {len(bowlers_data)}")
+        
+        print(f"DEBUG: Classified - Batsmen: {len(batsmen)}, Bowlers: {len(bowlers_data)}, All-rounders: {len(all_rounders)}, WK: {len(wicket_keepers)}")
         
         return all_players, batsmen, all_rounders, bowlers_data, df_year, batsmen, all_rounders, wicket_keepers
     
