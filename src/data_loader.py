@@ -62,6 +62,9 @@ def load_all_data(_csv_cache_key=None):
             df_bowl = pd.read_csv(DATA_PATHS["bowler"]) if os.path.exists(DATA_PATHS["bowler"]) else pd.DataFrame()
             
             print(f"DEBUG CSV Load: batsman={len(df_bat)}, all_rounder={len(df_ar)}, bowler={len(df_bowl)}")
+            print(f"DEBUG Columns - batsman: {list(df_bat.columns)}")
+            print(f"DEBUG Columns - bowler: {list(df_bowl.columns)}")
+            print(f"DEBUG Columns - all_rounder: {list(df_ar.columns)}")
             
             # Simple cleaning function
             def clean(df, default_role=''):
@@ -81,11 +84,19 @@ def load_all_data(_csv_cache_key=None):
                                 .str.replace(r'\s+', ' ', regex=True)
                                 .str.strip())
                 
-                # Ensure role column exists
+                # Ensure role column exists and has default value
                 if 'role' not in df.columns:
                     df['role'] = default_role
+                else:
+                    # Fill empty role values with default
+                    df.loc[df['role'].isna() | (df['role'] == '') | (df['role'] == ' '), 'role'] = default_role
                     
                 return df
+            
+            # CRITICAL: Standardize column names BEFORE concat
+            # odi_bowler.csv has 'bowling_strike_rate' instead of 'strike_rate'
+            if 'bowling_strike_rate' in df_bowl.columns and 'strike_rate' not in df_bowl.columns:
+                df_bowl.rename(columns={'bowling_strike_rate': 'strike_rate'}, inplace=True)
             
             # Clean each with appropriate role
             df_bat = clean(df_bat, 'Batsman')
@@ -94,6 +105,7 @@ def load_all_data(_csv_cache_key=None):
             
             print(f"DEBUG After clean: batsman roles={df_bat['role'].unique()[:3] if len(df_bat)>0 else []}")
             print(f"DEBUG After clean: bowler roles={df_bowl['role'].unique()[:3] if len(df_bowl)>0 else []}")
+            print(f"DEBUG After clean: all_rounder roles={df_ar['role'].unique()[:3] if len(df_ar)>0 else []}")
             
             # Combine - use pandas concat with all columns
             dfs = [df for df in [df_bat, df_ar, df_bowl] if not df.empty]
