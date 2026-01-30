@@ -5,10 +5,18 @@ from ..config import FORMATS
 from ..utils import sort_players
 
 def render_format_analysis(batsmen, all_rounders, bowlers_data, wicket_keepers):
-    # Debug check
+    # Debug check and fallback
     if batsmen is None or batsmen.empty:
         st.error(f"❌ No batsmen data. Type: {type(batsmen)}, Shape: {batsmen.shape if hasattr(batsmen, 'shape') else 'N/A'}")
-        st.stop()
+        st.info("⚠️ Falling back to showing all players data")
+        # If batsmen is empty, use all_rounders or bowlers_data as fallback
+        if bowlers_data is not None and not bowlers_data.empty:
+            batsmen = bowlers_data
+        elif all_rounders is not None and not all_rounders.empty:
+            batsmen = all_rounders
+        else:
+            st.error("❌ No player data available at all. Please check CSV files.")
+            st.stop()
     
     # --- Interactive Filter Section ---
     st.markdown("### 🛠️ Global Chart Filters")
