@@ -353,8 +353,9 @@ def main():
         # Load data
         all_players, df_batsman, df_allrounder, df_bowler, year_wise, batsmen, all_rounders, wicket_keepers = load_all_data(_csv_cache_key=_get_csv_cache_key())
         
-        if all_players is None:
+        if all_players is None or all_players.empty:
             st.error("❌ Failed to load player data")
+            st.info(f"Debug: all_players is None={all_players is None}, empty={all_players.empty if all_players is not None else 'N/A'}")
             st.stop()
         
         # Sidebar filters for analysis - responsive

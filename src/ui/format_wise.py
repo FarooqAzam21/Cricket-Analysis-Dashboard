@@ -5,6 +5,11 @@ from ..config import FORMATS
 from ..utils import sort_players
 
 def render_format_analysis(batsmen, all_rounders, bowlers_data, wicket_keepers):
+    # Debug check
+    if batsmen is None or batsmen.empty:
+        st.error(f"❌ No batsmen data. Type: {type(batsmen)}, Shape: {batsmen.shape if hasattr(batsmen, 'shape') else 'N/A'}")
+        st.stop()
+    
     # --- Interactive Filter Section ---
     st.markdown("### 🛠️ Global Chart Filters")
     with st.expander("Adjust Analysis Thresholds (Applies to all charts)", expanded=True):
