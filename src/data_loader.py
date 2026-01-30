@@ -38,18 +38,29 @@ def load_all_data(_csv_cache_key=None):
     
     # 1. Try DB first
     try:
-        all_players = fetch_all_players_from_db()
-        if not all_players.empty:
-            # Map DB naming back to what UI expects
-            db_to_ui = {
-                'team': 'Team',
-                'format': 'Format',
-                'innings': 'Innings',
-                'no': 'NO',
-                'hundreds': '100s',
-                'fifties': '50s'
-            }
-            all_players = all_players.rename(columns=db_to_ui)
+        db_data = fetch_all_players_from_db()
+        
+        # Validate DB data - check if it has actual values (not just zeros/empty)
+        if not db_data.empty:
+            # Check data integrity: should have non-zero runs/wickets
+            has_valid_data = (db_data['runs'].astype(float) > 0).sum() > 0 or (db_data['wickets'].astype(float) > 0).sum() > 0
+            
+            if has_valid_data:
+                all_players = db_data
+                # Map DB naming back to what UI expects
+                db_to_ui = {
+                    'team': 'Team',
+                    'format': 'Format',
+                    'innings': 'Innings',
+                    'no': 'NO',
+                    'hundreds': '100s',
+                    'fifties': '50s'
+                }
+                all_players = all_players.rename(columns=db_to_ui)
+                print(f"✅ Loaded {len(all_players)} players from database")
+            else:
+                print(f"⚠️  Database has 888 rows but all data is zeros/empty - falling back to CSV")
+                all_players = pd.DataFrame()
     except Exception as e:
         print(f"DB Fetch failed, falling back to CSV: {e}")
 
@@ -199,6 +210,8 @@ def load_all_data(_csv_cache_key=None):
         
         print(f"DEBUG: Final - Batsmen: {len(batsmen)}, Bowlers: {len(bowlers_data)}, All-rounders: {len(all_rounders)}, WK: {len(wicket_keepers)}")
         
-        return all_players, batsmen, all_rounders, bowlers_data, df_year, batsmen, all_rounders, wicket_keepers
+        # RETURN ORDER MUST MATCH main.py expectations:
+        # all_players, df_batsman, df_allrounder, df_bowler, year_wise, batsmen, all_rounders, wicket_keepers
+        return all_players, all_players, all_rounders, bowlers_data, df_year, batsmen, all_rounders, wicket_keepers
     
     return None, None, None, None, None, None, None, None
