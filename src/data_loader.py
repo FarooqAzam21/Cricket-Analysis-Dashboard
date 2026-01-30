@@ -62,20 +62,39 @@ def load_all_data(_csv_cache_key=None):
             
             # Clean and combine (re-using the logic we had before)
             def clean(df):
-                if df.empty: return df
-                df.columns = df.columns.map(str).str.strip()
-                # Clean all text columns - remove tabs, quotes, special chars and excess whitespace
+                if df.empty: 
+                    return df
+                # Create a copy to avoid SettingWithCopyWarning
+                df = df.copy()
+                # Strip column names
+                df.columns = [col.strip() for col in df.columns]
+                # Clean specific columns that have text content
                 for c in ['player', 'Team', 'Format', 'role']:
                     if c in df.columns:
-                        df[c] = df[c].astype(str).str.strip()  # First strip outer whitespace
-                        df[c] = df[c].str.replace(r'[\t\r\n"\']', '', regex=True)  # Remove tabs, quotes, special chars
-                        df[c] = df[c].str.replace(r'\s+', ' ', regex=True)  # Replace multiple spaces with single space
-                        df[c] = df[c].str.strip()  # Final strip
+                        # Chain all operations without in-place modification
+                        df[c] = (df[c]
+                                .astype(str)
+                                .str.strip()
+                                .str.replace(r'[\t\r\n"\']', '', regex=True)
+                                .str.replace(r'\s+', ' ', regex=True)
+                                .str.strip())
                 return df
 
-            composite = pd.concat([clean(df_bat), clean(df_ar), clean(df_bowl)], ignore_index=True, sort=False)
-            # Minimal aggregation for the migration phase
-            all_players = composite.groupby(['player', 'Team', 'Format'], as_index=False).first()
+            # Load, clean, and combine all data sources
+            dfs_to_combine = []
+            if not df_bat.empty:
+                dfs_to_combine.append(clean(df_bat))
+            if not df_ar.empty:
+                dfs_to_combine.append(clean(df_ar))
+            if not df_bowl.empty:
+                dfs_to_combine.append(clean(df_bowl))
+            
+            if dfs_to_combine:
+                composite = pd.concat(dfs_to_combine, ignore_index=True, sort=False)
+                # Remove duplicates - keep all rows but deduplicate by player+Team+Format
+                all_players = composite.drop_duplicates(subset=['player', 'Team', 'Format'], keep='first').reset_index(drop=True)
+            else:
+                all_players = pd.DataFrame()
         except Exception as csv_e:
             print(f"CSV fallback also failed: {csv_e}")
 
@@ -103,14 +122,24 @@ def load_all_data(_csv_cache_key=None):
             if col in all_players.columns:
                 all_players[col] = pd.to_numeric(all_players[col], errors='coerce').fillna(0)
 
+        # Ensure 'role' column exists, if not create it as empty
+        if 'role' not in all_players.columns:
+            print("WARNING: 'role' column missing, creating empty role column")
+            all_players['role'] = ''
+        
         # Create role_lower for filtering with proper handling of NaN/None
-        all_players['role_lower'] = all_players.get('role', '').fillna('').astype(str).str.lower()
+        all_players['role_lower'] = all_players['role'].fillna('').astype(str).str.lower()
+        
+        print(f"DEBUG: Total players: {len(all_players)}")
+        print(f"DEBUG: Unique roles: {all_players['role_lower'].unique()[:10]}")
         
         # Classify players by role
         batsmen = all_players[all_players['role_lower'].str.contains('batsman', na=False, regex=False)]
         wicket_keepers = all_players[all_players['role_lower'].str.contains('wicket-keeper', na=False, regex=False)]
         all_rounders = all_players[all_players['role_lower'].str.contains('all-rounder|fast-bowling|spinner|arm', na=False)]
         bowlers_data = all_players[all_players['role_lower'].str.contains('bowler|spinner|fast|arm', na=False) | (all_players.get('wickets', 0) > 0)]
+        
+        print(f"DEBUG: Batsmen: {len(batsmen)}, Bowlers: {len(bowlers_data)}, All-rounders: {len(all_rounders)}")
         
         return all_players, batsmen, all_rounders, bowlers_data, df_year, batsmen, all_rounders, wicket_keepers
     
