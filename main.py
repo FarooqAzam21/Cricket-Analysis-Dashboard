@@ -18,8 +18,8 @@ from src.database import init_db
 import os
 
 def render_auth():
-    """Render improved mobile-friendly login/signup page with green and white theme."""
-    # Apply custom theme for login page
+    """Render production-grade mobile-friendly login/signup page."""
+    
     login_css = """
     <style>
     .login-container {
@@ -30,7 +30,7 @@ def render_auth():
         min-height: 100vh;
         background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         padding: 20px;
-        font-family: 'Inter', sans-serif;
+        font-family: 'Poppins', sans-serif;
     }
     
     .login-card {
@@ -40,6 +40,19 @@ def render_auth():
         width: 100%;
         max-width: 420px;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: slideUp 0.5s ease;
+        backdrop-filter: blur(10px);
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     
     .login-header {
@@ -52,22 +65,34 @@ def render_auth():
         font-size: 32px;
         font-weight: 700;
         margin: 0 0 10px 0;
+        letter-spacing: -0.5px;
     }
     
     .login-subtitle {
         color: #6b7280;
         font-size: 14px;
         margin: 0;
+        font-weight: 500;
     }
     
     .cricket-emoji {
         font-size: 60px;
         margin-bottom: 20px;
+        animation: bounce 2s infinite;
     }
     
-    @media (max-width: 600px) {
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    /* Responsive for tablets */
+    @media (max-width: 768px) {
         .login-card {
             padding: 30px 20px;
+            max-width: 100%;
+            margin: 20px;
+            border-radius: 16px;
         }
         .login-title {
             font-size: 24px;
@@ -76,12 +101,34 @@ def render_auth():
             font-size: 48px;
         }
     }
+    
+    /* Responsive for mobile phones */
+    @media (max-width: 480px) {
+        .login-card {
+            padding: 25px 16px;
+            margin: 10px;
+            border-radius: 14px;
+        }
+        .login-title {
+            font-size: 20px;
+        }
+        .login-subtitle {
+            font-size: 12px;
+        }
+        .cricket-emoji {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+        .login-header {
+            margin-bottom: 30px;
+        }
+    }
     </style>
     """
     
     st.markdown(login_css, unsafe_allow_html=True)
     
-    # Center content
+    # Center the login card
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
@@ -103,43 +150,81 @@ def render_auth():
         
         with tab1:
             st.markdown("### Welcome Back!")
-            with st.form("login_form"):
-                u = st.text_input("👤 Username", placeholder="Enter your username")
-                p = st.text_input("🔑 Password", type="password", placeholder="Enter your password")
+            with st.form("login_form", clear_on_submit=False):
+                u = st.text_input(
+                    "👤 Username",
+                    placeholder="Enter your username",
+                    key="login_username",
+                    max_chars=50
+                )
+                p = st.text_input(
+                    "🔑 Password",
+                    type="password",
+                    placeholder="Enter your password",
+                    key="login_password",
+                    max_chars=50
+                )
                 
                 col1, col2, col3 = st.columns([1, 2, 1])
                 with col2:
                     if st.form_submit_button("🔓 Login", use_container_width=True):
-                        success, res = login(u, p)
-                        if success:
-                            st.session_state.authenticated = True
-                            st.session_state.username = u
-                            st.success("✅ Login successful!")
-                            st.rerun()
+                        if not u or not p:
+                            st.error("❌ Please enter both username and password")
                         else:
-                            st.error(f"❌ {res}")
-                            
+                            success, res = login(u, p)
+                            if success:
+                                st.session_state.authenticated = True
+                                st.session_state.username = u
+                                st.success("✅ Login successful!")
+                                st.rerun()
+                            else:
+                                st.error(f"❌ {res}")
+                                
         with tab2:
             st.markdown("### Create New Account")
-            with st.form("signup_form"):
-                u = st.text_input("👤 Username", placeholder="Choose a username", key="signup_username")
-                p = st.text_input("🔑 Password", type="password", placeholder="Choose a strong password", key="signup_password")
-                p_confirm = st.text_input("🔑 Confirm Password", type="password", placeholder="Confirm your password", key="signup_confirm")
+            with st.form("signup_form", clear_on_submit=True):
+                u = st.text_input(
+                    "👤 Username",
+                    placeholder="Choose a username",
+                    key="signup_username",
+                    max_chars=50
+                )
+                p = st.text_input(
+                    "🔑 Password",
+                    type="password",
+                    placeholder="Choose a strong password (min 6 chars)",
+                    key="signup_password",
+                    max_chars=50
+                )
+                p_confirm = st.text_input(
+                    "🔑 Confirm Password",
+                    type="password",
+                    placeholder="Confirm your password",
+                    key="signup_confirm",
+                    max_chars=50
+                )
                 
                 col1, col2, col3 = st.columns([1, 2, 1])
                 with col2:
                     if st.form_submit_button("✅ Create Account", use_container_width=True):
-                        if p != p_confirm:
+                        if not u or not p:
+                            st.error("❌ Username and password are required!")
+                        elif len(p) < 6:
+                            st.error("❌ Password must be at least 6 characters!")
+                        elif p != p_confirm:
                             st.error("❌ Passwords don't match!")
                         else:
                             success, msg = signup(u, p)
                             if success:
                                 st.success(f"✅ {msg}")
+                                st.info("Now you can login with your new account!")
                             else:
                                 st.error(f"❌ {msg}")
 
 def main():
-    # 0. Initialize DB and Auth state
+    """Main application entry point with responsive design."""
+    
+    # Initialize database and auth state
     init_db()
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
@@ -148,31 +233,37 @@ def main():
     if 'page' not in st.session_state:
         st.session_state.page = "🏠 Home"
     
-    # 1. Set page config at the very beginning
+    # Set page configuration
     logo_path = os.path.join("assets", "logo.png")
     page_icon = logo_path if os.path.exists(logo_path) else "🏏"
 
     st.set_page_config(
-        page_title="Cricket Pro Analytics",
+        page_title="Cricket Pro - Fantasy League",
         page_icon=page_icon,
         layout="wide",
-        initial_sidebar_state="auto"
+        initial_sidebar_state="auto",
+        menu_items={
+            'About': "🏏 Cricket Pro - T20 World Cup Fantasy League Manager",
+            'Get help': None,
+            'Report a bug': None
+        }
     )
     
+    # Show auth if not authenticated
     if not st.session_state.authenticated:
         render_auth()
         st.stop()
 
-    # Apply Green & White Premium Theme
+    # Apply responsive theme globally
     apply_custom_styles()
     
-    # 2. Sidebar elements - IMPROVED MOBILE DESIGN
+    # Responsive sidebar navigation
     with st.sidebar:
-        # Logo and header
+        # Header with responsive sizing
         st.markdown("""
-        <div style='text-align: center; margin-bottom: 20px;'>
-            <h1 style='color: #10b981; margin: 0; font-size: 28px;'>🏏 Cricket Pro</h1>
-            <p style='color: #6b7280; margin: 5px 0 0 0; font-size: 12px;'>T20 Fantasy League</p>
+        <div style='text-align: center; margin-bottom: 20px; animation: fadeIn 0.5s ease;'>
+            <h1 style='color: white; margin: 0; font-size: clamp(24px, 5vw, 32px);'>🏏 Cricket Pro</h1>
+            <p style='color: rgba(255,255,255,0.8); margin: 8px 0 0 0; font-size: clamp(11px, 2.5vw, 14px);'>T20 Fantasy League</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -180,23 +271,32 @@ def main():
         st.markdown(f"### 👤 {st.session_state.username}")
         st.markdown("---")
         
-        # Show admin option only for admin user
+        # Navigation menu options
         menu_options = [
             ("🏠", "Home"),
             ("📊", "Analysis"),
             ("🏆", "Tournament"),
         ]
         
+        # Add admin option for admin users
         if st.session_state.username == 'admin':
             menu_options.append(("⚙️", "Admin"))
         
-        # Mobile-friendly menu with better icons
+        # Responsive navigation layout
         st.markdown("### Navigation")
-        cols = st.columns(len(menu_options))
+        
+        # Create responsive columns for buttons
+        nav_cols = st.columns(min(len(menu_options), 2))
         
         for idx, (icon, label) in enumerate(menu_options):
-            with cols[idx]:
-                if st.button(f"{icon}\n{label}", use_container_width=True, key=f"nav_{label}"):
+            col_idx = idx % len(nav_cols)
+            with nav_cols[col_idx]:
+                if st.button(
+                    f"{icon}\n{label}",
+                    use_container_width=True,
+                    key=f"nav_{label}",
+                    help=f"Go to {label}"
+                ):
                     if label == "Home":
                         st.session_state.page = "🏠 Home"
                     elif label == "Analysis":
@@ -209,43 +309,63 @@ def main():
         
         st.markdown("---")
         
-        # Logout button with better styling
-        if st.button("🚪 Logout", use_container_width=True):
+        # Logout button
+        if st.button("🚪 Logout", use_container_width=True, key="logout_btn"):
             st.session_state.authenticated = False
             st.session_state.username = None
             st.rerun()
         
         st.markdown("---")
-        st.info("🚀 **Cricket Pro** - Fantasy League Manager")
+        st.info("🚀 **Cricket Pro** v2.0\n\nFantasy League Manager")
     
-    # 3. Main routing based on menu selection
+    # Main content area - responsive routing
     if st.session_state.page == "🏠 Home":
         show_home_page()
     
     elif st.session_state.page == "🏏 Cricket Analysis":
-        # Sub-menu for cricket analysis
+        # Cricket analysis sub-menu
+        st.markdown("""
+        <style>
+        .analysis-header {
+            margin-bottom: 20px;
+        }
+        @media (max-width: 768px) {
+            .analysis-header {
+                margin-bottom: 15px;
+            }
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
         analysis_options = [
-            "Format Wise Analysis", "Select Playing 11", "Player Comparison",
-            "Player Analysis", "🎯 Next Match Prediction",
-            "📈 Yearly Performance Prediction", "Smart Scout (AI)", "Ask Expert (AI)"
+            "Format Wise Analysis",
+            "Select Playing 11",
+            "Player Comparison",
+            "Player Analysis",
+            "🎯 Next Match Prediction",
+            "📈 Yearly Performance Prediction",
+            "Smart Scout (AI)",
+            "Ask Expert (AI)"
         ]
         
-        analysis_menu = st.sidebar.selectbox("Cricket Analysis", analysis_options)
+        analysis_menu = st.sidebar.selectbox("Cricket Analysis", analysis_options, key="analysis_menu")
         
+        # Load data
         all_players, df_batsman, df_allrounder, df_bowler, year_wise, batsmen, all_rounders, wicket_keepers = load_all_data(_csv_cache_key=_get_csv_cache_key())
         
         if all_players is None:
+            st.error("❌ Failed to load player data")
             st.stop()
         
-        # Sidebar filters for analysis
+        # Sidebar filters for analysis - responsive
         st.sidebar.markdown("---")
         st.sidebar.subheader("Team Preference")
         teams = ['All']
         if all_players is not None and 'Team' in all_players.columns:
             teams += sorted(all_players['Team'].dropna().unique().tolist())
-        selected_team = st.sidebar.selectbox("Select Display Team", teams)
+        selected_team = st.sidebar.selectbox("Select Team", teams, key="team_filter")
         
-        # Routing for cricket analysis features
+        # Route to appropriate analysis page
         if analysis_menu == "Format Wise Analysis":
             render_format_analysis(batsmen, all_rounders, df_bowler, wicket_keepers)
         elif analysis_menu == "Select Playing 11":
@@ -266,10 +386,11 @@ def main():
             render_ai_chat(all_players)
     
     elif st.session_state.page == "🏆 Tournament":
-        # Tournament menu for all users
+        # Tournament section
         st.title("🏆 T20 World Cup Fantasy League")
+        
         tournament_options = ["Tournament Home", "Fantasy Cricket", "Leaderboard"]
-        tournament_menu = st.sidebar.selectbox("Tournament", tournament_options)
+        tournament_menu = st.sidebar.selectbox("Tournament", tournament_options, key="tournament_menu")
         
         if tournament_menu == "Tournament Home":
             show_tournament_home()
@@ -279,10 +400,16 @@ def main():
             show_leaderboard()
     
     elif st.session_state.page == "⚙️ Admin Panel":
-        # Admin panel - only for admin
-        show_admin_panel()
-        
-    st.sidebar.info("Developed by **Farooq Azam**")
+        # Admin panel for authorized users only
+        if st.session_state.username == 'admin':
+            show_admin_panel()
+        else:
+            st.error("❌ Access denied. Admin panel is restricted.")
+            st.stop()
+    
+    # Footer
+    st.sidebar.markdown("---")
+    st.sidebar.caption("Developed by **Farooq Azam** | Cricket Pro v2.0")
 
 if __name__ == "__main__":
     main()

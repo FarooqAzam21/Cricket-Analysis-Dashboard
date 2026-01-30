@@ -1,59 +1,252 @@
 import streamlit as st
 
 def show_home_page():
-    """Display professional home page after login"""
+    """Display professional, fully responsive home page after login"""
     
-    # Custom CSS for professional sports styling
+    # Comprehensive responsive CSS for professional sports styling
     st.markdown("""
     <style>
+        /* Main header with green theme and responsive sizing */
         .home-header {
-            background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);
-            padding: 60px 20px;
-            border-radius: 10px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            padding: clamp(30px, 8vw, 60px) 20px;
+            border-radius: 16px;
             color: white;
             text-align: center;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: clamp(20px, 5vw, 30px);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.2);
+            animation: slideDown 0.6s ease;
         }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
         .home-header h1 {
-            font-size: 3em;
+            font-size: clamp(28px, 7vw, 48px);
             margin: 0;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-weight: 800;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            letter-spacing: -0.5px;
         }
+        
         .home-header p {
-            font-size: 1.3em;
-            margin: 10px 0 0 0;
+            font-size: clamp(14px, 4vw, 20px);
+            margin: clamp(5px, 2vw, 15px) 0 0 0;
             opacity: 0.95;
+            font-weight: 500;
         }
+        
+        /* Feature cards with glassmorphism */
         .feature-card {
-            background: white;
-            border-left: 5px solid #1abc9c;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-left: 5px solid #10b981;
+            border-radius: 12px;
+            padding: clamp(16px, 4vw, 24px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: clamp(15px, 3vw, 20px);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
         }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(16, 185, 129, 0.15);
+        }
+        
         .feature-card h3 {
-            color: #1abc9c;
-            margin-top: 0;
+            color: #059669;
+            margin: 0 0 8px 0;
+            font-size: clamp(16px, 3vw, 22px);
+            font-weight: 700;
         }
+        
+        .feature-card p {
+            margin: 0;
+            color: #4b5563;
+            font-size: clamp(13px, 2.5vw, 15px);
+            line-height: 1.6;
+        }
+        
+        /* Stats boxes with responsive grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+            gap: clamp(12px, 3vw, 20px);
+            margin: clamp(20px, 5vw, 40px) 0;
+        }
+        
         .stats-box {
-            background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
-            padding: 20px;
-            border-radius: 8px;
+            padding: clamp(20px, 5vw, 30px);
+            border-radius: 14px;
             text-align: center;
-            margin: 10px;
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+        
+        .stats-box:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 36px rgba(16, 185, 129, 0.35);
+        }
+        
         .stats-box-value {
-            font-size: 2.5em;
-            font-weight: bold;
-            margin: 10px 0;
+            font-size: clamp(28px, 6vw, 42px);
+            font-weight: 800;
+            margin: clamp(8px, 2vw, 12px) 0;
+            letter-spacing: -0.5px;
         }
+        
         .stats-box-label {
-            font-size: 0.9em;
+            font-size: clamp(12px, 2.5vw, 16px);
             opacity: 0.9;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Quick links section */
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: clamp(12px, 3vw, 16px);
+            margin: clamp(20px, 5vw, 30px) 0;
+        }
+        
+        .quick-link-btn {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border: 2px solid #10b981;
+            color: #059669;
+            padding: clamp(16px, 4vw, 24px);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 700;
+            font-size: clamp(14px, 2.5vw, 18px);
+            text-decoration: none;
+        }
+        
+        .quick-link-btn:hover {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        /* Responsive layout for tablets and mobile */
+        @media (max-width: 1024px) {
+            .home-header {
+                padding: 40px 16px;
+                margin-bottom: 24px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .home-header h1 {
+                font-size: 28px;
+            }
+            
+            .home-header p {
+                font-size: 16px;
+            }
+            
+            .feature-card {
+                padding: 16px;
+                margin-bottom: 12px;
+                border-left: 4px solid #10b981;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .stats-box {
+                padding: 20px;
+            }
+            
+            .quick-links {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .quick-link-btn {
+                padding: 16px;
+                font-size: 16px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .home-header {
+                padding: 24px 12px;
+                margin-bottom: 16px;
+                border-radius: 12px;
+            }
+            
+            .home-header h1 {
+                font-size: 24px;
+            }
+            
+            .home-header p {
+                font-size: 13px;
+                margin-top: 8px;
+            }
+            
+            .feature-card {
+                padding: 12px;
+                border-radius: 10px;
+                margin-bottom: 10px;
+            }
+            
+            .feature-card h3 {
+                font-size: 16px;
+                margin-bottom: 6px;
+            }
+            
+            .feature-card p {
+                font-size: 13px;
+            }
+            
+            .stats-box {
+                padding: 16px;
+                border-radius: 12px;
+            }
+            
+            .stats-box-value {
+                font-size: 28px;
+            }
+            
+            .stats-box-label {
+                font-size: 12px;
+            }
+        }
+        
+        /* Print styles */
+        @media print {
+            .home-header {
+                background: none;
+                color: #333;
+                border: 1px solid #ddd;
+            }
+            
+            .stats-box {
+                background: none;
+                color: #333;
+                border: 1px solid #ddd;
+            }
         }
     </style>
     """, unsafe_allow_html=True)
@@ -73,46 +266,34 @@ def show_home_page():
     Your complete cricket analysis and management platform is ready.
     """)
     
-    # Quick stats
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.markdown("""
+    # Quick stats with responsive grid
+    st.markdown("""
+    <div class="stats-grid">
         <div class="stats-box">
             <div class="stats-box-value">1000+</div>
-            <div class="stats-box-label">Players</div>
+            <div class="stats-box-label">Players Database</div>
         </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
         <div class="stats-box">
             <div class="stats-box-value">50+</div>
-            <div class="stats-box-label">Tournaments</div>
+            <div class="stats-box-label">Active Tournaments</div>
         </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown("""
         <div class="stats-box">
             <div class="stats-box-value">100+</div>
-            <div class="stats-box-label">Teams</div>
+            <div class="stats-box-label">International Teams</div>
         </div>
-        """, unsafe_allow_html=True)
-    
-    with col4:
-        st.markdown("""
         <div class="stats-box">
             <div class="stats-box-value">5000+</div>
             <div class="stats-box-label">Fantasy Teams</div>
         </div>
-        """, unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Features section
+    # Features section - fully responsive
     st.markdown("---")
     st.markdown("## 🚀 Platform Features")
     
-    col1, col2 = st.columns(2)
+    # Responsive feature columns
+    col1, col2 = st.columns([1, 1], gap="medium")
     
     with col1:
         st.markdown("""
@@ -120,16 +301,12 @@ def show_home_page():
             <h3>📊 Cricket Analysis</h3>
             <p>In-depth player statistics, performance metrics, and format-wise analysis to make informed decisions.</p>
         </div>
-        """, unsafe_allow_html=True)
         
-        st.markdown("""
         <div class="feature-card">
             <h3>🏆 Tournament Management</h3>
             <p>Create and manage T20 tournaments with flexible stages: Group Stage, Super 8, Knockouts, and Finals.</p>
         </div>
-        """, unsafe_allow_html=True)
         
-        st.markdown("""
         <div class="feature-card">
             <h3>⚡ Fantasy Cricket</h3>
             <p>Build your dream teams before matches, earn points based on performance, and compete on leaderboards.</p>
@@ -139,22 +316,18 @@ def show_home_page():
     with col2:
         st.markdown("""
         <div class="feature-card">
-            <h3>🧠 Smart Scout</h3>
+            <h3>🧠 Smart Scout (AI)</h3>
             <p>AI-powered player recommendations and insights for team building and strategy optimization.</p>
         </div>
-        """, unsafe_allow_html=True)
         
-        st.markdown("""
         <div class="feature-card">
             <h3>📈 Predictions & Comparisons</h3>
             <p>Advanced match predictions and player comparisons using machine learning and statistical analysis.</p>
         </div>
-        """, unsafe_allow_html=True)
         
-        st.markdown("""
         <div class="feature-card">
-            <h3>🎯 Admin Panel</h3>
-            <p>Full control over tournaments, teams, players, and match results with flexible scheduling.</p>
+            <h3>💬 Expert Chat (AI)</h3>
+            <p>Ask cricket questions to our AI expert and get intelligent, context-aware recommendations.</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -194,33 +367,41 @@ def show_home_page():
     
     st.info(about_text)
     
-    # Quick links
+    # Quick navigation section
     st.markdown("---")
     st.markdown("## 🔗 Quick Navigation")
     
-    col1, col2, col3 = st.columns(3)
+    # Responsive navigation buttons
+    nav_col1, nav_col2, nav_col3 = st.columns(3, gap="small")
     
-    with col1:
-        if st.button("📊 Go to Analysis", use_container_width=True):
-            st.session_state.page = "Cricket Analysis"
+    with nav_col1:
+        if st.button("📊 Analysis", use_container_width=True, help="Go to cricket analysis"):
+            st.session_state.page = "🏏 Cricket Analysis"
             st.rerun()
     
-    with col2:
-        if st.button("🏆 Manage Tournaments", use_container_width=True):
-            st.session_state.page = "Admin Panel"
+    with nav_col2:
+        if st.button("🏆 Tournament", use_container_width=True, help="Manage tournaments"):
+            st.session_state.page = "🏆 Tournament"
             st.rerun()
     
-    with col3:
-        if st.button("🏏 Fantasy Cricket", use_container_width=True):
-            st.session_state.page = "Fantasy Cricket"
+    with nav_col3:
+        if st.button("🏏 Fantasy", use_container_width=True, help="Fantasy cricket"):
+            st.session_state.page = "🏆 Tournament"
+            st.session_state.fantasy_page = "Fantasy Cricket"
             st.rerun()
     
-    # Footer
-    st.markdown("---")
+    # Footer with responsive styling
     st.markdown("""
-    <div style="text-align: center; color: #7f8c8d; padding: 20px;">
-        <p>Cricket Pro Analytics v2.0 | Professional Cricket Management Platform</p>
-        <p>Designed for serious cricket professionals | Powered by Advanced Analytics</p>
+    <div style="text-align: center; color: #7f8c8d; padding: clamp(15px, 3vw, 20px); margin-top: 30px;">
+        <p style="margin: 5px 0; font-size: clamp(12px, 2.5vw, 14px);">
+            <strong>Cricket Pro Analytics v2.0</strong>
+        </p>
+        <p style="margin: 5px 0; font-size: clamp(11px, 2vw, 13px);">
+            Professional Cricket Management Platform
+        </p>
+        <p style="margin: 5px 0; font-size: clamp(10px, 1.8vw, 12px); opacity: 0.8;">
+            Designed for serious cricket professionals | Powered by Advanced Analytics
+        </p>
     </div>
     """, unsafe_allow_html=True)
 
