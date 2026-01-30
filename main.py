@@ -18,32 +18,125 @@ from src.database import init_db
 import os
 
 def render_auth():
-    st.title("🔐 Dashboard Login")
-    tab1, tab2 = st.tabs(["Login", "Sign Up"])
+    """Render improved mobile-friendly login/signup page with green and white theme."""
+    # Apply custom theme for login page
+    login_css = """
+    <style>
+    .login-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        padding: 20px;
+        font-family: 'Inter', sans-serif;
+    }
     
-    with tab1:
-        with st.form("login_form"):
-            u = st.text_input("Username")
-            p = st.text_input("Password", type="password")
-            if st.form_submit_button("Login"):
-                success, res = login(u, p)
-                if success:
-                    st.session_state.authenticated = True
-                    st.session_state.username = u
-                    st.rerun()
-                else:
-                    st.error(res)
-                    
-    with tab2:
-        with st.form("signup_form"):
-            u = st.text_input("New Username")
-            p = st.text_input("New Password", type="password")
-            if st.form_submit_button("Create Account"):
-                success, msg = signup(u, p)
-                if success:
-                    st.success(msg)
-                else:
-                    st.error(msg)
+    .login-card {
+        background: white;
+        border-radius: 20px;
+        padding: 40px 30px;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    .login-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    
+    .login-title {
+        color: #059669;
+        font-size: 32px;
+        font-weight: 700;
+        margin: 0 0 10px 0;
+    }
+    
+    .login-subtitle {
+        color: #6b7280;
+        font-size: 14px;
+        margin: 0;
+    }
+    
+    .cricket-emoji {
+        font-size: 60px;
+        margin-bottom: 20px;
+    }
+    
+    @media (max-width: 600px) {
+        .login-card {
+            padding: 30px 20px;
+        }
+        .login-title {
+            font-size: 24px;
+        }
+        .cricket-emoji {
+            font-size: 48px;
+        }
+    }
+    </style>
+    """
+    
+    st.markdown(login_css, unsafe_allow_html=True)
+    
+    # Center content
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        st.markdown("""
+        <div class="login-container">
+        <div class="login-card">
+        <div class="login-header">
+            <div class="cricket-emoji">🏏</div>
+            <h1 class="login-title">Cricket Pro</h1>
+            <p class="login-subtitle">T20 World Cup Fantasy League</p>
+        </div>
+        </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        tab1, tab2 = st.tabs(["🔓 Login", "✍️ Sign Up"])
+        
+        with tab1:
+            st.markdown("### Welcome Back!")
+            with st.form("login_form"):
+                u = st.text_input("👤 Username", placeholder="Enter your username")
+                p = st.text_input("🔑 Password", type="password", placeholder="Enter your password")
+                
+                col1, col2, col3 = st.columns([1, 2, 1])
+                with col2:
+                    if st.form_submit_button("🔓 Login", use_container_width=True):
+                        success, res = login(u, p)
+                        if success:
+                            st.session_state.authenticated = True
+                            st.session_state.username = u
+                            st.success("✅ Login successful!")
+                            st.rerun()
+                        else:
+                            st.error(f"❌ {res}")
+                            
+        with tab2:
+            st.markdown("### Create New Account")
+            with st.form("signup_form"):
+                u = st.text_input("👤 Username", placeholder="Choose a username", key="signup_username")
+                p = st.text_input("🔑 Password", type="password", placeholder="Choose a strong password", key="signup_password")
+                p_confirm = st.text_input("🔑 Confirm Password", type="password", placeholder="Confirm your password", key="signup_confirm")
+                
+                col1, col2, col3 = st.columns([1, 2, 1])
+                with col2:
+                    if st.form_submit_button("✅ Create Account", use_container_width=True):
+                        if p != p_confirm:
+                            st.error("❌ Passwords don't match!")
+                        else:
+                            success, msg = signup(u, p)
+                            if success:
+                                st.success(f"✅ {msg}")
+                            else:
+                                st.error(f"❌ {msg}")
 
 def main():
     # 0. Initialize DB and Auth state
@@ -70,31 +163,60 @@ def main():
         render_auth()
         st.stop()
 
-    # Apply Premium Theme
+    # Apply Green & White Premium Theme
     apply_custom_styles()
     
-    # 2. Sidebar elements
+    # 2. Sidebar elements - IMPROVED MOBILE DESIGN
     with st.sidebar:
-        logo_path = os.path.join("assets", "logo.png")
-        if os.path.exists(logo_path):
-            st.image(logo_path, use_container_width=True)
+        # Logo and header
+        st.markdown("""
+        <div style='text-align: center; margin-bottom: 20px;'>
+            <h1 style='color: #10b981; margin: 0; font-size: 28px;'>🏏 Cricket Pro</h1>
+            <p style='color: #6b7280; margin: 5px 0 0 0; font-size: 12px;'>T20 Fantasy League</p>
+        </div>
+        """, unsafe_allow_html=True)
         
-        st.markdown(f"### Welcome, **{st.session_state.username}**")
+        st.markdown("---")
+        st.markdown(f"### 👤 {st.session_state.username}")
         st.markdown("---")
         
         # Show admin option only for admin user
-        menu_options = ["🏠 Home", "🏏 Cricket Analysis", "🏆 Tournament"]
-        if st.session_state.username == 'admin':
-            menu_options = ["🏠 Home", "🏏 Cricket Analysis", "🏆 Tournament", "⚙️ Admin Panel"]
+        menu_options = [
+            ("🏠", "Home"),
+            ("📊", "Analysis"),
+            ("🏆", "Tournament"),
+        ]
         
-        menu = st.radio("Navigate to", menu_options)
-        st.session_state.page = menu
+        if st.session_state.username == 'admin':
+            menu_options.append(("⚙️", "Admin"))
+        
+        # Mobile-friendly menu with better icons
+        st.markdown("### Navigation")
+        cols = st.columns(len(menu_options))
+        
+        for idx, (icon, label) in enumerate(menu_options):
+            with cols[idx]:
+                if st.button(f"{icon}\n{label}", use_container_width=True, key=f"nav_{label}"):
+                    if label == "Home":
+                        st.session_state.page = "🏠 Home"
+                    elif label == "Analysis":
+                        st.session_state.page = "🏏 Cricket Analysis"
+                    elif label == "Tournament":
+                        st.session_state.page = "🏆 Tournament"
+                    elif label == "Admin":
+                        st.session_state.page = "⚙️ Admin Panel"
+                    st.rerun()
         
         st.markdown("---")
+        
+        # Logout button with better styling
         if st.button("🚪 Logout", use_container_width=True):
             st.session_state.authenticated = False
             st.session_state.username = None
             st.rerun()
+        
+        st.markdown("---")
+        st.info("🚀 **Cricket Pro** - Fantasy League Manager")
     
     # 3. Main routing based on menu selection
     if st.session_state.page == "🏠 Home":
