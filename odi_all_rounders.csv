@@ -8,9 +8,9 @@ Wanindu Hasaranga,Srilanka,T20,92,75,16,792,151,13.42,15.68,126.72,71,0,2,8,"",l
 Wanindu Hasaranga,Srilanka,Odi,68,56,9,1126,111,23.95,24.21,109.32,80*,0,5,7,https://d16f573ilcot6q.cloudfront.net/wp-content/uploads/2024/08/Wanindu-Hasaranga-for-Sri-Lanka.webp ,leg-spinner
 Mehdi Hassan,Bangladesh,T20,68,47,11,421,64,11.69,24.79,100.47,33,0,0,7,"",Batsman
 Mehdi Hassan,Bangladesh,Odi,11,10,2,122,14,15.25,31.14,64.89,29,0,0,7,https://tse1.mm.bing.net/th/id/OIP.MM94JTJT_qVQolbvHc4krwHaIL?pid=Api&P=0&h=220 ,right-arm-off-spinner
-Michael Bracewell,New Zeland,T20,47,31,9,434,35,19.72,21.91,133.95,61*,0,2,7,"",Batsman
-Michael Bracewell,New Zeland,Test,10,17,1,339,25,21.18,47.92,57.07,74*,0,1,7,"",Batsman
-Michael Bracewell,New Zeland,Odi,40,35,10,912,37,36.48,34.72,108.83,140,2,3,7,https://img1.hscicdn.com/image/upload/f_autot_ds_w_1280q_80/lsci/db/PICTURES/CMS/397700/397724.jpg ,right-arm-off-spinner
+Michael Bracewell,New Zealand,T20,47,31,9,434,35,19.72,21.91,133.95,61*,0,2,7,"",Batsman
+Michael Bracewell,New Zealand,Test,10,17,1,339,25,21.18,47.92,57.07,74*,0,1,7,"",Batsman
+Michael Bracewell,New Zealand,Odi,40,35,10,912,37,36.48,34.72,108.83,140,2,3,7,https://img1.hscicdn.com/image/upload/f_autot_ds_w_1280q_80/lsci/db/PICTURES/CMS/397700/397724.jpg ,right-arm-off-spinner
 Jacob Bethell,England,Test,6,12,1,476,4,43.27,40.53,65.20,154,1,3,3,"",left-arm-orthadox
 Jacob Bethell,England,T20,20,18,5,392,4,30.15,27.75,155.55,62*,0,2,3,"",left-arm-orthadox
 Jacob Bethell,England,Odi,21,19,1,603,8,33.50,46.37,92.48,110,1,5,5,https://img1.hscicdn.com/image/upload/f_autot_ds_w_1280q_80/lsci/db/PICTURES/CMS/405900/405903.jpg ,left-arm-orthadox
@@ -22,8 +22,8 @@ Wiaan Mulder,South Africa,Odi,30,24,6,338,26,18.77,38.23,84.92,64,0,2,4,https://
 Sikander Raza,Zimbabwe,T20,127,122,10,2883,102,25.74,22.93,135.28,133*,16,4,"",spinner
 Sikander Raza,Zimbabwe,Test,22,42,0,1434,40,34.14,44.5,56.12,127,1,11,5,"",spinner
 Sikander Raza,Zimbabwe,Odi,153,144,23,4476,94,36.99,43.64,86.3,141,7,24,6,https://img1.hscicdn.com/image/upload/f_autot_ds_w_1280q_80/lsci/db/PICTURES/CMS/405500/405597.jpg ,right-arm-off-spinner
-James Neesham,New Zeland,T20,93,71,21,1010,56,20.20,23.71,149.62,48*,0,0,7,"",fast-bowler
-James Neesham,New Zeland,Odi,76,65,12,1495,71,28.2,36.0,99.93,97*,0,7,7,https://img1.hscicdn.com/image/upload/f_autot_ds_w_1280q_80/lsci/db/PICTURES/CMS/391300/391356.jpg ,right-arm-medium-fast
+James Neesham,New Zealand,T20,93,71,21,1010,56,20.20,23.71,149.62,48*,0,0,7,"",fast-bowler
+James Neesham,New Zealand,Odi,76,65,12,1495,71,28.2,36.0,99.93,97*,0,7,7,https://img1.hscicdn.com/image/upload/f_autot_ds_w_1280q_80/lsci/db/PICTURES/CMS/391300/391356.jpg ,right-arm-medium-fast
 Mehidy Hasan Miraz,Bangladesh,Test,55,99,10,2127,208,23.89,32.37,50.73,104,2,9,5,"",right-arm-off-break
 Mehidy Hasan Miraz,Bangladesh,Test,34,29,4,418,18,16.72,37.05,116.75,46,0,0,5,"",right-arm-off-break
 Mehidy Hasan Miraz,Bangladesh,Odi,114,85,12,1790,121,24.52,36.55,76.26,112*,2,7,7,https://img1.hscicdn.com/image/upload/f_autot_ds_w_1280q_80/lsci/db/PICTURES/CMS/403300/403374.jpg ,right-arm-off-break
@@ -47,6 +47,8 @@ Corbin Bosch,South Africa,T20,11,9,3,85,17,14.16,16.94,118.05,30*,0,0,8,"",right
 Corbin Bosch,South Africa,Odi,12,10,4,270,11,45.00,59.63,108.87,67,0,1,7,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/402800/402864.jpg",right-arm-fast
 Liam Dawson,England,Odi,6,5,0,63,5,12.6,56.8,85.13,20,0,0,7,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/404300/404326.jpg",left-arm-orthadox
 Nitish Kumar Reddy,India,Odi,2,2,1,27,0,27.0,0.0,172.72,19*,0,0,7,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/407600/407608.jpg",right-hand-fast
+Gudakesh Motie,Windies,T20,43,24,10,205,36,14.64,29.91,133.98,33,0,0,7,"",left-arm-off-spin	
+Gudakesh Motie,Windies,Test,11,17,5,265,-,22.08,-,63.39,55,0,1,7,"",left-arm-off-spin
 Gudakesh Motie,Windies,Odi,33,21,6,357,42,22.31,31.47,101.42,63,0,2,8,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/403800/403862.jpg",left-arm-off-spin
 Rishad Hossein,Bangladesh,Test,53,32,8,213,67,8.87,21.40,129.87,53,0,1,8,"",leg-spinner
 Rishad Hossein,Bangladesh,Odi,14,12,3,176,19,19.55,21.81,140.79,48*,0,0,8,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/408000/408015.jpg",leg-spinner

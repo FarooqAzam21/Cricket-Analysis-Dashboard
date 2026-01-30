@@ -30,6 +30,32 @@ def show_admin_panel():
     
     st.title("🏆 T20 World Cup Fantasy Admin Panel")
     
+    # ========== TOURNAMENTS OVERVIEW ==========
+    st.divider()
+    st.subheader("📋 Existing Tournaments")
+    
+    conn = get_db_connection()
+    all_tournaments = conn.execute("SELECT * FROM tournaments ORDER BY id DESC").fetchall()
+    conn.close()
+    
+    if all_tournaments:
+        tourn_data = []
+        for t in all_tournaments:
+            tourn_data.append({
+                'ID': t['id'],
+                'Tournament': t['name'],
+                'Start Date': t['start_date'],
+                'End Date': t['end_date'],
+                'Status': t['status']
+            })
+        
+        st.dataframe(pd.DataFrame(tourn_data), use_container_width=True)
+        st.info(f"💡 Use the Tournament ID from the table above to manage tournaments in the tabs below")
+    else:
+        st.warning("No tournaments found. Create one in Tab 1 below.")
+    
+    st.divider()
+    
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "Create Tournament", 
         "Add Teams to Groups", 
@@ -121,15 +147,16 @@ def show_admin_panel():
                         groups_dict[group].append(team['team_name'])
                         team_id_map[team['team_name']] = team['id']
                     
-                    for group in ['A', 'B', 'C', 'D']:
+                    for idx, group in enumerate(['A', 'B', 'C', 'D']):
                         teams = groups_dict.get(group, [])
                         st.write(f"**Group {group}** ({len(teams)}/5)")
-                        for team in teams:
+                        for team_idx, team in enumerate(teams):
                             col1, col2 = st.columns([3, 1])
                             with col1:
                                 st.write(f"  • {team}")
                             with col2:
-                                if st.button("✏️ Edit", key=f"edit_team_{team_id_map[team]}"):
+                                # Use unique key with tournament_id, group and team index
+                                if st.button("✏️ Edit", key=f"edit_team_{tournament_id}_{group}_{team_idx}"):
                                     st.session_state[f"editing_team_{team_id_map[team]}"] = True
                     
                     # Edit team name section
