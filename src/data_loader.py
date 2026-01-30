@@ -64,8 +64,13 @@ def load_all_data(_csv_cache_key=None):
             def clean(df):
                 if df.empty: return df
                 df.columns = df.columns.map(str).str.strip()
+                # Clean all text columns - remove tabs, quotes, special chars and excess whitespace
                 for c in ['player', 'Team', 'Format', 'role']:
-                    if c in df.columns: df[c] = df[c].astype(str).str.replace(r'[\t"\']', '', regex=True).str.strip()
+                    if c in df.columns:
+                        df[c] = df[c].astype(str).str.strip()  # First strip outer whitespace
+                        df[c] = df[c].str.replace(r'[\t\r\n"\']', '', regex=True)  # Remove tabs, quotes, special chars
+                        df[c] = df[c].str.replace(r'\s+', ' ', regex=True)  # Replace multiple spaces with single space
+                        df[c] = df[c].str.strip()  # Final strip
                 return df
 
             composite = pd.concat([clean(df_bat), clean(df_ar), clean(df_bowl)], ignore_index=True, sort=False)
@@ -98,11 +103,15 @@ def load_all_data(_csv_cache_key=None):
             if col in all_players.columns:
                 all_players[col] = pd.to_numeric(all_players[col], errors='coerce').fillna(0)
 
-        all_players['role_lower'] = all_players.get('role', '').astype(str).str.lower()
-        batsmen = all_players[all_players['role_lower'].str.contains('batsman', na=False)]
-        wicket_keepers = all_players[all_players['role_lower'].str.contains('wicket-keeper', na=False)]
+        # Create role_lower for filtering with proper handling of NaN/None
+        all_players['role_lower'] = all_players.get('role', '').fillna('').astype(str).str.lower()
+        
+        # Classify players by role
+        batsmen = all_players[all_players['role_lower'].str.contains('batsman', na=False, regex=False)]
+        wicket_keepers = all_players[all_players['role_lower'].str.contains('wicket-keeper', na=False, regex=False)]
         all_rounders = all_players[all_players['role_lower'].str.contains('all-rounder|fast-bowling|spinner|arm', na=False)]
         bowlers_data = all_players[all_players['role_lower'].str.contains('bowler|spinner|fast|arm', na=False) | (all_players.get('wickets', 0) > 0)]
+        
         return all_players, batsmen, all_rounders, bowlers_data, df_year, batsmen, all_rounders, wicket_keepers
     
     return None, None, None, None, None, None, None, None
