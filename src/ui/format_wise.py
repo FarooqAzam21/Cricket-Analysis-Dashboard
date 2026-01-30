@@ -10,13 +10,13 @@ def render_format_analysis(batsmen, all_rounders, bowlers_data, wicket_keepers):
     with st.expander("Adjust Analysis Thresholds (Applies to all charts)", expanded=True):
         col_f1, col_f2, col_f3 = st.columns(3)
         with col_f1:
-            min_matches = st.number_input("Min Matches", min_value=0, value=50, step=5)
-            min_sr = st.number_input("Min Strike Rate (Batting)", min_value=0, value=100, step=10)
+            min_matches = st.number_input("Min Matches", min_value=0, value=10, step=5)
+            min_sr = st.number_input("Min Strike Rate (Batting)", min_value=0, value=80, step=10)
         with col_f2:
-            min_runs = st.number_input("Min Runs", min_value=0, value=1000, step=100)
+            min_runs = st.number_input("Min Runs", min_value=0, value=500, step=100)
             include_teams = st.multiselect("Filter Teams", options=sorted(batsmen['Team'].unique()), default=None)
         with col_f3:
-            min_wickets = st.number_input("Min Wickets", min_value=0, value=50, step=5)
+            min_wickets = st.number_input("Min Wickets", min_value=0, value=10, step=5)
             top_n_charts = st.slider("Show Top N Players", 5, 20, 10)
 
     # Create tabs for each format
@@ -52,12 +52,21 @@ def render_format_analysis(batsmen, all_rounders, bowlers_data, wicket_keepers):
                                                     ((fmt_all_rounders['runs'] >= min_runs) | (fmt_all_rounders['wickets'] >= min_wickets))]
             
             if filtered_batsmen.empty and filtered_bowlers.empty and filtered_all_rounders.empty:
-                with st.expander(f"ℹ️ No data available for {fmt} format with selected filters - Click to adjust", expanded=False):
-                    st.info(f"Try adjusting the filters above:")
-                    st.write(f"• Current Min Matches: {min_matches}")
-                    st.write(f"• Current Min Runs: {min_runs}")
-                    st.write(f"• Current Min Wickets: {min_wickets}")
-                    st.write(f"• Selected Teams: {include_teams if include_teams else 'All Teams'}")
+                with st.expander(f"ℹ️ No data available for {fmt} format with selected filters - Click to adjust", expanded=True):
+                    col_info1, col_info2 = st.columns(2)
+                    with col_info1:
+                        st.warning(f"**Current Filters:**")
+                        st.write(f"🔹 Min Matches: **{min_matches}**")
+                        st.write(f"🔹 Min Runs: **{min_runs}**")
+                        st.write(f"🔹 Min Wickets: **{min_wickets}**")
+                        st.write(f"🔹 Min Strike Rate: **{min_sr}**")
+                    with col_info2:
+                        st.info(f"**{fmt} Format Data Available:**")
+                        st.write(f"📊 Batsmen: **{len(fmt_batsmen)}**")
+                        st.write(f"⚡ Bowlers: **{len(fmt_bowlers)}**")
+                        st.write(f"🔄 All-Rounders: **{len(fmt_all_rounders)}**")
+                        st.write(f"👥 Teams: **{len(include_teams) if include_teams else 'All'}**")
+                    st.error("🔧 Try reducing filter values above to see more data!")
                 continue
 
             # --- Apply Interactive Filters ---
