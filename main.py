@@ -358,6 +358,7 @@ def main():
             st.info(f"Debug: all_players is None={all_players is None}, empty={all_players.empty if all_players is not None else 'N/A'}")
             st.stop()
         
+        st.success(f"✅ Loaded {len(all_players)} players successfully")
         # Sidebar filters for analysis - responsive
         st.sidebar.markdown("---")
         st.sidebar.subheader("Team Preference")
