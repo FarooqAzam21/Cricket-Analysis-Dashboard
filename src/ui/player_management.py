@@ -1,10 +1,11 @@
 """
-Admin Panel - Player Data Management
-Allows admins to search, view, and update player statistics
+Admin Panel - Player Statistics Dashboard for World Cup
+Shows top performers and player statistics from CSV data
 """
 import streamlit as st
 import pandas as pd
-from ..database import get_db_connection, fetch_all_players_from_db
+from ..config import DATA_PATHS
+import os
 
 def safe_int(value, default=0):
     """Safely convert value to int, handling None and NaN"""
@@ -24,309 +25,288 @@ def safe_float(value, default=0.0):
     except (ValueError, TypeError):
         return default
 
-def get_value(series, col, default=None):
-    """Safely get value from pandas Series"""
+def load_player_data():
+    """Load player data from CSV files"""
     try:
-        val = series[col]
-        if pd.isna(val):
-            return default
-        return val
-    except (KeyError, TypeError):
-        return default
-
-def update_player_stats(player_name, team, format_type, stats_dict):
-    """Update player statistics in the database"""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        df_bat = pd.read_csv(DATA_PATHS["batsman"]) if os.path.exists(DATA_PATHS["batsman"]) else pd.DataFrame()
+        df_ar = pd.read_csv(DATA_PATHS["all_rounder"]) if os.path.exists(DATA_PATHS["all_rounder"]) else pd.DataFrame()
+        df_bowl = pd.read_csv(DATA_PATHS["bowler"]) if os.path.exists(DATA_PATHS["bowler"]) else pd.DataFrame()
         
-        # Build dynamic UPDATE query
-        set_clauses = []
-        values = []
+        # Rename bowling_strike_rate to strike_rate if needed
+        if 'bowling_strike_rate' in df_bowl.columns:
+            df_bowl.rename(columns={'bowling_strike_rate': 'strike_rate'}, inplace=True)
         
-        for column, value in stats_dict.items():
-            if value is not None and value != '':
-                # Convert to appropriate type
-                if column in ['matches', 'innings', 'no', 'runs', 'wickets', 'hundreds', 'fifties', 'batting_position']:
-                    value = int(value) if value else 0
-                elif column in ['average', 'strike_rate', 'bowling_average', 'economy']:
-                    value = float(value) if value else 0.0
-                
-                set_clauses.append(f"{column} = ?")
-                values.append(value)
+        # Combine all players
+        all_data = pd.concat([df_bat, df_ar, df_bowl], ignore_index=True, sort=False)
         
-        if not set_clauses:
-            st.error("❌ No valid data to update")
-            return False
+        # Convert numeric columns
+        numeric_cols = ['matches', 'Innings', 'NO', 'runs', 'wickets', 'average', 
+                       'bowling_average', 'strike_rate', '100s', '50s', '6s']
+        for col in numeric_cols:
+            if col in all_data.columns:
+                all_data[col] = pd.to_numeric(all_data[col], errors='coerce')
         
-        # Add the WHERE clause values
-        values.extend([player_name, team, format_type])
-        
-        query = f"""
-            UPDATE players 
-            SET {', '.join(set_clauses)}
-            WHERE player = ? AND team = ? AND format = ?
-        """
-        
-        cursor.execute(query, values)
-        conn.commit()
-        
-        rows_affected = cursor.rowcount
-        conn.close()
-        
-        return rows_affected > 0
+        return all_data
     except Exception as e:
-        st.error(f"❌ Database error: {str(e)}")
-        return False
+        st.error(f"Error loading player data: {e}")
+        return pd.DataFrame()
 
 def render_player_management():
-    """Render player data management interface in admin panel"""
+    """Render player statistics dashboard"""
     
     st.markdown("""
     <style>
-    .player-update-section {
+    .stat-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 20px;
         border-radius: 10px;
         color: white;
-        margin-bottom: 30px;
-    }
-    .stats-input-container {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
+        text-align: center;
         margin: 10px 0;
     }
-    .success-box {
-        background: #d4edda;
-        color: #155724;
-        padding: 15px;
-        border-radius: 5px;
-        border-left: 4px solid #28a745;
+    .stat-title {
+        font-size: 14px;
+        opacity: 0.9;
+        margin-bottom: 10px;
+    }
+    .stat-value {
+        font-size: 32px;
+        font-weight: bold;
+    }
+    .stat-player {
+        font-size: 12px;
+        opacity: 0.8;
+        margin-top: 5px;
+    }
+    .tab-section {
+        padding: 20px 0;
     }
     @media (max-width: 768px) {
-        .player-update-section {
+        .stat-card {
             padding: 15px;
+        }
+        .stat-value {
+            font-size: 24px;
         }
     }
     </style>
     """, unsafe_allow_html=True)
     
-    st.markdown("<div class='player-update-section'>", unsafe_allow_html=True)
-    st.subheader("🎯 Player Data Management")
-    st.markdown("Update player statistics and performance metrics")
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class='stat-card'>
+        <div class='stat-title'>🏏 World Cup Player Statistics</div>
+        <p style='margin: 0; font-size: 14px;'>Top performers and key statistics for the upcoming tournament</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # ===== SECTION 1: SEARCH PLAYER =====
-    st.markdown("#### 🔍 Step 1: Search Player")
+    st.markdown("---")
     
-    col1, col2 = st.columns(2)
-    with col1:
-        # Load all players
-        try:
-            all_players_df = fetch_all_players_from_db()
-            if all_players_df is not None and not all_players_df.empty:
-                player_names = sorted(all_players_df['player'].unique().tolist())
-                selected_player = st.selectbox("Select Player", player_names, key="player_select")
-            else:
-                st.warning("⚠️ No players found in database")
-                return
-        except Exception as e:
-            st.error(f"Error loading players: {str(e)}")
-            return
+    # Load data
+    all_data = load_player_data()
     
-    with col2:
-        st.info(f"✅ Found {len(player_names)} players in database")
-    
-    # ===== SECTION 2: SELECT FORMAT & TEAM =====
-    st.markdown("#### 📋 Step 2: Select Format & Team")
-    
-    # Get player data for selected player
-    player_data = all_players_df[all_players_df['player'] == selected_player]
-    
-    if player_data.empty:
-        st.error(f"❌ No data found for {selected_player}")
+    if all_data.empty:
+        st.error("❌ No player data available")
         return
     
-    # Show available formats for this player
-    available_formats = player_data['format'].unique().tolist()
-    available_teams = player_data['team'].unique().tolist()
+    # Create tabs for different statistics
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "🎯 Top Run Scorers", 
+        "🎲 Top Wicket Takers", 
+        "⚡ Best Strike Rate",
+        "🎳 Best Bowling Average",
+        "🔥 Most 6's"
+    ])
     
-    col1, col2 = st.columns(2)
-    with col1:
-        selected_format = st.selectbox("Select Format", available_formats, key="format_select")
-    with col2:
-        # Filter teams by selected format
-        team_for_format = player_data[player_data['format'] == selected_format]['team'].unique().tolist()
-        selected_team = st.selectbox("Select Team", team_for_format, key="team_select")
-    
-    # ===== SECTION 3: DISPLAY CURRENT STATS =====
-    st.markdown("#### 📊 Step 3: Current Statistics")
-    
-    current_data = player_data[
-        (player_data['format'] == selected_format) & 
-        (player_data['team'] == selected_team)
-    ].iloc[0]
-    
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Matches", safe_int(get_value(current_data, 'matches', 0)))
-    with col2:
-        st.metric("Runs", safe_int(get_value(current_data, 'runs', 0)))
-    with col3:
-        st.metric("Wickets", safe_int(get_value(current_data, 'wickets', 0)))
-    with col4:
-        st.metric("Average", round(safe_float(get_value(current_data, 'average', 0)), 2))
-    
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Strike Rate", round(safe_float(get_value(current_data, 'strike_rate', 0)), 2))
-    with col2:
-        st.metric("Bowling Avg", round(safe_float(get_value(current_data, 'bowling_average', 0)), 2))
-    with col3:
-        st.metric("Economy", round(safe_float(get_value(current_data, 'economy', 0)), 2))
-    with col4:
-        st.metric("Hundreds", safe_int(get_value(current_data, '100s', 0)))
-    
-    # ===== SECTION 4: UPDATE STATS =====
-    st.markdown("#### ✏️ Step 4: Update Statistics")
-    st.markdown("---")
-    
-    # Create input fields organized in columns
-    st.markdown("<div class='stats-input-container'>", unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("**Batting Stats**")
-        new_matches = st.number_input("Matches", value=safe_int(get_value(current_data, 'matches', 0)), min_value=0, step=1, key="matches")
-        new_innings = st.number_input("Innings", value=safe_int(get_value(current_data, 'Innings', 0)), min_value=0, step=1, key="innings")
-        new_no = st.number_input("Not Out", value=safe_int(get_value(current_data, 'NO', 0)), min_value=0, step=1, key="no")
-        new_runs = st.number_input("Runs", value=safe_int(get_value(current_data, 'runs', 0)), min_value=0, step=100, key="runs")
-        new_sr = st.number_input("Strike Rate", value=round(safe_float(get_value(current_data, 'strike_rate', 0)), 2), min_value=0.0, step=1.0, format="%.2f", key="strike_rate")
-        new_batting_pos = st.number_input("Batting Position", value=safe_int(get_value(current_data, 'batting_position', 0)), min_value=0, max_value=11, step=1, key="batting_pos")
-    
-    with col2:
-        st.markdown("**Bowling Stats**")
-        new_wickets = st.number_input("Wickets", value=safe_int(get_value(current_data, 'wickets', 0)), min_value=0, step=1, key="wickets")
-        new_bowling_avg = st.number_input("Bowling Average", value=round(safe_float(get_value(current_data, 'bowling_average', 0)), 2), min_value=0.0, step=1.0, format="%.2f", key="bowling_average")
-        new_economy = st.number_input("Economy", value=round(safe_float(get_value(current_data, 'economy', 0)), 2), min_value=0.0, step=0.1, format="%.2f", key="economy")
-    
-    with col3:
-        st.markdown("**Achievement Stats**")
-        new_average = st.number_input("Batting Average", value=round(safe_float(get_value(current_data, 'average', 0)), 2), min_value=0.0, step=1.0, format="%.2f", key="average")
-        new_hundreds = st.number_input("Centuries", value=safe_int(get_value(current_data, '100s', 0)), min_value=0, step=1, key="hundreds")
-        new_fifties = st.number_input("Half Centuries", value=safe_int(get_value(current_data, '50s', 0)), min_value=0, step=1, key="fifties")
-        new_role = st.selectbox("Player Role", 
-            ["Batsman", "Bowler", "All-rounder", "Wicket-keeper"],
-            index=0,
-            key="role"
-        )
-    
-    st.markdown("</div>", unsafe_allow_html=True)
-    
-    # ===== SECTION 5: SUBMIT =====
-    st.markdown("#### 💾 Step 5: Submit Changes")
-    st.markdown("---")
-    
-    col1, col2, col3 = st.columns([2, 2, 1])
-    
-    with col2:
-        submit_btn = st.button("✅ Submit & Update Database", use_container_width=True, type="primary")
-    
-    with col3:
-        reset_btn = st.button("🔄 Reset", use_container_width=True)
-    
-    if reset_btn:
-        st.rerun()
-    
-    # Handle submission
-    if submit_btn:
-        # Prepare stats dictionary
-        stats_update = {
-            'matches': new_matches,
-            'innings': new_innings,
-            'no': new_no,
-            'runs': new_runs,
-            'wickets': new_wickets,
-            'average': new_average,
-            'strike_rate': new_sr,
-            'bowling_average': new_bowling_avg,
-            'economy': new_economy,
-            'hundreds': new_hundreds,
-            'fifties': new_fifties,
-            'batting_position': new_batting_pos,
-            'role': new_role
-        }
+    # ===== TAB 1: TOP RUN SCORERS =====
+    with tab1:
+        st.markdown("### Top Run Scorers")
         
-        # Show confirmation before update
-        with st.spinner("🔄 Updating player data..."):
-            success = update_player_stats(selected_player, selected_team, selected_format, stats_update)
+        # Get top 20 run scorers (with minimum 5 matches)
+        scorers = all_data.dropna(subset=['runs', 'matches'])
+        scorers = scorers[scorers['matches'] >= 5].sort_values('runs', ascending=False).head(20)
         
-        if success:
-            st.success(f"✅ Successfully updated {selected_player}'s statistics!")
-            st.markdown("<div class='success-box'>", unsafe_allow_html=True)
-            st.markdown(f"""
-            **Updated Stats:**
-            - Matches: {new_matches}
-            - Runs: {new_runs}
-            - Wickets: {new_wickets}
-            - Strike Rate: {new_sr}
-            - Bowling Average: {new_bowling_avg}
-            - Economy: {new_economy}
-            - Centuries: {new_hundreds}
-            - Half Centuries: {new_fifties}
-            - Role: {new_role}
-            """)
-            st.markdown("</div>", unsafe_allow_html=True)
-            st.info("Data will be reflected in the app within a few seconds.")
-        else:
-            st.error(f"❌ Failed to update {selected_player}'s data. Please try again.")
-    
-    # ===== SECTION 6: BULK UPDATE =====
-    st.markdown("---")
-    st.markdown("#### 📤 Bulk Update (CSV)")
-    
-    with st.expander("Upload CSV to update multiple players at once"):
-        uploaded_file = st.file_uploader("Upload CSV file", type=['csv'], key="bulk_upload")
-        
-        if uploaded_file is not None:
-            try:
-                bulk_df = pd.read_csv(uploaded_file)
-                st.markdown("**Preview:**")
-                st.dataframe(bulk_df.head(), use_container_width=True)
-                
-                if st.button("🚀 Bulk Update Database", type="primary"):
-                    success_count = 0
-                    error_count = 0
-                    
-                    with st.spinner("Processing bulk update..."):
-                        for idx, row in bulk_df.iterrows():
-                            try:
-                                player = row.get('player')
-                                team = row.get('team')
-                                format_type = row.get('format')
-                                
-                                # Extract all numeric columns
-                                stats_dict = {col: row[col] for col in bulk_df.columns 
-                                            if col not in ['player', 'team', 'format']}
-                                
-                                if update_player_stats(player, team, format_type, stats_dict):
-                                    success_count += 1
-                                else:
-                                    error_count += 1
-                            except Exception as e:
-                                error_count += 1
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.success(f"✅ {success_count} players updated successfully")
-                    with col2:
-                        if error_count > 0:
-                            st.error(f"❌ {error_count} players failed to update")
-                    
-                    st.info("💡 CSV should have columns: player, team, format, and any stats columns to update (matches, runs, wickets, etc.)")
+        if not scorers.empty:
+            col1, col2, col3 = st.columns(3)
             
-            except Exception as e:
-                st.error(f"Error processing CSV: {str(e)}")
-
+            # Top 3 highlighted
+            for idx, (i, row) in enumerate(scorers.head(3).iterrows()):
+                col = [col1, col2, col3][idx]
+                with col:
+                    st.markdown(f"""
+                    <div class='stat-card' style='background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);'>
+                        <div class='stat-title'>#{idx+1} Run Scorer</div>
+                        <div class='stat-value'>{safe_int(row['runs']):,}</div>
+                        <div class='stat-player'>{row['player']}</div>
+                        <div class='stat-player'>{row.get('Team', 'N/A')} • {safe_int(row['matches'])} M</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            st.markdown("**Full Rankings:**")
+            display_df = scorers[['player', 'Team', 'Format', 'matches', 'runs', 'average', 'strike_rate']].copy()
+            display_df.columns = ['Player', 'Team', 'Format', 'Matches', 'Runs', 'Average', 'Strike Rate']
+            display_df = display_df.reset_index(drop=True)
+            display_df.index = display_df.index + 1
+            st.dataframe(display_df, use_container_width=True)
+        else:
+            st.info("No run scorer data available")
+    
+    # ===== TAB 2: TOP WICKET TAKERS =====
+    with tab2:
+        st.markdown("### Top Wicket Takers")
+        
+        # Get top 20 wicket takers (with minimum 3 matches)
+        bowlers = all_data.dropna(subset=['wickets', 'matches'])
+        bowlers = bowlers[bowlers['matches'] >= 3].sort_values('wickets', ascending=False).head(20)
+        
+        if not bowlers.empty:
+            col1, col2, col3 = st.columns(3)
+            
+            # Top 3 highlighted
+            for idx, (i, row) in enumerate(bowlers.head(3).iterrows()):
+                col = [col1, col2, col3][idx]
+                with col:
+                    st.markdown(f"""
+                    <div class='stat-card' style='background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);'>
+                        <div class='stat-title'>#{idx+1} Wicket Taker</div>
+                        <div class='stat-value'>{safe_int(row['wickets'])}</div>
+                        <div class='stat-player'>{row['player']}</div>
+                        <div class='stat-player'>{row.get('Team', 'N/A')} • {safe_int(row['matches'])} M</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            st.markdown("**Full Rankings:**")
+            display_df = bowlers[['player', 'Team', 'Format', 'matches', 'wickets', 'bowling_average', 'economy']].copy()
+            display_df.columns = ['Player', 'Team', 'Format', 'Matches', 'Wickets', 'Bowling Avg', 'Economy']
+            display_df = display_df.reset_index(drop=True)
+            display_df.index = display_df.index + 1
+            st.dataframe(display_df, use_container_width=True)
+        else:
+            st.info("No wicket taker data available")
+    
+    # ===== TAB 3: BEST STRIKE RATE =====
+    with tab3:
+        st.markdown("### Best Strike Rate")
+        
+        # Get top strike rates (with minimum 20 runs)
+        strikers = all_data.dropna(subset=['strike_rate', 'runs'])
+        strikers = strikers[strikers['runs'] >= 20].sort_values('strike_rate', ascending=False).head(20)
+        
+        if not strikers.empty:
+            col1, col2, col3 = st.columns(3)
+            
+            # Top 3 highlighted
+            for idx, (i, row) in enumerate(strikers.head(3).iterrows()):
+                col = [col1, col2, col3][idx]
+                with col:
+                    st.markdown(f"""
+                    <div class='stat-card' style='background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);'>
+                        <div class='stat-title'>#{idx+1} Strike Rate</div>
+                        <div class='stat-value'>{safe_float(row['strike_rate'], 0):.2f}</div>
+                        <div class='stat-player'>{row['player']}</div>
+                        <div class='stat-player'>{row.get('Team', 'N/A')} • {safe_int(row['runs'])} Runs</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            st.markdown("**Full Rankings:**")
+            display_df = strikers[['player', 'Team', 'Format', 'runs', 'matches', 'strike_rate', 'average']].copy()
+            display_df.columns = ['Player', 'Team', 'Format', 'Runs', 'Matches', 'Strike Rate', 'Average']
+            display_df = display_df.reset_index(drop=True)
+            display_df.index = display_df.index + 1
+            st.dataframe(display_df, use_container_width=True)
+        else:
+            st.info("No strike rate data available")
+    
+    # ===== TAB 4: BEST BOWLING AVERAGE =====
+    with tab4:
+        st.markdown("### Best Bowling Average")
+        
+        # Get best bowling averages (with minimum 5 wickets)
+        best_bowlers = all_data.dropna(subset=['bowling_average', 'wickets'])
+        best_bowlers = best_bowlers[best_bowlers['wickets'] >= 5].sort_values('bowling_average', ascending=True).head(20)
+        
+        if not best_bowlers.empty:
+            col1, col2, col3 = st.columns(3)
+            
+            # Top 3 highlighted
+            for idx, (i, row) in enumerate(best_bowlers.head(3).iterrows()):
+                col = [col1, col2, col3][idx]
+                with col:
+                    st.markdown(f"""
+                    <div class='stat-card' style='background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);'>
+                        <div class='stat-title'>#{idx+1} Bowling Avg</div>
+                        <div class='stat-value'>{safe_float(row['bowling_average'], 0):.2f}</div>
+                        <div class='stat-player'>{row['player']}</div>
+                        <div class='stat-player'>{row.get('Team', 'N/A')} • {safe_int(row['wickets'])} Wkts</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            st.markdown("**Full Rankings:**")
+            display_df = best_bowlers[['player', 'Team', 'Format', 'wickets', 'matches', 'bowling_average', 'economy']].copy()
+            display_df.columns = ['Player', 'Team', 'Format', 'Wickets', 'Matches', 'Bowling Avg', 'Economy']
+            display_df = display_df.reset_index(drop=True)
+            display_df.index = display_df.index + 1
+            st.dataframe(display_df, use_container_width=True)
+        else:
+            st.info("No bowling average data available")
+    
+    # ===== TAB 5: MOST 6'S =====
+    with tab5:
+        st.markdown("### Most 6's")
+        
+        # Get most 6s (if column exists)
+        if '6s' in all_data.columns:
+            sixes = all_data.dropna(subset=['6s'])
+            sixes = sixes.sort_values('6s', ascending=False).head(20)
+            
+            if not sixes.empty and (sixes['6s'] > 0).any():
+                col1, col2, col3 = st.columns(3)
+                
+                # Top 3 highlighted
+                for idx, (i, row) in enumerate(sixes.head(3).iterrows()):
+                    col = [col1, col2, col3][idx]
+                    with col:
+                        st.markdown(f"""
+                        <div class='stat-card' style='background: linear-gradient(135deg, #ff9a56 0%, #ff6a88 100%);'>
+                            <div class='stat-title'>#{idx+1} Most 6's</div>
+                            <div class='stat-value'>{safe_int(row['6s'])}</div>
+                            <div class='stat-player'>{row['player']}</div>
+                            <div class='stat-player'>{row.get('Team', 'N/A')} • {safe_int(row['runs'])} Runs</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                
+                st.markdown("**Full Rankings:**")
+                display_df = sixes[['player', 'Team', 'Format', '6s', 'runs', 'strike_rate', 'matches']].copy()
+                display_df.columns = ['Player', 'Team', 'Format', '6s', 'Runs', 'Strike Rate', 'Matches']
+                display_df = display_df.reset_index(drop=True)
+                display_df.index = display_df.index + 1
+                st.dataframe(display_df, use_container_width=True)
+            else:
+                st.info("No 6's data available in current CSV")
+        else:
+            st.warning("⚠️ The '6s' column not found in player data. Add this column to CSV for this feature.")
+    
+    # ===== INFO SECTION =====
+    st.markdown("---")
+    with st.expander("ℹ️ How to Update Data"):
+        st.info("""
+        **To update player statistics:**
+        1. Edit the CSV files manually (odi_batsman.csv, odi_bowler.csv, odi_all_rounders.csv)
+        2. Add complete match details for World Cup players
+        3. Save the CSV files
+        4. The statistics will refresh automatically on this page
+        
+        **CSV Columns to Update:**
+        - `player`: Player name
+        - `Team`: Team name
+        - `Format`: ODI/T20/Test
+        - `matches`: Total matches
+        - `runs`: Total runs (for batsmen)
+        - `wickets`: Total wickets (for bowlers)
+        - `strike_rate`: Strike rate percentage
+        - `average`: Batting average
+        - `bowling_average`: Bowling average
+        - `economy`: Economy rate
+        - `100s`: Centuries
+        - `50s`: Half centuries
+        - `6s`: Sixes hit (if tracking)
+        """)
