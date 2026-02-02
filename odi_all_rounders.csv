@@ -45,7 +45,9 @@ Dasun Shanaka,Srilanka,Odi,71,63,5,1299,27,22.39,37.0,91.47,108*,2,4,7,"https://
 Corbin Bosch,South Africa,Test,4,6,2,245,16,61.25,18.87,76.80,100*,1,1,7,"",right-arm-fast
 Corbin Bosch,South Africa,T20,11,9,3,85,17,14.16,16.94,118.05,30*,0,0,8,"",right-arm-fast
 Corbin Bosch,South Africa,Odi,12,10,4,270,11,45.00,59.63,108.87,67,0,1,7,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/402800/402864.jpg",right-arm-fast
-Liam Dawson,England,Odi,6,5,0,63,5,12.6,56.8,85.13,20,0,0,7,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/404300/404326.jpg",left-arm-orthadox
+Liam Dawson,England,T20,22,5,1,57,20,14.25,25.20,158.33,34,0,0,7,"",left-arm-orthadox
+Liam Dawson,England,Test,4,7,2,110,8,22.00,54.75,41.98,66*,0,1,7,"",left-arm-orthadox
+Liam Dawson,England,Odi,9,6,0,65,9,10.83,44.77,85.52,20,0,0,7,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/404300/404326.jpg",left-arm-orthadox
 Nitish Kumar Reddy,India,Odi,2,2,1,27,0,27.0,0.0,172.72,19*,0,0,7,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/407600/407608.jpg",right-hand-fast
 Gudakesh Motie,Windies,T20,43,24,10,205,36,14.64,29.91,133.98,33,0,0,7,"",left-arm-off-spin	
 Gudakesh Motie,Windies,Test,11,17,5,265,-,22.08,-,63.39,55,0,1,7,"",left-arm-off-spin
@@ -158,7 +160,12 @@ Sanjay Krishnamurthi,USA,T20,9,5,2,90,2,30.00,10.5,130.43,29*,0,0,8,"https://img
 Milind Kumar,USA,T20,21,17,7,322,12,32.20,16.08,105.57,56*,0,1,7,"",right-arm-off-spinner
 Milind Kumar,USA,Odi,22,21,6,1016,28,67.73,18.64,102.21,155*,3,7,7,"",right-arm-off-spinner
 Muhammad Mohsin,USA,T20,-,-,-,-,-,-,-,-,-,-,-,-,"",right-arm-off-spinner
-Shubham Ranjane,USA,ODi,4,3,1,84,6,42.00,24.00,72.41,46*,0,0,8,"",fast-bowler
+Shubham Ranjane,USA,Odi,4,3,1,84,6,42.00,24.00,72.41,46*,0,0,8,"",fast-bowler
 Shubham Ranjane,USA,T20,-,-,-,-,-,-,-,-,-,-,-,-,"",fast-bowler
 Shadley van Schalkwyk,USA,Odi,13,10,2,167,17,20.87,32.35,63.49,58,0,1,8,"",fast-bowler
 Shadley van Schalkwyk,USA,T20,14,11,6,104,15,20.80,27.46,118.18,18,0,0,8,"",fast-bowler
+Michael Leask,Scotland,Odi,91,72,14,1547,71,26.67,32.40,113.08,107*,1,8,4,"",right-arm-off-spinner
+Michael Leask,Scotland,T20,74,61,8,870,50,16.41,21.56,127.56,58,0,1,4,"",right-arm-off-spinner
+Brandon McMullen,Scotland,T20,37,33,4,1202,55,41.44,22.10,88.05,151,4,4,5,"",fast-bowler
+Brandon McMullen,Scotland,Odi,23,22,2,629,7,31.45,43.14,145.93,96,0,7,5,"",fast-bowler	
+Tharindu Ratnayake,2,2,0,10,9,5.00,43.22,37.03,10,0,0,7,"",right-arm-off-spinner

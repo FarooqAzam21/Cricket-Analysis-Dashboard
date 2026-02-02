@@ -59,8 +59,9 @@ Tanzim hassan Shakib,Bangladesh,Test,1,1,41,1,41.0,49.00,60.0,4.9,9,0,"",fast-bo
 Tanzim Hassan Shakib,Bangladesh,T20,38,37,190,44,13.57,25.09,18.2,8.24,9,0,"",fast-bowler
 Tanzim hassan Shakib,Bangladesh,Odi,15,15,151.0,24,18.87,27.29,28.4,5.75,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/399900/399956.jpg",fast-bowler,,,
 Dushmantha Chameera,Srilanka,Test,12,21,104,32,5.47,41.28,63.1,3.91,9,1,"",fast-bowler
-Dushmantha Chameera,Srilanka,T20,70	70	1530	2026	78	4/17	4/17	25.97	7.94	19.6,7.94,10,0,"",fast-bowler
+Dushmantha Chameera,Srilanka,T20,70,70,103,78,5.94,25.97,19.6,7.94,10,0,"",fast-bowler
 Dushmantha Chameera,Srilanka,Odi,58,57,296,65,11.38,35.06,38.3,5.49,9,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/403300/403388.jpg",fast-bowler,,,
+Mateesha Pathirana,Srilanka,Odi,24,23,17,36,2.83,18.47,12.7,8.71,11,0,"",fast-bowler
 Mateesha Pathirana,Srilanka,Odi,12,12,11.0,17,2.2,36.23,29.8,7.27,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/385400/385453.jpg",fast-bowler,,,
 Josh Little,Ireland,Odi,42,40,81.0,61,8.1,34.34,33.1,6.21,10,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/365700/365760.jpg",fast-bowler,,,
 Tod Astle,New Zealand,Odi,9,8,79.0,10,26.33,24.6,27.0,5.46,10,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/299800/299803.jpg",leg-spinner,,,
@@ -88,11 +89,12 @@ Ben Dawrshius,Australia,Odi,6,6,45.0,11,7.5,24.54,26.7,5.51,10,0,"https://img1.h
 Kyle Jamieson,New Zealand,T20,23,23,63,21,12.60,35.14,22.9,9.20,10,0,"",fast-bowler
 Kyle Jamieson,New Zealand,Test,19,36,432,80,19.63,19.73,44.4,2.66,9,5,"",fast-bowler
 Kyle Jamieson,New Zealand,Odi,17,16,92.0,17,23.0,39.47,45.7,5.17,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/407100/407106.png",fast-bowler,,,
-Jamie Overton,England,Odi,8,7,7.0,120,18.28,30.0,32.0,5.62,8,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/405800/405855.jpg",fast-bowler,,,
+Jamie Overton,England,Test,2,4,106,4,35.33,77.50,112.5,4.13,8,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/412500/412521.jpg",fast-bowler
+Jamie Overton,England,T20,16,12,54,17,9.00,16.64,12.2,8.12,8,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/412500/412521.jpg",fast-bowler
+Jamie Overton,England,Odi,13,12,272,14,27.20,29.50,30.1,5.87,8,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/405800/405855.jpg",fast-bowler,,,
 Brydon Carse,England,T20,14,13,46,20,9.20,20.60,13.4,9.22,9,0,"",fast-bowler
 Brydon Carse,England,Test,11,21,291,45,19.40,29.44,47.4,3.72,9,1,"",fast-bowler
 Brydon Carse,England,Odi,28,27,225.0,33,17.3,38.54,36.3,6.37,9,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/408100/408113.jpg",fast-bowler,,,
-Luke Wood,England,Odi,3,2,15.0,1,15.0,113.0,108.0,6.27,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/401800/401828.jpg",fast-bowler,,,
 Zakary Foulkes,New Zealand,T20,17,16,60,18,15.00,26.27,18.1,8.67,8,0,"",fast-bowler
 Zakary Foulkes,New Zealand,Test,1,2,0,9,0,8.33,3.00,16.6,10,1,"",fast-bowler
 Zakary Foulkes,New Zealand,Odi,4,3,14,7,0,14.42,17.1,5.05,10,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/404800/404831.jpg",fast-bowler
@@ -183,7 +185,7 @@ Tajiul Islam,Bangladesh,Test,56,100,841,242,10.13,31.34,61.3,3.06,11,17,"",left-
 Tajiul Islam,Bangladesh,Odi,20,20,110,31,10.00,25.96,33.8,4.60,11,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/392200/392242.jpg",left-arm-off-spinner
 Tajiul Islam,Bangladesh,T20,2,2,0,1,0,58.00,42.0,8.28,11,0,"",left-arm-off-spinner
 Hassan Murad,Bangladesh,Test,1,2,16,6,16.00,17.83,34.0,3.14,10,0,"",left-arm-off-spinner
-Maheesh Theekshana,Srilanka,T20,68,68,84,66,4.42,27.06,23.2,6.99,9,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_wide_w_1280,q_70/lsci/db/PICTURES/CMS/409100/409150.6.jpg",right-arm-off-spinner
+Maheesh Theekshana,Srilanka,T20,75,75,94,70,4.08,28.45,24.0,7.10,9,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_wide_w_1280,q_70/lsci/db/PICTURES/CMS/409100/409150.6.jpg",right-arm-off-spinner
 Jeffrey Vandersay,Srilanka,T20,17,17,35,8,11.66,61.12,46.0,7.97,10,0,"",leg-spinner
 Jeffrey Vandersay,Srilanka,Odi,29,27,116,43,10.54,25.74,28.9,5.33,10,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/391100/391142.jpg",leg-spinner
 Jeffrey Vandersay,Srilanka,Test,2,2,71,5,17.75,50.00,57.6,5.20,10,0,"",leg-spinner
@@ -325,6 +327,28 @@ Lockie Fergueson,New Zealand,T20,43,43,29,64,3.62,17.00,14.3,7.10,10,1,"https://
 Kwena Maphaka,South Africa,Test,2,4,17,3,8.50,56.66,86.6,3.92,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/404900/404952.jpg",fast-bowler
 Kwena Maphaka,South Africa,Odi,3,3,1,5,0.33,39.00,26.2,8.93,10,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/404900/404952.jpg",fast-bowler
 Kwena Maphaka,South Africa,T20,15,14,19,15,9.50,32.20,19.8,9.72,10,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/404900/404952.jpg",fast-bowler
-Shamar Jseph,Windies,Test,11,21,299,51,15.73,21.66,34.1,3.81,11,4,"",fast-bowler
-Shamar Jseph,Windies,Odi,6,6,11,4,11.00,67.50,62.7,6.45,9,0,"",fast-bowler
-Shamar Jseph,Windies,T20,14,14,32,16,32.00,28.43,18.0,9.47,9,0,"",fast-bowler
+Shamar Joseph,Windies,Test,11,21,299,51,15.73,21.66,34.1,3.81,11,4,"",fast-bowler
+Shamar Joseph,Windies,Odi,6,6,11,4,11.00,67.50,62.7,6.45,9,0,"",fast-bowler
+Shamar Joseph,Windies,T20,14,14,32,16,32.00,28.43,18.0,9.47,9,0,"",fast-bowler
+Anrich Nortje,South Africa,Test,19,32,187,70,7.79,26.71,43.6,3.67,11,4,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/397900/397983.jpg",fast-bowler
+Anrich Nortje,South Africa,Odi,22,21,40,36,6.66,27.27,27.9,5.85,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/397900/397983.jpg",fast-bowler
+Anrich Nortje,South Africa,T20,45,44,30,53,3.75,21.32,17.5,7.29,11,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/397900/397983.jpg",fast-bowler
+Luke Wood,England,Odi,3,2,15,1,15.00,113.00,108.0,6.27,10,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/401800/401828.jpg",fast-bowler
+Luke Wood,England,T20,14,13,3,17,3.00,22.52,15.1,8.90,10,0,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1280,q_80/lsci/db/PICTURES/CMS/401800/401828.jpg",fast-bowler
+Josh Tounge,England,Test,9,18,48,49,5.33,26.36,39.8,3.97,9,3,"",fast-bowler
+Josh Tounge,England,Odi,-,-,-,-,-,-,-,-,9,-,"",fast-bowler
+Josh Tounge,England,T20,-,-,-,-,-,-,-,-,9,-,"",fast-bowler
+Brad Currie,Scotland,Odi,14,14,16,32,16.00,12.81,20.0,3.83,8,0,"",fast-bowler
+Brad Currie,Scotland,T20,18,17,15,28,15.00,12.57,13.2,5.67,8,1,"",fast-bowler
+Mark Watt,Scotland,T20,77,74,293,89,10.88,21.12,18.1,6.98,10,1,"",left-arm-spin
+Mark Watt,Scotland,Odi,82,80,733,110,20.36,27.31,38.6,4.24,10,1,"",left-arm-spin
+Chris Greaves,Scotland,Odi,30,22,381,28,22.41,21.42,23.5,5.46,9,1,"",leg-spinner
+Chris Greaves,Scotland,T20,35,30,290,27,19.33,22.62,17.7,7.63,9,0,"",leg-spinner
+Safyaan Sharif,Scotland,T20,75,74,191,85,12.73,23.68,17.6,8.06,11,0,"",fast-bolwer
+Safyaan Sharif,Scotland,Odi,90,89,609,113,19.03,30.31,36.7,4.94,11,2,"",fast-bolwer
+Zainullah Ihsan,Scotland,T20,-,-,-,-,-,-,-,-,10,-,"",fast-bowler
+Oliver Davidson,Scotland,Odi,1,1,14,0,14.00,-,-,3.33,10,0,"",left-arm-off-spineer
+Oliver Davidson,Scotland,T20,-,-,-,-,-,-,-,-,10,-,"",left-arm-off-spineer
+Dunith Wellalage,Sri Lanka,Test,1,2,29,0,14.50,-,-,2.69,9,0,"",left-arm-spinner
+Dunith Wellalage,Sri Lanka,Odi,34,33,453,41,21.57,31.09,36.5,5.10,9,2,"",left-arm-spinner
+Dunith Wellalage,Sri Lanka,T20,7,7,12,8,12.00,25.75,19.8,7.77,8,0,"",left-arm-spinner
