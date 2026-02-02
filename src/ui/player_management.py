@@ -6,6 +6,24 @@ import streamlit as st
 import pandas as pd
 from ..database import get_db_connection, fetch_all_players_from_db
 
+def safe_int(value, default=0):
+    """Safely convert value to int, handling None and NaN"""
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return default
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default
+
+def safe_float(value, default=0.0):
+    """Safely convert value to float, handling None and NaN"""
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return default
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return default
+
 def update_player_stats(player_name, team, format_type, stats_dict):
     """Update player statistics in the database"""
     try:
@@ -142,23 +160,23 @@ def render_player_management():
     
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("Matches", int(current_data.get('matches', 0)))
+        st.metric("Matches", safe_int(current_data.get('matches', 0)))
     with col2:
-        st.metric("Runs", int(current_data.get('runs', 0)))
+        st.metric("Runs", safe_int(current_data.get('runs', 0)))
     with col3:
-        st.metric("Wickets", int(current_data.get('wickets', 0)))
+        st.metric("Wickets", safe_int(current_data.get('wickets', 0)))
     with col4:
-        st.metric("Average", round(current_data.get('average', 0), 2))
+        st.metric("Average", round(safe_float(current_data.get('average', 0)), 2))
     
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("Strike Rate", round(current_data.get('strike_rate', 0), 2))
+        st.metric("Strike Rate", round(safe_float(current_data.get('strike_rate', 0)), 2))
     with col2:
-        st.metric("Bowling Avg", round(current_data.get('bowling_average', 0), 2))
+        st.metric("Bowling Avg", round(safe_float(current_data.get('bowling_average', 0)), 2))
     with col3:
-        st.metric("Economy", round(current_data.get('economy', 0), 2))
+        st.metric("Economy", round(safe_float(current_data.get('economy', 0)), 2))
     with col4:
-        st.metric("Hundreds", int(current_data.get('hundreds', 0)))
+        st.metric("Hundreds", safe_int(current_data.get('hundreds', 0)))
     
     # ===== SECTION 4: UPDATE STATS =====
     st.markdown("#### ✏️ Step 4: Update Statistics")
@@ -171,24 +189,24 @@ def render_player_management():
     
     with col1:
         st.markdown("**Batting Stats**")
-        new_matches = st.number_input("Matches", value=int(current_data.get('matches', 0)), min_value=0, step=1, key="matches")
-        new_innings = st.number_input("Innings", value=int(current_data.get('innings', 0)), min_value=0, step=1, key="innings")
-        new_no = st.number_input("Not Out", value=int(current_data.get('no', 0)), min_value=0, step=1, key="no")
-        new_runs = st.number_input("Runs", value=int(current_data.get('runs', 0)), min_value=0, step=100, key="runs")
-        new_sr = st.number_input("Strike Rate", value=round(current_data.get('strike_rate', 0), 2), min_value=0.0, step=1.0, format="%.2f", key="strike_rate")
-        new_batting_pos = st.number_input("Batting Position", value=int(current_data.get('batting_position', 0)), min_value=0, max_value=11, step=1, key="batting_pos")
+        new_matches = st.number_input("Matches", value=safe_int(current_data.get('matches', 0)), min_value=0, step=1, key="matches")
+        new_innings = st.number_input("Innings", value=safe_int(current_data.get('innings', 0)), min_value=0, step=1, key="innings")
+        new_no = st.number_input("Not Out", value=safe_int(current_data.get('no', 0)), min_value=0, step=1, key="no")
+        new_runs = st.number_input("Runs", value=safe_int(current_data.get('runs', 0)), min_value=0, step=100, key="runs")
+        new_sr = st.number_input("Strike Rate", value=round(safe_float(current_data.get('strike_rate', 0)), 2), min_value=0.0, step=1.0, format="%.2f", key="strike_rate")
+        new_batting_pos = st.number_input("Batting Position", value=safe_int(current_data.get('batting_position', 0)), min_value=0, max_value=11, step=1, key="batting_pos")
     
     with col2:
         st.markdown("**Bowling Stats**")
-        new_wickets = st.number_input("Wickets", value=int(current_data.get('wickets', 0)), min_value=0, step=1, key="wickets")
-        new_bowling_avg = st.number_input("Bowling Average", value=round(current_data.get('bowling_average', 0), 2), min_value=0.0, step=1.0, format="%.2f", key="bowling_average")
-        new_economy = st.number_input("Economy", value=round(current_data.get('economy', 0), 2), min_value=0.0, step=0.1, format="%.2f", key="economy")
+        new_wickets = st.number_input("Wickets", value=safe_int(current_data.get('wickets', 0)), min_value=0, step=1, key="wickets")
+        new_bowling_avg = st.number_input("Bowling Average", value=round(safe_float(current_data.get('bowling_average', 0)), 2), min_value=0.0, step=1.0, format="%.2f", key="bowling_average")
+        new_economy = st.number_input("Economy", value=round(safe_float(current_data.get('economy', 0)), 2), min_value=0.0, step=0.1, format="%.2f", key="economy")
     
     with col3:
         st.markdown("**Achievement Stats**")
-        new_average = st.number_input("Batting Average", value=round(current_data.get('average', 0), 2), min_value=0.0, step=1.0, format="%.2f", key="average")
-        new_hundreds = st.number_input("Centuries", value=int(current_data.get('hundreds', 0)), min_value=0, step=1, key="hundreds")
-        new_fifties = st.number_input("Half Centuries", value=int(current_data.get('fifties', 0)), min_value=0, step=1, key="fifties")
+        new_average = st.number_input("Batting Average", value=round(safe_float(current_data.get('average', 0)), 2), min_value=0.0, step=1.0, format="%.2f", key="average")
+        new_hundreds = st.number_input("Centuries", value=safe_int(current_data.get('hundreds', 0)), min_value=0, step=1, key="hundreds")
+        new_fifties = st.number_input("Half Centuries", value=safe_int(current_data.get('fifties', 0)), min_value=0, step=1, key="fifties")
         new_role = st.selectbox("Player Role", 
             ["Batsman", "Bowler", "All-rounder", "Wicket-keeper"],
             index=0,
