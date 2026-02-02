@@ -56,13 +56,14 @@ def show_admin_panel():
     
     st.divider()
     
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
         "Create Tournament", 
         "Add Teams to Groups", 
         "Add Players to Teams",
         "Schedule Matches",
         "Manage Matches", 
-        "Update Scores"
+        "Update Scores",
+        "Player Data Management"
     ])
     
     # ========== TAB 1: CREATE TOURNAMENT ==========
@@ -771,6 +772,11 @@ def show_admin_panel():
                         st.error("Failed to delete tournament")
                 except Exception as e:
                     st.error(f"Error deleting tournament: {e}")
+    
+    # ========== TAB 7: PLAYER DATA MANAGEMENT ==========
+    with tab7:
+        from .player_management import render_player_management
+        render_player_management()
 
 if __name__ == "__main__":
     show_admin_panel()
