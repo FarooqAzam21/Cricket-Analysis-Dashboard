@@ -170,30 +170,26 @@ def render_team_builder(all_players):
                 img_url = player.get('image_url', "https://via.placeholder.com/150?text=No+Image")
                 
                 st.markdown(f"""
-                    <div style='background: rgba(255, 255, 255, 0.05); 
-                                border: 1px solid rgba(255, 255, 255, 0.1); 
-                                padding: 1rem; 
-                                border-radius: 12px; 
-                                margin-bottom: 20px;
-                                backdrop-filter: blur(5px);
-                                transition: transform 0.3s ease;'>
-                        <div style='display: flex; gap: 10px; align-items: center; margin-bottom: 10px;'>
-                            <img src='{img_url}' style='width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #10B981;'>
-                            <div>
-                                <div style='font-size: 1.1rem; font-weight: bold; color: #10B981;'>{player['player']}</div>
-                                <div style='font-size: 0.75rem; opacity: 0.7;'>{player['Team']}</div>
+                    <div class="elite-card">
+                        <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
+                            <img src="{img_url}" style="width: 60px; height: 60px; border-radius: 30px; object-fit: cover; border: 3px solid var(--primary);">
+                            <div style="flex-grow: 1;">
+                                <div style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark) !important;">{player['player']}</div>
+                                <div style="font-size: 0.8rem; opacity: 0.7; font-weight: 600;">{player['Team']}</div>
+                            </div>
+                            <div style="background: var(--primary); color: white; padding: 4px 10px; border-radius: 8px; font-weight: 800; font-size: 0.8rem;">
+                                #{assigned_pos}
                             </div>
                         </div>
-                        <div style='display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; margin-bottom: 8px;'>
-                            <span>{role_icon} {player['role']}</span>
-                            <span style='background: #10B981; color: #000; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;'>Position #{assigned_pos}</span>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span style="font-size: 0.9rem; font-weight: 600;">{role_icon} {player['role']}</span>
+                            <span style="font-size: 0.8rem; background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 4px;">Form: 📈 Match Ready</span>
                         </div>
-                        <hr style='margin: 8px 0; border: none; border-top: 1px solid rgba(255,255,255,0.1);'>
-                        <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.75rem;'>
-                            <div><b>Mat:</b> {int(player['matches'])}</div>
-                            <div><b>{"Bowl Avg" if role_icon in ["⚾", "⚡"] else "Bat Avg"}:</b> {player['bowling_average'] if role_icon in ["⚾", "⚡"] else player['average']:.1f}</div>
-                            <div><b>{"Econ" if role_icon in ["⚾", "⚡"] else "SR"}:</b> {player['economy'] if role_icon in ["⚾", "⚡"] else player['strike_rate']:.1f}</div>
-                            <div><b>Wkts:</b> {int(player['wickets'])}</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.05);">
+                            <div><b>Matches:</b> {int(player['matches'])}</div>
+                            <div><b>{"Avg (B)": if role_icon in ["⚾", "⚡"] else "Avg (P)"}:</b> {player['bowling_average'] if role_icon in ["⚾", "⚡"] else player['average']:.1f}</div>
+                            <div><b>{"Econ": if role_icon in ["⚾", "⚡"] else "SR"}:</b> {player['economy'] if role_icon in ["⚾", "⚡"] else player['strike_rate']:.1f}</div>
+                            <div><b>Wickets:</b> {int(player['wickets'])}</div>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)

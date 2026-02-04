@@ -45,64 +45,63 @@ def render_smart_scout(all_players):
                 # Show results
                 for i, (_, row) in enumerate(similar_df.iterrows()):
                     match_score = round((1 - scores[i]) * 100, 2)
+                    img_url = row.get('image_url', "https://via.placeholder.com/100?text=No+Img")
                     
-                    # Main container for each result
-                    with st.container():
-                        col1, col2, col3 = st.columns([1, 4, 1])
+                    # ELITE RESULT CARD
+                    st.markdown(f"""
+                    <div class="elite-card">
+                        <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 20px;">
+                            <img src="{img_url}" style="width: 80px; height: 80px; border-radius: 40px; object-fit: cover; border: 3px solid var(--primary); box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                            <div style="flex-grow: 1;">
+                                <div style="display: flex; justify-content: space-between; align-items: start;">
+                                    <div>
+                                        <h4 style="margin: 0; color: var(--primary-dark) !important;">{row['player']}</h4>
+                                        <p style="margin: 0; font-size: 0.9rem; opacity: 0.7; font-weight: 600;">{row['Team']} | {row.get('role', 'N/A')}</p>
+                                    </div>
+                                    <div style="background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.8rem;">
+                                        {match_score}% MATCH
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         
-                        with col1:
-                            if row.get('image_url') and str(row['image_url']) != 'nan' and row['image_url'] != "":
-                                st.image(row['image_url'], width=100)
-                            else:
-                                st.image("https://via.placeholder.com/100?text=No+Img", width=100)
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; background: rgba(0,0,0,0.02); padding: 15px; border-radius: 12px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.7rem; text-transform: uppercase; opacity: 0.6; font-weight: 800;">Matches</div>
+                                <div style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark);">{int(row.get('matches', 0))}</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.7rem; text-transform: uppercase; opacity: 0.6; font-weight: 800;">Runs</div>
+                                <div style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark);">{int(row.get('runs', 0))}</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.7rem; text-transform: uppercase; opacity: 0.6; font-weight: 800;">{"Avg" if 'batter' in str(row.get('role','')).lower() or 'batsman' in str(row.get('role','')).lower() else "Bowl Avg"}</div>
+                                <div style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark);">{row.get('average', 0) if 'batter' in str(row.get('role','')).lower() or 'batsman' in str(row.get('role','')).lower() else row.get('bowling_average', 0):.1f}</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.7rem; text-transform: uppercase; opacity: 0.6; font-weight: 800;">Wickets</div>
+                                <div style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark);">{int(row.get('wickets', 0))}</div>
+                            </div>
+                        </div>
                         
-                        with col2:
-                            st.markdown(f"#### {row['player']} ({row['Team']})")
-                            st.markdown(f"**Role:** `{row.get('role', 'N/A')}` | **Match:** {match_score}%")
-                            
-                            cols = st.columns(4)
-                            role_l = str(row.get('role', '')).lower()
-                            
-                            if 'bowler' in role_l or 'spinner' in role_l or 'fast' in role_l:
-                                # Bowler Metrics
-                                cols[0].metric("Matches", row.get('matches', 0))
-                                cols[1].metric("Runs", row.get('runs', 0))
-                                cols[2].metric("Wickets", row.get('wickets', 0))
-                                cols[3].metric("Bowl Avg", row.get('bowling_average', 0))
-                            else:
-                                # Batsman Metrics
-                                cols[0].metric("Runs", row.get('runs', 0))
-                                cols[1].metric("Average", row.get('average', 0))
-                                cols[2].metric("SR", row.get('strike_rate', 0))
-                                cols[3].metric("Wickets", row.get('wickets', 0))
-                        
-                        with col3:
-                            st.markdown("**Rate this match:**")
-                            feedback_key = f"feedback_{selected_player}_{row['player']}_{i}"
-                            
-                            col_up, col_down = st.columns(2)
-                            with col_up:
-                                if st.button("👍", key=f"up_{feedback_key}", help="Good match"):
-                                    save_scout_feedback(
-                                        st.session_state.username,
-                                        selected_player,
-                                        row['player'],
-                                        selected_fmt,
-                                        "good"
-                                    )
-                                    st.success("✓")
-                            
-                            with col_down:
-                                if st.button("👎", key=f"down_{feedback_key}", help="Bad match"):
-                                    save_scout_feedback(
-                                        st.session_state.username,
-                                        selected_player,
-                                        row['player'],
-                                        selected_fmt,
-                                        "bad"
-                                    )
-                                    st.error("✓")
-                        
-                        st.markdown("---")
+                        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+                            <div style="font-size: 0.8rem; opacity: 0.6; align-self: center;">Help improve results:</div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Feedback buttons continue using Streamlit components for logic
+                    col_fb1, col_fb2 = st.columns([8, 1]) # Shift buttons to the right
+                    with col_fb2:
+                        fb_c1, fb_c2 = st.columns(2)
+                        with fb_c1:
+                            if st.button("👍", key=f"up_{selected_player}_{row['player']}_{i}"):
+                                save_scout_feedback(st.session_state.username, selected_player, row['player'], selected_fmt, "good")
+                                st.toast("Feedback saved!", icon="✅")
+                        with fb_c2:
+                            if st.button("👎", key=f"down_{selected_player}_{row['player']}_{i}"):
+                                save_scout_feedback(st.session_state.username, selected_player, row['player'], selected_fmt, "bad")
+                                st.toast("Feedback noted!", icon="❌")
+                    
+                    st.markdown("</div>", unsafe_allow_html=True) # Close elite-card
+                    st.markdown("<br>", unsafe_allow_html=True)
             else:
                 st.error("Could not find similar players.")

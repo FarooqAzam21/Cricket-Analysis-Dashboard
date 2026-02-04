@@ -5,11 +5,12 @@ from datetime import datetime
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from database import (
+from src.database import (
     get_tournament, get_tournament_matches, get_tournament_teams,
-    save_fantasy_team, get_user_fantasy_teams, get_db_connection, fetch_all_players_from_db
+    save_fantasy_team, get_user_fantasy_teams, get_db_connection, 
+    fetch_all_players_from_db, get_match_playing_xi
 )
 
 def get_upcoming_and_scheduled_matches(tournament_id):
@@ -17,54 +18,73 @@ def get_upcoming_and_scheduled_matches(tournament_id):
     matches = get_tournament_matches(tournament_id)
     return [m for m in matches if m['status'] != 'completed']
 
-def get_match_squads(match_id):
-    """Get all players from both teams in a match"""
+def get_match_squads_curated(match_id):
+    """Get only the players announced in Playing 11 from admin panel"""
     all_players = fetch_all_players_from_db()
+    playing_xi_names = get_match_playing_xi(match_id)
     
-    match = None
+    if not playing_xi_names:
+        # Fallback to full squads if no playing 11 announced yet
+        # But we should probably warn the user
+        return get_match_squads_full(match_id), False
+    
+    # Filter global players list by these names
+    squad = all_players[all_players['player'].isin(playing_xi_names)].copy()
+    
+    # Get team names for header
     conn = get_db_connection()
-    match = conn.execute("SELECT * FROM tournament_matches WHERE id = ?", (match_id,)).fetchone()
+    match = conn.execute("SELECT team1_id, team2_id, tournament_id FROM tournament_matches WHERE id = ?", (match_id,)).fetchone()
     conn.close()
     
-    if not match:
-        return pd.DataFrame()
+    all_teams = get_tournament_teams(match['tournament_id'])
+    team1_name = next((t['team_name'] for t in all_teams if t['id'] == match['team1_id']), "Team 1")
+    team2_name = next((t['team_name'] for t in all_teams if t['id'] == match['team2_id']), "Team 2")
     
-    # Get both teams' players from database
-    # Filter by team and format = 'T20'
-    team1_id = match['team1_id']
-    team2_id = match['team2_id']
+    return squad, team1_name, team2_name, True
+
+def get_match_squads_full(match_id):
+    """Fallback: Get all players from both teams"""
+    all_players = fetch_all_players_from_db()
+    conn = get_db_connection()
+    match = conn.execute("SELECT team1_id, team2_id, tournament_id FROM tournament_matches WHERE id = ?", (match_id,)).fetchone()
+    conn.close()
     
     all_teams = get_tournament_teams(match['tournament_id'])
-    team1_name = next((t['team_name'] for t in all_teams if t['id'] == team1_id), None)
-    team2_name = next((t['team_name'] for t in all_teams if t['id'] == team2_id), None)
+    team1_name = next((t['team_name'] for t in all_teams if t['id'] == match['team1_id']), None)
+    team2_name = next((t['team_name'] for t in all_teams if t['id'] == match['team2_id']), None)
     
-    # Filter players from both teams
     squad = all_players[
         ((all_players['team'] == team1_name) | (all_players['team'] == team2_name)) &
         (all_players['format'] == 'T20')
     ].copy()
-    
     return squad, team1_name, team2_name
 
-def calculate_fantasy_points(players_data, match_results):
-    """Calculate fantasy points based on match performance"""
-    # Scoring system:
-    # Batting: 1 point per run, 2 points per 4, 3 points per 6
-    # Bowling: 20 points per wicket, 4 points per economy <7, etc.
-    # Fielding: 10 points per catch, 15 points per runout, 25 points per stumping
-    # Bonuses: 50 points for 50, 100 points for 100
-    
-    points = 0
-    
-    # This is a placeholder - in production, you'd integrate with live APIs
-    # For now, we'll use a formula based on player stats
-    
-    return points
-
 def show_fantasy_cricket():
-    """Fantasy cricket team builder interface"""
+    """Fantasy cricket team builder interface with improved design"""
     
-    st.title("🏏 Fantasy Cricket")
+    # Custom CSS for horizontal match list
+    st.markdown("""
+        <style>
+        .match-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.2s;
+            min-width: 200px;
+        }
+        .match-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .match-team { font-weight: bold; font-size: 1.1rem; }
+        .match-vs { color: #f39c12; font-weight: bold; margin: 5px 0; }
+        .match-info { font-size: 0.8rem; opacity: 0.7; }
+        </style>
+    """, unsafe_allow_html=True)
+
+    st.title("🏏 Fantasy Cricket League")
     
     # Get active tournaments
     conn = get_db_connection()
@@ -75,228 +95,169 @@ def show_fantasy_cricket():
         st.info("No tournaments available")
         return
     
-    # Select tournament
-    tournament_options = {t['name']: t['id'] for t in tournaments}
-    tournament_name = st.selectbox("Select Tournament", tournament_options.keys())
-    tournament_id = tournament_options[tournament_name]
+    # Select tournament (simplified)
+    t_id = tournaments[0]['id'] if len(tournaments) > 0 else None
+    if not t_id: return
+
+    # Get upcoming matches
+    upcoming_matches = get_upcoming_and_scheduled_matches(t_id)
+    all_teams = get_tournament_teams(t_id)
     
-    tournament = get_tournament(tournament_id)
+    st.write("### 📅 Upcoming Fixtures")
     
-    # Get upcoming/scheduled matches (not completed yet)
-    upcoming_matches = get_upcoming_and_scheduled_matches(tournament_id)
-    
-    if not upcoming_matches:
-        st.warning("⏳ No upcoming matches. Check back when matches are scheduled!")
-        return
-    
-    # Select match
-    st.subheader("Select Match to Create Fantasy Team")
-    all_teams = get_tournament_teams(tournament_id)
-    
-    match_options = {}
-    for match in upcoming_matches:
-        team1 = next((t['team_name'] for t in all_teams if t['id'] == match['team1_id']), f"Team {match['team1_id']}")
-        team2 = next((t['team_name'] for t in all_teams if t['id'] == match['team2_id']), f"Team {match['team2_id']}")
-        status_badge = "🔴 Scheduled" if match['status'] == 'scheduled' else "🟡 Live"
-        match_options[f"{team1} vs {team2} ({match['match_date']}) {status_badge}"] = match['id']
-    
-    selected_match_display = st.selectbox("Pick a Match", match_options.keys())
-    match_id = match_options[selected_match_display]
-    
-    # Get match details
-    selected_match = next((m for m in upcoming_matches if m['id'] == match_id), None)
-    
-    if not selected_match:
-        st.error("Match not found")
-        return
-    
-    team1 = next((t['team_name'] for t in all_teams if t['id'] == selected_match['team1_id']), "Team 1")
-    team2 = next((t['team_name'] for t in all_teams if t['id'] == selected_match['team2_id']), "Team 2")
-    
-    # Display match info
-    col1, col2, col3 = st.columns([2, 1, 2])
-    with col1:
-        st.write(f"### {team1}")
-        if selected_match['status'] == 'completed':
-            st.metric("Runs", selected_match['team1_score'])
+    # Horizontal Match Selection Area
+    if upcoming_matches:
+        cols = st.columns(len(upcoming_matches) if len(upcoming_matches) < 5 else 5)
+        
+        # Track selected match in session state
+        if 'selected_match_id' not in st.session_state:
+            st.session_state.selected_match_id = None
+
+        for idx, match in enumerate(upcoming_matches[:5]): # Show up to 5 horizontally
+            with cols[idx]:
+                t1 = next((t['team_name'] for t in all_teams if t['id'] == match['team1_id']), "T1")
+                t2 = next((t['team_name'] for t in all_teams if t['id'] == match['team2_id']), "T2")
+                
+                # Manual HTML-ish layout for the box
+                st.markdown(f"""
+                    <div style="text-align: center; padding: 10px; border: 1px solid #333; border-radius: 10px; background: #0e1117; margin-bottom: 10px;">
+                        <div style="font-size: 0.9rem; font-weight: bold;">{t1}</div>
+                        <div style="color: #f39c12; font-weight: bold; margin: 2px 0;">VS</div>
+                        <div style="font-size: 0.9rem; font-weight: bold;">{t2}</div>
+                        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">{match['match_date']}</div>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                if st.button("Create Team", key=f"btn_{match['id']}"):
+                    st.session_state.selected_match_id = match['id']
+                    st.rerun()
+
+    if st.session_state.selected_match_id:
+        match_id = st.session_state.selected_match_id
+        selected_match = next((m for m in upcoming_matches if m['id'] == match_id), None)
+        
+        if not selected_match:
+            st.error("Match not found")
+            return
+
+        st.divider()
+        st.write(f"## 🛠️ Team Builder: {selected_match['match_date']}")
+        
+        # Get squads (Filtered by Admin's Playing 11)
+        res = get_match_squads_curated(match_id)
+        if len(res) == 4:
+            squad_df, team1_name, team2_name, is_announced = res
         else:
-            st.info("Match not started yet")
-    with col2:
-        st.write("**VS**")
-        st.write(f"📅 {selected_match['match_date']}")
-    with col3:
-        st.write(f"### {team2}")
-        if selected_match['status'] == 'completed':
-            st.metric("Runs", selected_match['team2_score'])
+            squad_df, team1_name, team2_name = res
+            is_announced = False
+
+        if not is_announced:
+            st.warning("⚠️ Official Playing 11 contains all squad players. Final lineups may vary.")
         else:
-            st.info("Match not started yet")
-    
+            st.success(f"✅ Showing the official 22 players announced in Admin Panel.")
+
+        # Build UI
+        if f"selected_players_{match_id}" not in st.session_state:
+            st.session_state[f"selected_players_{match_id}"] = []
+        
+        selected_players = st.session_state[f"selected_players_{match_id}"]
+
+        st.markdown(f"""
+        <div style="background: #1a1c24; padding: 20px; border-radius: 15px; border-left: 5px solid #2ecc71; margin-bottom: 25px;">
+            <h4 style="margin-top: 0;">🛡️ Selection Strategy</h4>
+            <p style="font-size: 0.9rem; opacity: 0.8;">Select 11 players. Must include 2+ Batsmen, 2+ Bowlers, and 1+ Wicket-keeper.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Tabs for Roles
+        tab_bat, tab_bowl, tab_ar, tab_wk = st.tabs(["🏏 Batsmen", "🎳 Bowlers", "🛡️ All-rounders", "🧤 Wicket-keepers"])
+        
+        def render_compact_selection(role_filter, player_df):
+            c1, c2 = st.columns(2)
+            teams = [team1_name, team2_name]
+            role_players = player_df[player_df['role'].str.contains(role_filter, case=False, na=False)]
+            
+            for i, team in enumerate(teams):
+                with [c1, c2][i]:
+                    st.markdown(f"##### {team}")
+                    team_role_players = role_players[role_players['team'] == team]
+                    if team_role_players.empty:
+                        st.caption("No players in this role")
+                    for _, p in team_role_players.iterrows():
+                        p_name = p['player']
+                        sel = p_name in selected_players
+                        label = f"✅ {p_name}" if sel else f"➕ {p_name}"
+                        if st.button(label, key=f"fsel_{p_name}_{match_id}"):
+                            if sel: selected_players.remove(p_name)
+                            elif len(selected_players) < 11: selected_players.append(p_name)
+                            else: st.error("11 players max!")
+                            st.rerun()
+
+        with tab_bat: render_compact_selection('Bat', squad_df)
+        with tab_bowl: render_compact_selection('Bowl', squad_df)
+        with tab_ar: render_compact_selection('All', squad_df)
+        with tab_wk: render_compact_selection('Keeper', squad_df)
+
+        # Validation & Submit
+        st.divider()
+        sel_df = squad_df[squad_df['player'].isin(selected_players)]
+        bat_c = len(sel_df[sel_df['role'].str.contains('Bat', case=False)])
+        bowl_c = len(sel_df[sel_df['role'].str.contains('Bowl', case=False)])
+        wk_c = len(sel_df[sel_df['role'].str.contains('Keeper', case=False)])
+        
+        v1, v2, v3, v4 = st.columns(4)
+        v1.metric("Batsmen", f"{bat_c}/2+", delta=bat_c-2 if bat_c>=2 else bat_c-2)
+        v2.metric("Bowlers", f"{bowl_c}/2+", delta=bowl_c-2 if bowl_c>=2 else bowl_c-2)
+        v3.metric("Wicketkeepers", f"{wk_c}/1+", delta=wk_c-1 if wk_c>=1 else wk_c-1)
+        v4.metric("Squad Size", f"{len(selected_players)}/11")
+
+        if bat_c>=2 and bowl_c>=2 and wk_c>=1 and len(selected_players)==11:
+            st.success("✨ Your team is balanced and ready!")
+            c_col1, c_col2 = st.columns(2)
+            with c_col1:
+                cap = st.selectbox("Captain (2x)", selected_players, key=f"c_{match_id}")
+            with c_col2:
+                vcap = st.selectbox("Vice-Captain (1.5x)", [p for p in selected_players if p != cap], key=f"vc_{match_id}")
+            
+            if st.button("🚀 Submit Fantasy Squad", type="primary"):
+                try:
+                    conn = get_db_connection()
+                    user = conn.execute("SELECT id FROM users WHERE username = ?", (st.session_state.username,)).fetchone()
+                    if user:
+                        players_json = json.dumps({'players': selected_players, 'captain': cap, 'vice_captain': vcap})
+                        save_fantasy_team(user['id'], t_id, match_id, players_json)
+                        st.success("Team saved for the match!")
+                        st.balloons()
+                    conn.close()
+                except Exception as e: st.error(f"Error: {e}")
+        else:
+            st.info("💡 Keep picking until you satisfy the requirements!")
+            if selected_players:
+                st.write("**Current Lineup:** " + ", ".join(selected_players))
+                if st.button("Clear All"):
+                    st.session_state[f"selected_players_{match_id}"] = []
+                    st.rerun()
+
+    # Previous Teams Section (Persistent)
     st.divider()
-    
-    # Get squads
-    squad_df, team1_name, team2_name = get_match_squads(match_id)
-    
-    if squad_df.empty:
-        st.error("Could not load player squads")
-        return
-    
-    # Team builder
-    st.subheader("🏗️ Build Your Fantasy Team (11 Players)")
-    
-    # Create team selection
-    team_selections = {}
-    cols = st.columns(3)
-    
-    st.write("**Select 11 players from both teams**")
-    
-    # Separate by teams
-    team1_players = squad_df[squad_df['team'] == team1_name].copy()
-    team2_players = squad_df[squad_df['team'] == team2_name].copy()
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.write(f"#### {team1_name}")
-        team1_selected = st.multiselect(
-            f"Select {team1_name} players",
-            options=team1_players['player'].tolist(),
-            key=f"team1_{match_id}",
-            max_selections=11
-        )
-    
-    with col2:
-        st.write(f"#### {team2_name}")
-        team2_selected = st.multiselect(
-            f"Select {team2_name} players",
-            options=team2_players['player'].tolist(),
-            key=f"team2_{match_id}",
-            max_selections=11
-        )
-    
-    all_selected = team1_selected + team2_selected
-    
-    # Display player count
-    st.info(f"Selected Players: {len(all_selected)}/11")
-    
-    if len(all_selected) == 11:
-        st.success("✅ Full team selected!")
-        
-        # Show selected team preview
-        st.subheader("Your Fantasy Team Preview")
-        selected_df = squad_df[squad_df['player'].isin(all_selected)][
-            ['player', 'team', 'role', 'runs', 'wickets', 'strike_rate', 'average']
-        ].copy()
-        
-        selected_df = selected_df.sort_values('team')
-        st.dataframe(selected_df, hide_index=True, use_container_width=True)
-        
-        # Positions
-        st.subheader("Assign Batting Positions (1-11)")
-        position_assignments = {}
-        
-        cols = st.columns(3)
-        for idx, player in enumerate(all_selected):
-            col = cols[idx % 3]
-            with col:
-                position = st.number_input(
-                    f"{player}",
-                    min_value=1,
-                    max_value=11,
-                    value=idx + 1,
-                    key=f"position_{player}_{match_id}"
-                )
-                position_assignments[player] = position
-        
-        # Captain selection
-        st.subheader("📍 Select Captain & Vice-Captain")
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            captain = st.selectbox("Captain", all_selected, key=f"captain_{match_id}")
-        
-        with col2:
-            vice_captain = st.selectbox(
-                "Vice-Captain",
-                [p for p in all_selected if p != captain],
-                key=f"vice_captain_{match_id}"
-            )
-        
-        # Submit fantasy team
-        if st.button("🚀 Submit Fantasy Team", key=f"submit_{match_id}"):
-            try:
-                # Get user ID
-                conn = get_db_connection()
-                user = conn.execute(
-                    "SELECT id FROM users WHERE username = ?",
-                    (st.session_state.username,)
-                ).fetchone()
-                conn.close()
-                
-                if not user:
-                    st.error("User not found")
-                    return
-                
-                user_id = user['id']
-                
-                # Save fantasy team
-                players_json = json.dumps({
-                    'players': all_selected,
-                    'positions': position_assignments,
-                    'captain': captain,
-                    'vice_captain': vice_captain
-                })
-                
-                # Get captain and vice captain IDs
-                captain_id = next((p['id'] for p in squad_df.itertuples()), None)
-                vice_captain_id = next((p['id'] for p in squad_df.itertuples()), None)
-                
-                fantasy_team_id = save_fantasy_team(
-                    user_id,
-                    tournament_id,
-                    match_id,
-                    players_json,
-                    captain_id,
-                    vice_captain_id
-                )
-                
-                st.success("🎉 Fantasy team submitted successfully!")
-                st.balloons()
-                
-                # Show points estimation
-                st.info(f"Your team will be scored based on player performance.")
-                
-            except Exception as e:
-                st.error(f"Error submitting fantasy team: {e}")
-    
-    elif len(all_selected) > 11:
-        st.warning(f"⚠️ You've selected {len(all_selected)} players. Maximum is 11.")
-    
-    # Show previous teams
-    st.divider()
-    st.subheader("Your Previous Fantasy Teams")
-    
+    st.subheader("📜 Your Saved Teams")
     try:
         conn = get_db_connection()
-        user = conn.execute(
-            "SELECT id FROM users WHERE username = ?",
-            (st.session_state.username,)
-        ).fetchone()
+        user = conn.execute("SELECT id FROM users WHERE username = ?", (st.session_state.username,)).fetchone()
         conn.close()
-        
         if user:
-            previous_teams = get_user_fantasy_teams(user['id'], tournament_id)
-            
-            if previous_teams:
-                for team in previous_teams:
-                    with st.expander(f"Team from match {team['match_id']} ({team['created_at']})"):
-                        team_data = json.loads(team['players_json'])
-                        st.write(f"**Players:** {', '.join(team_data['players'])}")
-                        st.write(f"**Captain:** {team_data['captain']}")
-                        st.write(f"**Vice-Captain:** {team_data['vice_captain']}")
+            prev = get_user_fantasy_teams(user['id'], t_id)
+            if prev:
+                for team in prev:
+                    match_info = next((m for m in upcoming_matches if m['id'] == team['match_id']), None)
+                    date_str = match_info['match_date'] if match_info else "Unknown Date"
+                    with st.expander(f"Match ID: {team['match_id']} | Date: {date_str}"):
+                        data = json.loads(team['players_json'])
+                        st.write(f"**Players:** {', '.join(data['players'])}")
+                        st.write(f"**C/VC:** {data['captain']} (C), {data['vice_captain']} (VC)")
             else:
-                st.info("You haven't created any fantasy teams yet")
-    except Exception as e:
-        st.error(f"Error loading previous teams: {e}")
+                st.caption("No teams saved yet.")
+    except Exception as e: st.error(str(e))
 
 if __name__ == "__main__":
     show_fantasy_cricket()

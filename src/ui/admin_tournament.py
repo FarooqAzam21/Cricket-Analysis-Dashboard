@@ -7,15 +7,17 @@ import sys
 import os
 
 # Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from database import (
+from src.database import (
     create_tournament, get_tournament, add_team_to_tournament, get_tournament_teams,
     create_tournament_match, get_tournament_matches, update_match_result,
     delete_tournament, update_team_squad, get_team_details, fetch_all_players_from_db,
     get_db_connection, update_match_date, get_group_stage_matches, calculate_and_save_fantasy_points,
     update_team_name, update_match_number, add_player_performance, get_match_performances,
-    calculate_team_strength, get_team_strength_rating, calculate_updated_fantasy_scores
+    calculate_team_strength, get_team_strength_rating, calculate_updated_fantasy_scores,
+    promote_to_super8, get_tournament_stats, delete_match,
+    save_playing_xi, get_playing_xi
 )
 
 def check_admin_access():
@@ -56,15 +58,44 @@ def show_admin_panel():
     
     st.divider()
     
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-        "Create Tournament", 
-        "Add Teams to Groups", 
-        "Add Players to Teams",
-        "Schedule Matches",
-        "Manage Matches", 
-        "Update Scores",
-        "Player Data Management"
+    st.markdown("""
+        <style>
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 8px;
+            background-color: #0d1117;
+            padding: 10px;
+            border-radius: 12px;
+        }
+        .stTabs [data-baseweb="tab"] {
+            height: 45px;
+            white-space: pre-wrap;
+            background-color: #161b22;
+            border-radius: 8px;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 0 16px;
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: #238636 !important;
+            color: white !important;
+            border-color: #2ea043 !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    tabs = st.tabs([
+        "🆕 Create Tournament", 
+        "👥 Groups", 
+        "👤 Add Players",
+        "📅 Schedule",
+        "⚙️ Manage Matches", 
+        "🏏 Update Scores",
+        "🏆 Super 8",
+        "📊 Tournament Stats",
+        "🛠️ Master Player Control"
     ])
+    
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = tabs
     
     # ========== TAB 1: CREATE TOURNAMENT ==========
     with tab1:
@@ -363,36 +394,7 @@ def show_admin_panel():
                         
                         st.dataframe(pd.DataFrame(match_data), use_container_width=True, hide_index=True)
                         
-                        st.write("**Edit Match Date:**")
-                        
-                        # Create columns for editing date
-                        edit_cols = st.columns([2, 2, 1])
-                        
-                        with edit_cols[0]:
-                            match_to_edit = st.selectbox(
-                                "Select Match to Edit Date",
-                                options=[f"Match {idx}: {md['Team 1']} vs {md['Team 2']}" for idx, md in enumerate(match_data, 1)],
-                                key="edit_match_select"
-                            )
-                        
-                        match_idx = int(match_to_edit.split(':')[0].split()[1]) - 1
-                        selected_match = group_matches[match_idx]
-                        
-                        with edit_cols[1]:
-                            new_date = st.date_input(
-                                "New Date",
-                                value=datetime.strptime(selected_match['match_date'], "%Y-%m-%d").date(),
-                                key="new_match_date"
-                            )
-                        
-                        with edit_cols[2]:
-                            if st.button("Update Date", key="update_date_btn"):
-                                try:
-                                    update_match_date(selected_match['id'], new_date.strftime("%Y-%m-%d"))
-                                    st.success(f"✅ Match date updated to {new_date}")
-                                    st.rerun()
-                                except Exception as e:
-                                    st.error(f"Error updating date: {e}")
+                        # Date/Time editing moved to Manage Matches tab for consistency
                         
                         # Edit match numbers for same-date matches
                         st.divider()
@@ -453,6 +455,27 @@ def show_admin_panel():
                             st.info("ℹ️ No multiple matches on same date yet")
                     else:
                         st.info("No group stage matches generated yet. Click 'Auto-Generate Group Stage Matches' first.")
+                        
+                    # Custom Single Match Entry
+                    st.divider()
+                    st.subheader("➕ Add Single Match Manually")
+                    sc_col1, sc_col2 = st.columns(2)
+                    with sc_col1:
+                        m_team1 = st.selectbox("Team 1", [t['team_name'] for t in all_teams], key="man_t1")
+                        m_team2 = st.selectbox("Team 2", [t['team_name'] for t in all_teams if t['team_name'] != m_team1], key="man_t2")
+                    with sc_col2:
+                        m_date = st.date_input("Match Date", key="man_date")
+                        m_stage = st.selectbox("Stage", ["group", "super8", "semi-final", "final"], key="man_stage")
+                        
+                    if st.button("Schedule Manual Match"):
+                        t1_id = next(t['id'] for t in all_teams if t['team_name'] == m_team1)
+                        t2_id = next(t['id'] for t in all_teams if t['team_name'] == m_team2)
+                        create_tournament_match(
+                            tournament_id, t1_id, t2_id, 
+                            m_date.strftime("%Y-%m-%d"), m_stage
+                        )
+                        st.success(f"Match Scheduled for {m_date}!")
+                        st.rerun()
                     
                     st.divider()
                     st.subheader("Create Knockout Matches")
@@ -526,16 +549,70 @@ def show_admin_panel():
                             team1 = next((t['team_name'] for t in all_teams if t['id'] == m['team1_id']), f"Team {m['team1_id']}")
                             team2 = next((t['team_name'] for t in all_teams if t['id'] == m['team2_id']), f"Team {m['team2_id']}")
                             
+                            match_dict = dict(m)
                             match_data.append({
-                                'ID': m['id'],
+                                'ID': match_dict['id'],
                                 'Team 1': team1,
                                 'Team 2': team2,
-                                'Date': m['match_date'],
-                                'Stage': m['stage'].title(),
-                                'Status': m['status'].title(),
+                                'Date': match_dict['match_date'],
+                                'Time': match_dict.get('match_time', '10:00'),
+                                'Stage': match_dict['stage'].title(),
+                                'Status': match_dict['status'].title(),
                             })
                         
-                        st.dataframe(pd.DataFrame(match_data), use_container_width=True)
+                        st.dataframe(pd.DataFrame(match_data), use_container_width=True, hide_index=True)
+                        
+                        # Create a mapping for descriptive selectboxes
+                        match_map = {
+                            f"{m['Team 1']} vs {m['Team 2']} ({m['Date']} at {m['Time']})": m['ID'] 
+                            for m in match_data
+                        }
+                        
+                        st.subheader("Match Control")
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            st.write("**Reset Match**")
+                            match_display_reset = st.selectbox("Select Match to Reset", list(match_map.keys()), key="reset_match_select")
+                            match_to_reset = match_map[match_display_reset]
+                            if st.button("🚨 Reset Selected Match Result", type="secondary"):
+                                from ..database import reset_match_result
+                                success, msg = reset_match_result(match_to_reset)
+                                if success:
+                                    st.success(msg)
+                                    st.rerun()
+                                else:
+                                    st.error(msg)
+                        
+                        with col2:
+                            st.write("**Update Schedule (Time/Date)**")
+                            match_display_update = st.selectbox("Select Match to Update", list(match_map.keys()), key="update_match_select")
+                            match_to_update = match_map[match_display_update]
+                            sel_m = next(m for m in filtered_matches if m['id'] == match_to_update)
+                            sel_m_dict = dict(sel_m)
+                            
+                            new_date = st.date_input("New Date", value=datetime.strptime(sel_m_dict['match_date'], "%Y-%m-%d").date(), key="manage_date")
+                            new_time = st.time_input("New Time", value=datetime.strptime(sel_m_dict.get('match_time', '10:00'), "%H:%M").time(), key="manage_time")
+                            
+                            if st.button("Update Match Schedule"):
+                                from ..database import update_match_date, update_match_time
+                                try:
+                                    update_match_date(match_to_update, new_date.strftime("%Y-%m-%d"))
+                                    update_match_time(match_to_update, new_time.strftime("%H:%M"))
+                                    st.success("✅ Match schedule updated!")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Error: {e}")
+                            
+                            st.write("---")
+                            st.write("**Delete Match**")
+                            if st.button("🗑️ Delete Selected Match", type="primary", key="del_m_btn"):
+                                success, msg = delete_match(match_to_update)
+                                if success:
+                                    st.success(msg)
+                                    st.rerun()
+                                else:
+                                    st.error(msg)
                     else:
                         st.info("No matches found with selected filters")
                 else:
@@ -569,6 +646,16 @@ def show_admin_panel():
                     selected_match_display = st.selectbox("Select Match", match_options.keys())
                     match_id = match_options[selected_match_display]
                     match = next(m for m in incomplete_matches if m['id'] == match_id)
+                    
+                    # --- TIME CHECK ---
+                    m_dict = dict(match)
+                    match_dt_str = f"{m_dict['match_date']} {m_dict.get('match_time', '10:00')}"
+                    match_dt = datetime.strptime(match_dt_str, "%Y-%m-%d %H:%M")
+                    
+                    if datetime.now() < match_dt:
+                        st.warning(f"⏳ **Match Result Entry Locked**")
+                        st.info(f"This match is scheduled for **{match_dt_str}**. Results can only be entered after the match starts.")
+                        st.stop()
                     
                     # Step 1: Update Match Score
                     st.subheader("Step 1: Match Result")
@@ -642,63 +729,108 @@ def show_admin_panel():
                             } for p in existing_perfs])
                             st.dataframe(perf_df, use_container_width=True)
                         
-                        st.subheader("Add New Player Performance")
-                        
-                        col1, col2 = st.columns(2)
-                        
-                        with col1:
-                            perf_team = st.selectbox("Select Team", [perf_team1_name, perf_team2_name], key="perf_team_select")
-                            perf_team_id = perf_match['team1_id'] if perf_team == perf_team1_name else perf_match['team2_id']
-                        
-                        with col2:
-                            # Get team players
-                            team_details = get_team_details(perf_team_id)
-                            team_players = team_details['squad'].split(',') if team_details and team_details['squad'] else []
+                            st.subheader("Add New Player Performance")
                             
-                            if team_players:
-                                perf_player = st.selectbox("Select Player", team_players, key="perf_player_select")
-                            else:
-                                st.error("No players found for this team")
-                                perf_player = None
-                        
-                        if perf_player:
-                            st.write(f"**Recording performance for {perf_player}**")
+                            col1, col2 = st.columns(2)
                             
-                            perf_col1, perf_col2, perf_col3, perf_col4 = st.columns(4)
+                            with col1:
+                                perf_team = st.selectbox("Select Team", [perf_team1_name, perf_team2_name], key="perf_team_select")
+                                perf_team_id = perf_match['team1_id'] if perf_team == perf_team1_name else perf_match['team2_id']
                             
-                            with perf_col1:
-                                perf_runs = st.number_input("Runs", min_value=0, step=1, key="perf_runs")
-                            
-                            with perf_col2:
-                                perf_balls = st.number_input("Balls Faced", min_value=0, step=1, key="perf_balls")
-                            
-                            with perf_col3:
-                                perf_fours = st.number_input("Fours", min_value=0, step=1, key="perf_fours")
-                            
-                            with perf_col4:
-                                perf_sixes = st.number_input("Sixes", min_value=0, step=1, key="perf_sixes")
-                            
-                            if st.button("Add Performance", key="add_perf"):
-                                try:
-                                    add_player_performance(
-                                        perf_match_id, 
-                                        perf_player, 
-                                        perf_team_id,
-                                        perf_runs,
-                                        perf_balls,
-                                        perf_fours,
-                                        perf_sixes
+                            with col2:
+                                # Get team players
+                                team_details = get_team_details(perf_team_id)
+                                team_players = team_details['squad'].split(',') if team_details and team_details['squad'] else []
+                                
+                                if team_players:
+                                    # Multiselect for players who played
+                                    playing_players = st.multiselect(
+                                        "Select Playing 11 (Exactly 11 required)", 
+                                        team_players, 
+                                        default=get_playing_xi(perf_match_id, perf_team_id),
+                                        key="perf_playing_select",
+                                        help="Finalize your 11 players for this match before entering scores"
                                     )
-                                    st.success(f"✅ Performance recorded for {perf_player}")
-                                except Exception as e:
-                                    st.error(f"Error recording performance: {e}")
+                                    
+                                    if st.button("📢 Save/Finalize Playing 11", key=f"save_xi_{perf_team_id}"):
+                                        if len(playing_players) > 0:
+                                            success, msg = save_playing_xi(perf_match_id, perf_team_id, playing_players)
+                                            if success:
+                                                st.success(f"✅ {perf_team} Playing 11 saved!")
+                                            else:
+                                                st.error(msg)
+                                        else:
+                                            st.warning("Please select at least one player.")
+
+                                    if len(playing_players) != 11 and len(playing_players) > 0:
+                                        st.warning(f"⚠️ Selected {len(playing_players)} players. Pro Tip: International matches usually have exactly 11.")
+                                else:
+                                    st.error("No players found for this team")
+                                    playing_players = []
                             
-                            st.divider()
-                            
-                            # Calculate SR
-                            if perf_balls > 0:
-                                sr = (perf_runs / perf_balls) * 100
-                                st.metric("Strike Rate", f"{sr:.2f}")
+                            if playing_players:
+                                # We'll use a data editor or dynamic fields for multiple players
+                                st.write("📝 **Enter Match Performance Details**")
+                                
+                                for p_name in playing_players:
+                                    with st.expander(f"👤 {p_name} - Stats", expanded=True):
+                                        p_col1, p_col2, p_col3 = st.columns(3)
+                                        
+                                        with p_col1:
+                                            st.write("**Batting**")
+                                            p_runs = st.number_input("Runs", min_value=0, step=1, key=f"runs_{p_name}")
+                                            p_balls = st.number_input("Balls Faced", min_value=0, step=1, key=f"balls_{p_name}")
+                                            p_not_out = st.checkbox("Not Out", key=f"no_{p_name}")
+                                            # Simple SR display
+                                            if p_balls > 0:
+                                                p_sr = (p_runs / p_balls) * 100
+                                                st.caption(f"SR: {p_sr:.2f}")
+                                            
+                                        with p_col2:
+                                            st.write("**Boundaries**")
+                                            p_fours = st.number_input("4s", min_value=0, step=1, key=f"4s_{p_name}")
+                                            p_sixes = st.number_input("6s", min_value=0, step=1, key=f"6s_{p_name}")
+                                            
+                                        with p_col3:
+                                            st.write("**Bowling**")
+                                            p_overs = st.number_input("Overs", min_value=0.0, max_value=4.0, step=0.1, key=f"overs_{p_name}")
+                                            p_cons = st.number_input("Runs Conceded", min_value=0, step=1, key=f"cons_{p_name}")
+                                            p_wkts = st.number_input("Wickets", min_value=0, step=1, key=f"wkts_{p_name}")
+                                            # Simple Econ display
+                                            if p_overs > 0:
+                                                p_econ = p_cons / p_overs
+                                                st.caption(f"Econ: {p_econ:.2f}")
+                                        
+                                        if st.button(f"Save {p_name}", key=f"save_{p_name}"):
+                                            try:
+                                                # 1. Save to Database for match stats and fantasy
+                                                add_player_performance(
+                                                    perf_match_id, p_name, perf_team_id,
+                                                    p_runs, p_balls, p_fours, p_sixes,
+                                                    p_wkts, p_overs, p_cons, p_not_out
+                                                )
+                                                
+                                                # 2. Synchronize to wc_players.csv
+                                                from ..database import update_wc_csv_stats
+                                                match_stats = {
+                                                    'runs': p_runs,
+                                                    'balls': p_balls,
+                                                    'fours': p_fours,
+                                                    'sixes': p_sixes,
+                                                    'wickets': p_wkts,
+                                                    'overs': p_overs,
+                                                    'runs_conceded': p_cons,
+                                                    'is_not_out': p_not_out
+                                                }
+                                                csv_success, csv_msg = update_wc_csv_stats(p_name, match_stats)
+                                                
+                                                if csv_success:
+                                                    st.success(f"✅ Saved for {p_name} and updated CSV!")
+                                                else:
+                                                    st.warning(f"✅ Saved for {p_name}, but CSV update note: {csv_msg}")
+                                                    
+                                            except Exception as e:
+                                                st.error(f"Error: {e}")
                         
                         # Recalculate fantasy scores
                         if st.button("🔄 Recalculate Fantasy Points (After all performances recorded)", key="recalc_fantasy"):
@@ -714,6 +846,58 @@ def show_admin_panel():
                     st.info("✅ All matches completed!")
             else:
                 st.error("Tournament not found")
+
+    # ========== TAB 7: SUPER 8 & STAGES ==========
+    with tab7:
+        st.header("🏆 Stage Progression Management")
+        tournament_id = st.number_input("Tournament ID", min_value=1, step=1, key="stage_man_id")
+        
+        if tournament_id:
+            tournament = get_tournament(tournament_id)
+            if tournament:
+                st.subheader("Promote to Super 8")
+                st.write("This will take the Top 2 teams from each of the 4 groups (A, B, C, D) based on Points and NRR, then schedule the Super 8 round-robin matches.")
+                
+                if st.button("✨ Advance to Super 8", type="primary"):
+                    success, msg = promote_to_super8(tournament_id)
+                    if success:
+                        st.success(msg)
+                        st.balloons()
+                    else:
+                        st.error(f"Cannot Advance: {msg}")
+                
+                st.divider()
+                st.subheader("Knockout Progression")
+                st.info("Once Super 8 is complete, manually schedule the Semi-Finals using the 'Schedule Matches' tab.")
+
+    # ========== TAB 8: TOURNAMENT STATS ==========
+    with tab8:
+        st.header("📊 Live Tournament Statistics")
+        tournament_id = st.number_input("Tournament ID", min_value=1, step=1, key="stats_man_id")
+        
+        if tournament_id:
+            s_tab1, s_tab2, s_tab3 = st.tabs(["Top Scorers", "Top Bowlers", "Most Sixes"])
+            
+            with s_tab1:
+                df = get_tournament_stats(tournament_id, 'runs')
+                if not df.empty:
+                    st.dataframe(df, use_container_width=True)
+                else:
+                    st.write("No batting data recorded yet.")
+            
+            with s_tab2:
+                df = get_tournament_stats(tournament_id, 'wickets')
+                if not df.empty:
+                    st.dataframe(df, use_container_width=True)
+                else:
+                    st.write("No bowling data recorded yet.")
+                    
+            with s_tab3:
+                df = get_tournament_stats(tournament_id, 'sixes')
+                if not df.empty:
+                    st.dataframe(df, use_container_width=True)
+                else:
+                    st.write("No sixes data recorded yet.")
     
     # ========== TEAM STRENGTH DISPLAY ==========
     st.divider()
@@ -773,10 +957,33 @@ def show_admin_panel():
                 except Exception as e:
                     st.error(f"Error deleting tournament: {e}")
     
-    # ========== TAB 7: PLAYER DATA MANAGEMENT ==========
-    with tab7:
+    # ========== TAB 9: PLAYER MASTER CONTROL ==========
+    with tab9:
+        st.header("🛠️ Global Player Master Control")
         from .player_management import render_player_management
         render_player_management()
+        
+        st.divider()
+        st.subheader("➕ Global Database Additions")
+        with st.expander("Register New Professional Player"):
+            new_p_name = st.text_input("Full Player Name")
+            new_p_team = st.text_input("National Side")
+            new_p_role = st.selectbox("Playing Role", ["Batsman", "Bowler", "All-rounder", "Wicket-keeper"], key="master_role")
+            new_p_fmt = st.selectbox("Primary Format", ["T20", "ODI", "Test"], key="master_fmt")
+            
+            if st.button("Commit to Master List", type="primary"):
+                try:
+                    conn = get_db_connection()
+                    conn.execute("""
+                        INSERT INTO players (player, team, format, role, runs, wickets, average, strike_rate, matches, innings)
+                        VALUES (?, ?, ?, ?, 0, 0, 0, 0, 0, 0)
+                    """, (new_p_name, new_p_team, new_p_fmt, new_p_role))
+                    conn.commit()
+                    st.success(f"Successfully added {new_p_name} to world database!")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+                finally:
+                    conn.close()
 
 if __name__ == "__main__":
     show_admin_panel()

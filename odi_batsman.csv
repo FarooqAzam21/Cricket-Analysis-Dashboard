@@ -188,7 +188,9 @@ Mitchell Owen,Australia,Odi,3,2,0,37,2.0,18.5,21.0,137.03,36,0,0,6,"https://img1
 Alex Cary,Australia,Test,48,73,8,2333,-,35.89,-,65.14,156,3,13,7,"",wicket-keeper
 Alex Cary,Australia,T20,42,29,5,267,0,11.12,0,109.87,37,0,0,5,"",wicket-keeper
 Alex Cary,Australia,Odi,85,77,13,2245,0.0,35.07,0.0,90.67,106,1,13,5,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/403100/403127.jpg",wicket-keeper,0
-Matt Renshaw,Australia,Odi,3,3,1,107,0.0,53.5,0.0,95.53,56,0,1,4,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/391100/391130.jpg",Batsman,0
+Matt Renshaw,Australia,Test,14,24,2,645,-,29.31,-,42.32,184,1,3,5,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/391100/391130.jpg",wicket-keeper
+Matt Renshaw,Australia,T20,3,3,0,18,-,6.00,-,81.81,15,0,0,5,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/391100/391130.jpg",wicket-keeper
+Matt Renshaw,Australia,Odi,3,3,1,107,0.0,53.5,0.0,95.53,56,0,1,4,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/391100/391130.jpg",wicket-keeper,0
 Sahibzada Farhan,Pakistan,T20,37,37,1,917,-,25.47,-,129.15,80*,0,8,1,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/406600/406680.jpg",Batsman
 Usman Khan,Pakistan,Odi,2,2,0,51,0,25.50,0,102.00,39,0,0,2,"https://img1.hscicdn.com/image/upload/f_auto,t_ds_w_1200,q_50/lsci/db/PICTURES/CMS/396700/396734.jpg",wicket-keeper
 Usman Khan,Pakistan,T20,29,25,6,343,-,18.05,-,117.06,52,0,1,5,"",wicket-keeper
@@ -433,3 +435,7 @@ Finlay McCreath,Scotland,Odi,10,8,0,274,-,34.25,-,72.87,81,0,2,5,"",Batsman
 Finlay McCreath,Scotland,T20,4,4,0,53,-,13.25,-,117.77,40,0,0,5,"",Batsman
 George Munsey,Scotland,Odi,70,69,10,2630,-,44.57,-,89.91,191,3,18,1,"",Batsman
 George Munsey,Scotland,T20,81,79,5,2302,-,31.10,-,144.23,132,2,13,1,"",Batsman
+Ashish Odedara,Oman,Odi,5,5,1,137,-,34.25,-,43.63,54*,0,1,5,"",Batsman
+Ashish Odedara,Oman,T20,7,7,0,44,-,6.28,-,72.13,15,0,0,5,"",Batsman
+Basir Ahamad,Nepal,Odi,4,3,0,14,2,4.66,35.50,36.84,11,0,0,5,"",Batsman
+Basir Ahamad,Nepal,T20,7,4,2,123,2,61.50,24.50,135.16,80,0,1,5,"",Batsman

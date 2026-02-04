@@ -108,6 +108,40 @@ def render_next_match_prediction(df_batsman, df_allrounder=None, df_bowler=None,
             > This suggests a **{'high-impact' if predicted_sr > 120 else 'steady'}** innings for the upcoming match.
             """)
             
+            # ELITE: Probability Distribution
+            st.markdown("---")
+            st.subheader("🎲 Performance Probability Distribution")
+            
+            import numpy as np
+            from scipy.stats import norm
+            
+            # Simulate a distribution based on mean (predicted) and a standard deviation (derived from career avg)
+            mean = predicted_runs
+            std_dev = max(10, player_row.get('average', 20) * 0.5) # Heuristic for spread
+            
+            x = np.linspace(max(0, mean - 3*std_dev), mean + 3*std_dev, 100)
+            y = norm.pdf(x, mean, std_dev)
+            
+            fig_prob = go.Figure()
+            fig_prob.add_trace(go.Scatter(x=x, y=y, fill='toself', 
+                                         line_color='rgba(16, 185, 129, 0.8)',
+                                         fillcolor='rgba(16, 185, 129, 0.2)',
+                                         name='Probability Density'))
+            
+            fig_prob.add_vline(x=mean, line_dash="dash", line_color="red", 
+                             annotation_text=f"Expected: {int(mean)}", annotation_position="top")
+            
+            fig_prob.update_layout(
+                title=f"Runs Probability Range for {selected_player}",
+                xaxis_title="Predicted Runs",
+                yaxis_title="Probability",
+                template="plotly_white",
+                height=400,
+                showlegend=False
+            )
+            st.plotly_chart(fig_prob, use_container_width=True)
+            st.caption("The curve indicates the most likely run range. Higher peak = more consistent performer.")
+            
         else:
             st.warning("No data available for selected format.")
     except Exception as e:

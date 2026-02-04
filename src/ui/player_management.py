@@ -5,6 +5,7 @@ Shows top performers and player statistics from CSV data
 import streamlit as st
 import pandas as pd
 from ..config import DATA_PATHS
+from ..database import get_db_connection, get_tournament_teams
 import os
 
 def safe_int(value, default=0):
@@ -26,28 +27,79 @@ def safe_float(value, default=0.0):
         return default
 
 def load_player_data():
-    """Load player data from CSV files"""
+    """Load player data from CSV files and filter by tournament selection.
+    Prioritizes wc_players.csv if it exists.
+    """
     try:
-        df_bat = pd.read_csv(DATA_PATHS["batsman"]) if os.path.exists(DATA_PATHS["batsman"]) else pd.DataFrame()
-        df_ar = pd.read_csv(DATA_PATHS["all_rounder"]) if os.path.exists(DATA_PATHS["all_rounder"]) else pd.DataFrame()
-        df_bowl = pd.read_csv(DATA_PATHS["bowler"]) if os.path.exists(DATA_PATHS["bowler"]) else pd.DataFrame()
+        # Check if WC-specific players CSV exists
+        if os.path.exists(DATA_PATHS.get("wc_players", "")):
+            all_data = pd.read_csv(DATA_PATHS["wc_players"])
+            # Ensure Format/format column exists for T20 filtering later
+            if 'Format' not in all_data.columns and 'format' not in all_data.columns:
+                all_data['Format'] = 'T20' # Assume T20 if from WC CSV
+        else:
+            # Fallback to standard sources
+            df_bat = pd.read_csv(DATA_PATHS["batsman"]) if os.path.exists(DATA_PATHS["batsman"]) else pd.DataFrame()
+            df_ar = pd.read_csv(DATA_PATHS["all_rounder"]) if os.path.exists(DATA_PATHS["all_rounder"]) else pd.DataFrame()
+            df_bowl = pd.read_csv(DATA_PATHS["bowler"]) if os.path.exists(DATA_PATHS["bowler"]) else pd.DataFrame()
+            
+            # Robust column renaming for bowlers
+            if not df_bowl.empty:
+                if 'bowling_strike_rate' in df_bowl.columns:
+                    # If strike_rate already exists, drop it before renaming bowling_strike_rate to avoid duplicates
+                    if 'strike_rate' in df_bowl.columns:
+                        df_bowl.drop(columns=['strike_rate'], inplace=True)
+                    df_bowl.rename(columns={'bowling_strike_rate': 'strike_rate'}, inplace=True)
+            
+            # Combine all global players
+            all_data = pd.concat([df_bat, df_ar, df_bowl], ignore_index=True, sort=False)
         
-        # Rename bowling_strike_rate to strike_rate if needed
-        if 'bowling_strike_rate' in df_bowl.columns:
-            df_bowl.rename(columns={'bowling_strike_rate': 'strike_rate'}, inplace=True)
-        
-        # Combine all players
-        all_data = pd.concat([df_bat, df_ar, df_bowl], ignore_index=True, sort=False)
+        # --- Filter by World Cup Selected Players ---
+        try:
+            conn = get_db_connection()
+            # Get latest tournament
+            t = conn.execute("SELECT id FROM tournaments ORDER BY id DESC LIMIT 1").fetchone()
+            if t:
+                tournament_id = t['id']
+                teams = get_tournament_teams(tournament_id)
+                wc_player_names = set()
+                for team in teams:
+                    if team['players']:
+                        # Handle both comma-separated strings and possible lists
+                        plist = team['players'].split(',') if isinstance(team['players'], str) else []
+                        wc_player_names.update([p.strip().lower() for p in plist])
+                
+                if wc_player_names:
+                    # Filter all_data where player name is in wc_player_names
+                    # and ensure we match case-insensitively
+                    all_data = all_data[all_data['player'].str.lower().isin(wc_player_names)]
+            conn.close()
+        except Exception as db_e:
+            print(f"Database filtering error: {db_e}")
+            # Fallback to global data if DB fails
+            
+        # --- Filter by T20 Format Only ---
+        if not all_data.empty:
+            # Check for column case (Format vs format)
+            format_col = 'Format' if 'Format' in all_data.columns else 'format' if 'format' in all_data.columns else None
+            if format_col:
+                all_data = all_data[all_data[format_col].str.contains('t20', case=False, na=False)]
         
         # Convert numeric columns
         numeric_cols = ['matches', 'Innings', 'NO', 'runs', 'wickets', 'average', 
-                       'bowling_average', 'strike_rate', '100s', '50s', '6s']
+                       'bowling_average', 'strike_rate', '100s', '50s', '6s', "6's", 'economy']
+        
+        # Drop duplicate columns if any managed to slip through
+        all_data = all_data.loc[:, ~all_data.columns.duplicated()]
+        
         for col in numeric_cols:
             if col in all_data.columns:
                 all_data[col] = pd.to_numeric(all_data[col], errors='coerce')
         
         return all_data
     except Exception as e:
+        import traceback
+        print(f"Player data error: {traceback.format_exc()}")
         st.error(f"Error loading player data: {e}")
         return pd.DataFrame()
 

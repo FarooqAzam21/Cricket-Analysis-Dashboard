@@ -4,11 +4,11 @@ from datetime import datetime
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from database import (
+from src.database import (
     get_tournament, get_tournament_teams, get_group_standings, 
-    get_tournament_matches
+    get_tournament_matches, get_db_connection, get_leaderboard
 )
 
 def show_tournament_home():
@@ -18,7 +18,6 @@ def show_tournament_home():
     
     # Get tournament (hardcoded for now, can be dynamic later)
     # In production, you'd select from available tournaments
-    from database import get_db_connection
     conn = get_db_connection()
     tournaments = conn.execute("SELECT * FROM tournaments ORDER BY id DESC").fetchall()
     conn.close()
@@ -47,82 +46,78 @@ def show_tournament_home():
     
     # ========== MATCHES TAB ==========
     with tab1:
-        st.header("📅 Matches")
+        from src.database import get_tournament_stats
         
+        st.header("📅 Tournament Pulse")
         matches = get_tournament_matches(tournament_id)
         
         if not matches:
             st.info("No matches scheduled yet")
         else:
-            # Filter tabs for match stages
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                show_group = st.checkbox("Group Stage", value=True)
-            with col2:
-                show_knockout = st.checkbox("Knockout", value=True)
+            # --- UPCOMING MATCHES (HORIZONTAL) ---
+            upcoming = [m for m in matches if m['status'] != 'completed']
+            if upcoming:
+                st.subheader("🔥 Upcoming Matches")
+                up_cols = st.columns(min(len(upcoming), 3))
+                for i, match in enumerate(upcoming[:3]):
+                    with up_cols[i]:
+                        all_teams = get_tournament_teams(tournament_id)
+                        t1 = next((t['team_name'] for t in all_teams if t['id'] == match['team1_id']), "T1")
+                        t2 = next((t['team_name'] for t in all_teams if t['id'] == match['team2_id']), "T2")
+                        st.markdown(f"""
+                        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center; margin-bottom: 20px;">
+                            <div style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 5px;">📅 {match['match_date']}</div>
+                            <div style="font-weight: bold; font-size: 1.1rem;">{t1}</div>
+                            <div style="color: #238636; font-size: 0.8rem; margin: 4px 0;">VS</div>
+                            <div style="font-weight: bold; font-size: 1.1rem;">{t2}</div>
+                            <div style="font-size: 0.75rem; opacity: 0.5; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;">{match['stage'].upper()}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                
+                if len(upcoming) > 3:
+                    with st.expander("View All Upcoming Matches"):
+                        for match in upcoming[3:]:
+                            st.write(f"📅 {match['match_date']} | {match['stage']} | {match['team1_id']} vs {match['team2_id']}")
             
-            # Display matches
-            for match in matches:
-                # Skip based on filters
-                if match['stage'] == 'group' and not show_group:
-                    continue
-                if match['stage'] != 'group' and not show_knockout:
-                    continue
+            st.divider()
+            
+            # --- COMPLETED MATCHES & TOURNAMENT STATS ---
+            st.subheader("📊 Live Tournament Standings & Stats")
+            
+            s_col1, s_col2 = st.columns([2, 1])
+            
+            with s_col1:
+                st.markdown("### 🎯 Top Run Scorers")
+                df_runs = get_tournament_stats(tournament_id, 'runs')
+                if not df_runs.empty:
+                    st.dataframe(df_runs, use_container_width=True, hide_index=True)
+                else:
+                    st.info("Batting stats will appear after match results are entered.")
                 
-                # Get team names
-                all_teams = get_tournament_teams(tournament_id)
-                team1_name = next((t['team_name'] for t in all_teams if t['id'] == match['team1_id']), f"Team {match['team1_id']}")
-                team2_name = next((t['team_name'] for t in all_teams if t['id'] == match['team2_id']), f"Team {match['team2_id']}")
+                st.markdown("### 🎲 Top Wicket Takers")
+                df_wkts = get_tournament_stats(tournament_id, 'wickets')
+                if not df_wkts.empty:
+                    st.dataframe(df_wkts, use_container_width=True, hide_index=True)
+            
+            with s_col2:
+                st.markdown("### 🔥 Most Sixes")
+                df_sixes = get_tournament_stats(tournament_id, 'sixes')
+                if not df_sixes.empty:
+                    st.dataframe(df_sixes, use_container_width=True, hide_index=True)
                 
-                # Match card
-                with st.container():
-                    col1, col2, col3 = st.columns([3, 1, 3])
-                    
-                    with col1:
-                        st.markdown(f"### {team1_name}")
-                    
-                    with col2:
-                        if match['status'] == 'completed':
-                            if match['winner_id'] == match['team1_id']:
-                                st.markdown(f"### **{match['team1_score']}**")
-                            else:
-                                st.markdown(f"### {match['team1_score']}")
-                        else:
-                            st.markdown("### vs")
-                    
-                    with col3:
-                        st.markdown(f"### {team2_name}")
-                    
-                    # Score line
-                    if match['status'] == 'completed':
-                        col1, col2, col3 = st.columns([3, 1, 3])
-                        with col1:
-                            st.write("")
-                        with col2:
-                            st.write("")
-                        with col3:
-                            if match['winner_id'] == match['team2_id']:
-                                st.markdown(f"### **{match['team2_score']}**")
-                            else:
-                                st.markdown(f"### {match['team2_score']}")
-                    
-                    # Match details
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        status_color = "🟢" if match['status'] == 'completed' else "🔵"
-                        st.caption(f"{status_color} {match['status'].upper()}")
-                    with col2:
-                        st.caption(f"📅 {match['match_date']}")
-                    with col3:
-                        stage_label = "Group" if match['stage'] == 'group' else match['stage'].replace('-', ' ').title()
-                        st.caption(f"📍 {stage_label}")
-                    
-                    # Result message
-                    if match['status'] == 'completed':
-                        winner_team = next((t['team_name'] for t in all_teams if t['id'] == match['winner_id']), "")
-                        st.success(f"🎉 {winner_team} won!", icon="✓")
-                    
-                    st.divider()
+                st.markdown("### 🏁 Recent Results")
+                completed = [m for m in matches if m['status'] == 'completed']
+                for match in completed[-3:]:
+                    all_teams = get_tournament_teams(tournament_id)
+                    t1 = next((t['team_name'] for t in all_teams if t['id'] == match['team1_id']), "T1")
+                    t2 = next((t['team_name'] for t in all_teams if t['id'] == match['team2_id']), "T2")
+                    winner = t1 if match['winner_id'] == match['team1_id'] else t2
+                    st.markdown(f"""
+                    <div style="font-size: 0.85rem; padding: 10px; border-left: 3px solid #238636; background: rgba(35, 134, 54, 0.05); margin-bottom: 8px;">
+                        <b>{t1}</b> vs <b>{t2}</b><br/>
+                        <span style="color: #238636;">Winner: {winner}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
     
     # ========== GROUP STANDINGS TAB ==========
     with tab2:
@@ -200,8 +195,6 @@ def show_tournament_home():
     # ========== LEADERBOARD TAB ==========
     with tab4:
         st.header("🏆 Fantasy Leaderboard")
-        
-        from database import get_leaderboard
         
         leaderboard = get_leaderboard(tournament_id)
         

@@ -268,7 +268,33 @@ def main():
         """, unsafe_allow_html=True)
         
         st.markdown("---")
-        st.markdown(f"### 👤 {st.session_state.username}")
+        
+        # ELITE GLOBAL SEARCH
+        st.markdown("### 🔍 Quick Search")
+        try:
+            # Load only names for the search bar to keep it snappy
+            from src.data_loader import load_all_data, _get_csv_cache_key
+            all_players_search, _, _, _, _, _, _, _ = load_all_data(_csv_cache_key=_get_csv_cache_key())
+            
+            if all_players_search is not None and not all_players_search.empty:
+                search_list = [""] + sorted(all_players_search['player'].unique().tolist())
+                selected_search = st.selectbox(
+                    "Find any player...",
+                    options=search_list,
+                    index=0,
+                    key="global_player_search",
+                    label_visibility="collapsed"
+                )
+                
+                if selected_search:
+                    st.session_state.page = "🏏 Cricket Analysis"
+                    st.session_state.analysis_menu = "Player Analysis"
+                    st.session_state.preselected_player = selected_search
+                    st.toast(f"Navigating to {selected_search}'s profile...", icon="🚀")
+                    st.rerun()
+        except Exception as search_e:
+            st.error("Search temporarily unavailable")
+            
         st.markdown("---")
         
         # Navigation menu options
@@ -320,7 +346,7 @@ def main():
             st.rerun()
         
         st.markdown("---")
-        st.info("🚀 **Cricket Pro** v2.0\n\nFantasy League Manager")
+        st.info("🚀 **Cricket Pro Elite** v2.1\n\nElite Analytics Platform")
     
     # Main content area - responsive routing
     if st.session_state.page == "🏠 Home":
