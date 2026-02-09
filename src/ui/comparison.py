@@ -93,7 +93,7 @@ def render_comparison(all_players):
                 template="plotly_white",
                 title=f"{selected_format} Radar Analysis"
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
             # Detailed Comparison Table (Elite Glass style)
             st.subheader("📋 In-Depth Metric Breakdown")
@@ -101,7 +101,7 @@ def render_comparison(all_players):
             display_cols = ['player', 'Team', 'matches', 'Innings', 'runs', 'average', 'strike_rate', 'wickets', 'bowling_average', 'economy']
             st.dataframe(
                 comp_df[display_cols].set_index('player'),
-                use_container_width=True
+                width="stretch"
             )
 
     except Exception as e:

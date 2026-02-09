@@ -103,6 +103,11 @@ def init_db():
             winner_id INTEGER,
             team1_score INTEGER,
             team2_score INTEGER,
+            batting_first_id INTEGER,
+            team1_overs REAL DEFAULT 20.0,
+            team2_overs REAL DEFAULT 20.0,
+            team1_all_out INTEGER DEFAULT 0,
+            team2_all_out INTEGER DEFAULT 0,
             FOREIGN KEY(tournament_id) REFERENCES tournaments(id),
             FOREIGN KEY(team1_id) REFERENCES tournament_teams(id),
             FOREIGN KEY(team2_id) REFERENCES tournament_teams(id)
@@ -112,6 +117,26 @@ def init_db():
     # Quick fix for existing databases
     try:
         cursor.execute("ALTER TABLE tournament_matches ADD COLUMN match_time TEXT DEFAULT '10:00'")
+    except sqlite3.OperationalError: pass
+
+    try:
+        cursor.execute("ALTER TABLE tournament_matches ADD COLUMN batting_first_id INTEGER")
+    except sqlite3.OperationalError: pass
+
+    try:
+        cursor.execute("ALTER TABLE tournament_matches ADD COLUMN team1_overs REAL DEFAULT 20.0")
+    except sqlite3.OperationalError: pass
+
+    try:
+        cursor.execute("ALTER TABLE tournament_matches ADD COLUMN team2_overs REAL DEFAULT 20.0")
+    except sqlite3.OperationalError: pass
+
+    try:
+        cursor.execute("ALTER TABLE tournament_matches ADD COLUMN team1_all_out INTEGER DEFAULT 0")
+    except sqlite3.OperationalError: pass
+
+    try:
+        cursor.execute("ALTER TABLE tournament_matches ADD COLUMN team2_all_out INTEGER DEFAULT 0")
     except sqlite3.OperationalError: pass
     
     try:
@@ -170,6 +195,7 @@ def init_db():
         )
     ''')
     
+    # Create match_player_performance Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS match_player_performance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -184,15 +210,80 @@ def init_db():
             overs_bowled REAL DEFAULT 0,
             runs_conceded INTEGER DEFAULT 0,
             economy REAL DEFAULT 0,
+            catches INTEGER DEFAULT 0,
             performance_type TEXT,
+            is_not_out INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(match_id) REFERENCES tournament_matches(id),
             FOREIGN KEY(team_id) REFERENCES tournament_teams(id)
         )
     ''')
     
+    # Ensure all columns exist (Migration/Repair)
+    perf_cols = {
+        'balls_faced': 'INTEGER DEFAULT 0',
+        'fours': 'INTEGER DEFAULT 0',
+        'sixes': 'INTEGER DEFAULT 0',
+        'wickets': 'INTEGER DEFAULT 0',
+        'overs_bowled': 'REAL DEFAULT 0',
+        'runs_conceded': 'INTEGER DEFAULT 0',
+        'economy': 'REAL DEFAULT 0',
+        'catches': 'INTEGER DEFAULT 0',
+        'is_not_out': 'INTEGER DEFAULT 0',
+        'performance_type': 'TEXT'
+    }
+    for col, dtype in perf_cols.items():
+        try:
+            cursor.execute(f"ALTER TABLE match_player_performance ADD COLUMN {col} {dtype}")
+        except sqlite3.OperationalError: pass
+
     conn.commit()
     conn.close()
+    
+    # Run data repair for corrupted JSON
+    repair_corrupted_data()
+
+def repair_corrupted_data():
+    """Fix double-encoded JSON lists in match_playing_xi and tournament_teams"""
+    try:
+        import json
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 1. Fix match_playing_xi
+        rows = cursor.execute("SELECT id, players_json FROM match_playing_xi").fetchall()
+        for row in rows:
+            p_json = row['players_json']
+            try:
+                data = json.loads(p_json)
+                # If first element is a string that looks like a JSON list, it's double encoded
+                if isinstance(data, list) and len(data) > 0 and isinstance(data[0], str) and data[0].startswith('['):
+                    inner_data = json.loads(data[0])
+                    if isinstance(inner_data, list):
+                        new_json = json.dumps(inner_data)
+                        cursor.execute("UPDATE match_playing_xi SET players_json = ? WHERE id = ?", (new_json, row['id']))
+            except: continue
+            
+        # 2. Fix tournament_teams squad
+        rows = cursor.execute("SELECT id, squad FROM tournament_teams").fetchall()
+        for row in rows:
+            squad = row['squad']
+            if not squad: continue
+            try:
+                data = json.loads(squad)
+                if isinstance(data, list) and len(data) > 0 and isinstance(data[0], str) and data[0].startswith('['):
+                    inner_data = json.loads(data[0])
+                    if isinstance(inner_data, list):
+                        new_json = json.dumps(inner_data)
+                        cursor.execute("UPDATE tournament_teams SET squad = ? WHERE id = ?", (new_json, row['id']))
+            except: continue
+            
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Data Repair Error: {e}")
+        return False
 
 def save_scout_feedback(username, source_player, similar_player, format_type, rating):
     """Save user feedback on similarity results."""
@@ -427,43 +518,64 @@ def get_tournament_matches(tournament_id, stage=None, group_letter=None):
     conn.close()
     return matches
 
-def reset_match_result(match_id):
-    """Reset a match result back to scheduled status"""
+def total_tournament_reset(tournament_id):
+    """Reset all tournament progress, matches, performances and standings"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # 1. Clear match status and scores
+        # 1. Reset matches
         cursor.execute("""
             UPDATE tournament_matches 
-            SET status = 'scheduled', winner_id = NULL, team1_score = 0, team2_score = 0
-            WHERE id = ?
-        """, (match_id,))
+            SET status = 'scheduled', winner_id = NULL, team1_score = 0, team2_score = 0,
+                batting_first_id = NULL, team1_overs = 20.0, team2_overs = 20.0,
+                team1_all_out = 0, team2_all_out = 0
+            WHERE tournament_id = ?
+        """, (tournament_id,))
         
-        # 2. Delete player performances for this match
-        cursor.execute("DELETE FROM match_player_performance WHERE match_id = ?", (match_id,))
+        # 2. Reset team standings
+        cursor.execute("""
+            UPDATE tournament_teams 
+            SET matches_played = 0, wins = 0, losses = 0, points = 0
+            WHERE tournament_id = ?
+        """, (tournament_id,))
         
-        # 3. Clear fantasy points for this match in fantasy_teams or fantasy_scores if applicable
-        # (This is more complex depending on how fantasy_scores are stored, but clearing performance 
-        # is the main step for tournament stats)
+        # 3. Delete performances for these matches
+        matches = conn.execute("SELECT id FROM tournament_matches WHERE tournament_id = ?", (tournament_id,)).fetchall()
+        match_ids = [m['id'] for m in matches]
+        
+        if match_ids:
+            placeholders = ','.join(['?'] * len(match_ids))
+            cursor.execute(f"DELETE FROM match_player_performance WHERE match_id IN ({placeholders})", match_ids)
+            cursor.execute(f"DELETE FROM match_playing_xi WHERE match_id IN ({placeholders})", match_ids)
+            
+            # Reset fantasy scores for these matches
+            cursor.execute(f"DELETE FROM fantasy_scores WHERE fantasy_team_id IN (SELECT id FROM fantasy_teams WHERE match_id IN ({placeholders}))", match_ids)
+        
+        # 4. Reset leaderboard
+        cursor.execute("UPDATE tournament_leaderboard SET total_points = 0 WHERE tournament_id = ?", (tournament_id,))
         
         conn.commit()
         conn.close()
-        return True, "Match result reset successfully."
+        return True, "Tournament progress has been completely reset."
     except Exception as e:
         return False, str(e)
 
-def update_match_result(match_id, winner_id, team1_score, team2_score):
-    """Update match result after completion"""
+def update_match_result(match_id, winner_id, team1_score, team2_score, batting_first_id=None, t1_overs=20.0, t2_overs=20.0, t1_all_out=False, t2_all_out=False):
+    """Update match result after completion with NRR data"""
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Update match status
+    # Update match status and NRR fields
     cursor.execute("""
         UPDATE tournament_matches 
-        SET status = ?, winner_id = ?, team1_score = ?, team2_score = ?
+        SET status = ?, winner_id = ?, team1_score = ?, team2_score = ?,
+            batting_first_id = ?, team1_overs = ?, team2_overs = ?,
+            team1_all_out = ?, team2_all_out = ?
         WHERE id = ?
-    """, ('completed', winner_id, team1_score, team2_score, match_id))
+    """, ('completed', winner_id, team1_score, team2_score, 
+          batting_first_id, t1_overs, t2_overs, 
+          1 if t1_all_out else 0, 1 if t2_all_out else 0, match_id))
     
     # Update team stats
     match = conn.execute("SELECT team1_id, team2_id FROM tournament_matches WHERE id = ?", (match_id,)).fetchone()
@@ -766,34 +878,40 @@ def calculate_nrr(team_id, tournament_id):
         AND (team1_id = ? OR team2_id = ?)
     """, (tournament_id, team_id, team_id)).fetchall()
     
-    runs_for = 0
-    runs_against = 0
-    overs_played = 0
-    overs_faced = 0
+    runs_scored = 0
+    runs_conceded = 0
+    overs_faced = 0.0
+    overs_bowled = 0.0
     
+    def over_to_decimal(o):
+        parts = str(o).split('.')
+        ov = int(parts[0])
+        balls = int(parts[1]) if len(parts) > 1 else 0
+        return ov + (balls / 6.0)
+
     for match in matches:
-        if match['team1_id'] == team_id:
-            runs_for += match['team1_score']
-            runs_against += match['team2_score']
-        else:
-            runs_for += match['team2_score']
-            runs_against += match['team1_score']
+        is_team1 = (match['team1_id'] == team_id)
         
-        # Assume 20 overs per T20 match
-        overs_played += 20
-        overs_faced += 20
+        if is_team1:
+            runs_scored += match['team1_score']
+            runs_conceded += match['team2_score']
+            # If all out, use full 20 overs
+            overs_faced += 20.0 if match['team1_all_out'] else over_to_decimal(match['team1_overs'])
+            overs_bowled += 20.0 if match['team2_all_out'] else over_to_decimal(match['team2_overs'])
+        else:
+            runs_scored += match['team2_score']
+            runs_conceded += match['team1_score']
+            overs_faced += 20.0 if match['team2_all_out'] else over_to_decimal(match['team2_overs'])
+            overs_bowled += 20.0 if match['team1_all_out'] else over_to_decimal(match['team1_overs'])
     
     conn.close()
     
-    # Calculate NRR
-    if overs_played == 0:
+    # NRR = (Runs Scored / Overs Faced) - (Runs Conceded / Overs Bowled)
+    if overs_faced == 0 or overs_bowled == 0:
         return 0.0
     
-    run_rate_for = runs_for / (overs_played / 6)  # Convert overs to decimal
-    run_rate_against = runs_against / (overs_faced / 6)
-    nrr = run_rate_for - run_rate_against
-    
-    return round(nrr, 2)
+    nrr = (runs_scored / overs_faced) - (runs_conceded / overs_bowled)
+    return round(nrr, 3)
 
 def get_group_standings_with_nrr(tournament_id, group_letter):
     """Get group standings with NRR for qualification"""
@@ -899,10 +1017,10 @@ def get_tournament_format(tournament_id):
     
     return ['group', 'semi-final', 'final']
     
-def update_wc_csv_stats(player_name, match_stats):
+def update_wc_csv_stats(player_name, match_stats, team_name="Unknown"):
     """
     Update wc_players.csv with match performance data.
-    match_stats = { 'runs': X, 'balls': X, 'fours': X, 'sixes': X, 'wickets': X, 'overs': X, 'runs_conceded': X }
+    match_stats = { 'runs': X, 'balls': X, 'fours': X, 'sixes': X, 'wickets': X, 'overs': X, 'runs_conceded': X, 'catches': X }
     """
     try:
         from .config import DATA_PATHS
@@ -912,16 +1030,39 @@ def update_wc_csv_stats(player_name, match_stats):
             
         df = pd.read_csv(csv_path)
         
+        # Ensure helper columns exist for accurate aggregate calculation
+        required_cols = ['player', 'Team', 'Format', 'matches', 'Innings', 'NO', 'runs', 'wickets', 
+                         'average', 'bowling_average', 'strike_rate', 'HS', '100s', '50s', 
+                         'batting_position', 'image_url', 'role', 'economy',
+                         'total_balls_faced', 'total_overs_bowled', 'total_runs_conceded', 
+                         'total_fours', 'total_sixes', 'total_catches']
+        
+        for col in required_cols:
+            if col not in df.columns:
+                if col in ['player', 'Team', 'Format', 'role', 'HS', 'image_url']:
+                    df[col] = ""
+                else:
+                    df[col] = 0
+
         # Find player (case insensitive)
         player_mask = df['player'].str.lower() == player_name.lower()
-        if not player_mask.any():
-            return False, f"Player {player_name} not found in CSV"
-            
-        # Ensure helper columns exist for accurate aggregate calculation
-        for col in ['total_balls_faced', 'total_overs_bowled', 'total_runs_conceded']:
-            if col not in df.columns:
-                df[col] = 0
         
+        if not player_mask.any():
+            # Add new player row
+            new_row = {col: (0 if df[col].dtype in ['int64', 'float64'] else "") for col in df.columns}
+            new_row.update({
+                'player': player_name,
+                'Team': team_name,
+                'Format': 'T20',
+                'matches': 0,
+                'Innings': 0,
+                'runs': 0,
+                'wickets': 0,
+                'HS': '0'
+            })
+            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+            player_mask = df['player'] == player_name # Refresh mask
+            
         idx = df[player_mask].index[0]
         
         # Update basics
@@ -932,6 +1073,8 @@ def update_wc_csv_stats(player_name, match_stats):
             df.at[idx, 'Innings'] = safe_int(df.at[idx, 'Innings']) + 1
             df.at[idx, 'runs'] = safe_int(df.at[idx, 'runs']) + match_stats['runs']
             df.at[idx, 'total_balls_faced'] = safe_int(df.at[idx, 'total_balls_faced']) + match_stats['balls']
+            df.at[idx, 'total_fours'] = safe_int(df.at[idx, 'total_fours']) + match_stats.get('fours', 0)
+            df.at[idx, 'total_sixes'] = safe_int(df.at[idx, 'total_sixes']) + match_stats.get('sixes', 0)
             
             if match_stats.get('is_not_out', False):
                 df.at[idx, 'NO'] = safe_int(df.at[idx, 'NO']) + 1
@@ -968,6 +1111,10 @@ def update_wc_csv_stats(player_name, match_stats):
                 df.at[idx, 'bowling_average'] = round(cons / wkts, 2)
             if ovrs > 0:
                 df.at[idx, 'economy'] = round(cons / ovrs, 2)
+        
+        # Fielding updates
+        if match_stats.get('catches', 0) > 0:
+            df.at[idx, 'total_catches'] = safe_int(df.at[idx, 'total_catches']) + match_stats['catches']
                 
         # Save back
         df.to_csv(csv_path, index=False)
@@ -975,6 +1122,116 @@ def update_wc_csv_stats(player_name, match_stats):
     except Exception as e:
         import traceback
         print(f"CSV Sync Error: {traceback.format_exc()}")
+        return False, str(e)
+
+def update_batch_wc_csv_stats(match_data_list):
+    """
+    Update wc_players.csv for multiple players at once.
+    match_data_list = [ {'player_name': name, 'match_stats': {stats}, 'team_name': team}, ... ]
+    """
+    try:
+        from .config import DATA_PATHS
+        csv_path = DATA_PATHS.get("wc_players")
+        if not csv_path or not os.path.exists(csv_path):
+            return False, "CSV file not found"
+            
+        df = pd.read_csv(csv_path)
+        
+        # Ensure helper columns exist
+        required_cols = ['player', 'Team', 'Format', 'matches', 'Innings', 'NO', 'runs', 'wickets', 
+                         'average', 'bowling_average', 'strike_rate', 'HS', '100s', '50s', 
+                         'batting_position', 'image_url', 'role', 'economy',
+                         'total_balls_faced', 'total_overs_bowled', 'total_runs_conceded', 
+                         'total_fours', 'total_sixes', 'total_catches']
+        
+        for col in required_cols:
+            if col not in df.columns:
+                if col in ['player', 'Team', 'Format', 'role', 'HS', 'image_url']:
+                    df[col] = ""
+                else:
+                    df[col] = 0
+
+        updated_count = 0
+        for entry in match_data_list:
+            player_name = entry['player_name']
+            match_stats = entry['match_stats']
+            team_name = entry.get('team_name', 'Unknown')
+            
+            player_mask = df['player'].str.lower() == player_name.lower()
+            
+            if not player_mask.any():
+                new_row = {col: (0 if df[col].dtype in ['int64', 'float64'] else "") for col in df.columns}
+                new_row.update({
+                    'player': player_name,
+                    'Team': team_name,
+                    'Format': 'T20',
+                    'matches': 0,
+                    'Innings': 0,
+                    'runs': 0,
+                    'wickets': 0,
+                    'HS': '0'
+                })
+                df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+                player_mask = df['player'] == player_name
+            
+            idx = df[player_mask].index[0]
+            
+            # Update basics
+            df.at[idx, 'matches'] = safe_int(df.at[idx, 'matches']) + 1
+            
+            # Batting updates
+            if match_stats.get('balls', 0) > 0 or match_stats.get('runs', 0) > 0:
+                df.at[idx, 'Innings'] = safe_int(df.at[idx, 'Innings']) + 1
+                df.at[idx, 'runs'] = safe_int(df.at[idx, 'runs']) + match_stats['runs']
+                df.at[idx, 'total_balls_faced'] = safe_int(df.at[idx, 'total_balls_faced']) + match_stats['balls']
+                df.at[idx, 'total_fours'] = safe_int(df.at[idx, 'total_fours']) + match_stats.get('fours', 0)
+                df.at[idx, 'total_sixes'] = safe_int(df.at[idx, 'total_sixes']) + match_stats.get('sixes', 0)
+                
+                if match_stats.get('is_not_out', False):
+                    df.at[idx, 'NO'] = safe_int(df.at[idx, 'NO']) + 1
+                
+                # Recalculate
+                total_runs = float(df.at[idx, 'runs'])
+                innings = float(df.at[idx, 'Innings'])
+                no = safe_float(df.at[idx, 'NO'])
+                balls = float(df.at[idx, 'total_balls_faced'])
+                
+                if (innings - no) > 0:
+                    df.at[idx, 'average'] = round(total_runs / (innings - no), 2)
+                if balls > 0:
+                    df.at[idx, 'strike_rate'] = round((total_runs / balls) * 100, 2)
+                
+                current_hs = str(df.at[idx, 'HS']) if pd.notna(df.at[idx, 'HS']) else '0'
+                clean_hs = int(current_hs.replace('*', '')) if current_hs else 0
+                if match_stats['runs'] > clean_hs:
+                    df.at[idx, 'HS'] = match_stats['runs']
+            
+            # Bowling updates
+            if match_stats.get('overs', 0) > 0 or match_stats.get('wickets', 0) > 0:
+                df.at[idx, 'wickets'] = safe_int(df.at[idx, 'wickets']) + match_stats['wickets']
+                df.at[idx, 'total_runs_conceded'] = safe_int(df.at[idx, 'total_runs_conceded']) + match_stats['runs_conceded']
+                df.at[idx, 'total_overs_bowled'] = safe_float(df.at[idx, 'total_overs_bowled']) + match_stats['overs']
+                
+                wkts = float(df.at[idx, 'wickets'])
+                cons = float(df.at[idx, 'total_runs_conceded'])
+                ovrs = float(df.at[idx, 'total_overs_bowled'])
+                
+                if wkts > 0:
+                    df.at[idx, 'bowling_average'] = round(cons / wkts, 2)
+                if ovrs > 0:
+                    df.at[idx, 'economy'] = round(cons / ovrs, 2)
+            
+            # Fielding
+            if match_stats.get('catches', 0) > 0:
+                df.at[idx, 'total_catches'] = safe_int(df.at[idx, 'total_catches']) + match_stats['catches']
+            
+            updated_count += 1
+                
+        df.to_csv(csv_path, index=False)
+        return True, f"Batch CSV update successful for {updated_count} players."
+    except Exception as e:
+        import traceback
+        print(f"Batch CSV Sync Error: {traceback.format_exc()}")
         return False, str(e)
 
 def safe_int(v):
@@ -987,9 +1244,14 @@ def safe_float(v):
 
 # ==================== PERFORMANCE TRACKING ====================
 
-def add_player_performance(match_id, player_name, team_id, runs=0, balls_faced=0, fours=0, sixes=0, wickets=0, overs_bowled=0, runs_conceded=0, economy=0, is_not_out=False):
+def add_player_performance(match_id, player_name, team_id, runs=0, balls_faced=0, fours=0, sixes=0, wickets=0, overs_bowled=0, runs_conceded=0, economy=0, catches=0, is_not_out=False):
     """Add player performance for a match with auto-calculated details"""
     try:
+        # Debug Logging
+        with open("db_debug.log", "a") as f:
+            f.write(f"Attempting Add Perf: match={match_id}, player={player_name}, team={team_id}\n")
+            f.write(f"Params: runs={runs}, balls={balls_faced}, wkts={wickets}, overs={overs_bowled}, catches={catches}\n")
+
         conn = get_db_connection()
         cursor = conn.cursor()
         
@@ -1005,14 +1267,16 @@ def add_player_performance(match_id, player_name, team_id, runs=0, balls_faced=0
         
         cursor.execute("""
             INSERT INTO match_player_performance 
-            (match_id, player_name, team_id, runs, balls_faced, fours, sixes, wickets, overs_bowled, runs_conceded, economy, performance_type, is_not_out)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (match_id, player_name, team_id, runs, balls_faced, fours, sixes, wickets, overs_bowled, runs_conceded, economy, perf_type_str, 1 if is_not_out else 0))
+            (match_id, player_name, team_id, runs, balls_faced, fours, sixes, wickets, overs_bowled, runs_conceded, economy, catches, performance_type, is_not_out)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (match_id, player_name, team_id, runs, balls_faced, fours, sixes, wickets, overs_bowled, runs_conceded, economy, catches, perf_type_str, 1 if is_not_out else 0))
         
         conn.commit()
         conn.close()
+        with open("db_debug.log", "a") as f: f.write("Success!\n")
         return True
     except Exception as e:
+        with open("db_debug.log", "a") as f: f.write(f"Error: {e}\n")
         print(f"Error adding player performance: {e}")
         return False
 
@@ -1029,76 +1293,50 @@ def get_match_performances(match_id):
 
 def calculate_batsman_fantasy_points(runs, fours, sixes, balls_faced, is_captain=False, is_vice_captain=False):
     """Calculate fantasy points for batsman performance"""
-    points = 0
+    points = (runs * 1) + (fours * 1) + (sixes * 2)
     
-    # Runs - 1 point per run
-    points += runs * 1
-    
-    # Fours - bonus points
-    points += fours * 1
-    
-    # Sixes - double bonus
-    points += sixes * 2
-    
-    # Strike rate bonus (if SR > 120)
-    if balls_faced > 0:
+    # Strike rate bonus
+    if balls_faced >= 10:
         sr = (runs / balls_faced) * 100
-        if sr > 150:
-            points += 10
-        elif sr > 120:
-            points += 5
+        if sr > 170: points += 12
+        elif sr > 150: points += 8
+        elif sr > 130: points += 4
+
+    # Milestones
+    if runs >= 100: points += 16
+    elif runs >= 50: points += 8
+    elif runs >= 30: points += 4
     
-    # Runs bonus
-    if runs >= 50:
-        points += 15 # Half-century bonus
-    if runs >= 100:
-        points += 30 # Century bonus
-        
+    # Multipliers
+    if is_captain: points *= 2
+    elif is_vice_captain: points *= 1.5
     return points
 
-def calculate_bowler_fantasy_points(wickets, economy, overs_bowled):
+def calculate_bowler_fantasy_points(wickets, economy, overs_bowled, is_captain=False, is_vice_captain=False):
     """Calculate fantasy points for bowling performance"""
-    points = 0
+    points = wickets * 25
     
-    # Wickets - 25 points per wicket
-    points += wickets * 25
+    # Wicket hauls
+    if wickets >= 5: points += 16
+    elif wickets >= 4: points += 8
+    elif wickets >= 3: points += 4
     
-    # Wicket Bonus
-    if wickets >= 3:
-        points += 10 # 3-wicket haul
-    if wickets >= 5:
-        points += 20 # 5-wicket haul
-        
-    # Economy Bonus (if min 2 overs bowled)
+    # Economy bonus (min 2 overs)
     if overs_bowled >= 2:
-        if economy < 5:
-            points += 15
-        elif economy < 7:
-            points += 10
-        elif economy < 9:
-            points += 5
+        if economy < 5: points += 12
+        elif economy < 7: points += 8
+        elif economy < 9: points += 4
             
+    # Multipliers
+    if is_captain: points *= 2
+    elif is_vice_captain: points *= 1.5
     return points
 
-def calculate_bowler_fantasy_points(wickets, economy, is_captain=False, is_vice_captain=False):
-    """Calculate fantasy points for bowler performance"""
-    points = 0
-    
-    # Wickets - points
-    points += wickets * 25
-    
-    # Economy bonus (better economy = more points)
-    if economy < 6:
-        points += 10
-    elif economy < 8:
-        points += 5
-    
-    # Captain/Vice Captain multiplier
-    if is_captain:
-        points *= 2
-    elif is_vice_captain:
-        points *= 1.5
-    
+def calculate_fielding_fantasy_points(catches, is_captain=False, is_vice_captain=False):
+    """Calculate fantasy points for fielding performance"""
+    points = catches * 8
+    if is_captain: points *= 2
+    elif is_vice_captain: points *= 1.5
     return points
 
 def calculate_updated_fantasy_scores(tournament_id, match_id=None):
@@ -1141,9 +1379,15 @@ def calculate_updated_fantasy_scores(tournament_id, match_id=None):
                             perf['balls_faced'], is_captain, is_vice_captain
                         )
                     
-                    if perf['wickets'] > 0 or perf['economy'] > 0:
+                    if perf['wickets'] > 0 or perf['overs_bowled'] > 0:
                         points += calculate_bowler_fantasy_points(
-                            perf['wickets'], perf['economy'], is_captain, is_vice_captain
+                            perf['wickets'], perf['economy'], perf['overs_bowled'],
+                            is_captain, is_vice_captain
+                        )
+
+                    if perf['catches'] > 0:
+                        points += calculate_fielding_fantasy_points(
+                            perf['catches'], is_captain, is_vice_captain
                         )
                     
                     total_points += points
@@ -1186,7 +1430,7 @@ def get_tournament_stats(tournament_id, stat_type='runs'):
             query = """
                 SELECT player_name, tt.team_name, SUM(runs) as total_runs, 
                        AVG(CAST(runs AS FLOAT) / NULLIF(balls_faced, 0) * 100) as avg_sr,
-                       COUNT(id) as matches
+                       COUNT(mpp.id) as matches
                 FROM match_player_performance mpp
                 JOIN tournament_teams tt ON mpp.team_id = tt.id
                 WHERE tt.tournament_id = ?
@@ -1197,7 +1441,7 @@ def get_tournament_stats(tournament_id, stat_type='runs'):
             query = """
                 SELECT player_name, tt.team_name, SUM(wickets) as total_wickets, 
                        AVG(economy) as avg_eco,
-                       COUNT(id) as matches
+                       COUNT(mpp.id) as matches
                 FROM match_player_performance mpp
                 JOIN tournament_teams tt ON mpp.team_id = tt.id
                 WHERE tt.tournament_id = ?
@@ -1212,6 +1456,15 @@ def get_tournament_stats(tournament_id, stat_type='runs'):
                 WHERE tt.tournament_id = ?
                 GROUP BY player_name
                 ORDER BY total_sixes DESC LIMIT 10
+            """
+        elif stat_type == 'catches':
+            query = """
+                SELECT player_name, tt.team_name, SUM(catches) as total_catches
+                FROM match_player_performance mpp
+                JOIN tournament_teams tt ON mpp.team_id = tt.id
+                WHERE tt.tournament_id = ?
+                GROUP BY player_name
+                ORDER BY total_catches DESC LIMIT 10
             """
             
         if not query: return pd.DataFrame()
@@ -1390,3 +1643,70 @@ def get_team_strength_rating(tournament_id, team_id):
     except Exception as e:
         print(f"Error getting team strength: {e}")
         return 0
+
+def populate_csv_with_all_squad_players(tournament_id):
+    """Ensure all players in tournament squads are present in wc_players.csv"""
+    try:
+        from .config import DATA_PATHS
+        csv_path = DATA_PATHS.get("wc_players")
+        if not csv_path or not os.path.exists(csv_path):
+            return False, "CSV file not found"
+            
+        df = pd.read_csv(csv_path)
+        
+        # Ensure helper columns exist
+        required_cols = ['player', 'Team', 'Format', 'matches', 'Innings', 'NO', 'runs', 'wickets', 
+                         'average', 'bowling_average', 'strike_rate', 'HS', '100s', '50s', 
+                         'batting_position', 'image_url', 'role', 'economy',
+                         'total_balls_faced', 'total_overs_bowled', 'total_runs_conceded', 
+                         'total_fours', 'total_sixes', 'total_catches']
+        
+        for col in required_cols:
+            if col not in df.columns:
+                if col in ['player', 'Team', 'Format', 'role', 'HS', 'image_url']:
+                    df[col] = ""
+                else:
+                    df[col] = 0
+
+        teams = get_tournament_teams(tournament_id)
+        added_count = 0
+        
+        for team in teams:
+            team_name = team['team_name']
+            squad_data = team['squad'] 
+            if not squad_data: continue
+            
+            # Handle both JSON list and legacy comma-separated string
+            try:
+                import json
+                players = json.loads(squad_data)
+                if not isinstance(players, list): players = [players]
+            except:
+                players = [p.strip() for p in squad_data.split(',') if p.strip()]
+            
+            for p_name in players:
+                # Check if exists (case insensitive)
+                if not (df['player'].str.lower() == p_name.lower()).any():
+                    # Add new player row
+                    new_row = {col: (0 if df[col].dtype in ['int64', 'float64'] else "") for col in df.columns}
+                    new_row.update({
+                        'player': p_name,
+                        'Team': team_name,
+                        'Format': 'T20',
+                        'matches': 0,
+                        'Innings': 0,
+                        'runs': 0,
+                        'wickets': 0,
+                        'HS': '0'
+                    })
+                    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+                    added_count += 1
+        
+        if added_count > 0:
+            df.to_csv(csv_path, index=False)
+            
+        return True, f"Successfully processed squads. Added {added_count} new players to CSV."
+    except Exception as e:
+        import traceback
+        print(f"Bulk CSV Pop Error: {traceback.format_exc()}")
+        return False, str(e)

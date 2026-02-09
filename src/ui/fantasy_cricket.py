@@ -255,20 +255,20 @@ def show_fantasy_cricket():
             text-align: center;
             border: 1px solid #333;
             transition: all 0.3s ease;
-            color: #ffffff !important;
+            color: #e2e8f0 !important;
         }
         .match-card:hover {
             border-color: #2ecc71;
             box-shadow: 0 4px 15px rgba(46, 204, 113, 0.2);
         }
-        .match-team { font-weight: bold; font-size: 1.1rem; color: #ffffff; }
+        .match-team { font-weight: bold; font-size: 1.1rem; color: #e2e8f0; }
         .match-vs { color: #f39c12; font-weight: bold; margin: 5px 0; }
         .match-date { font-size: 0.75rem; color: #95a5a6; margin-top: 5px; }
         /* Custom button styling within cards */
         div.stButton > button.create-team-btn {
             width: 100%;
             background-color: #2ecc71 !important;
-            color: white !important;
+            color: #e2e8f0 !important;
             border: none !important;
             border-radius: 8px !important;
             padding: 10px !important;
@@ -323,7 +323,7 @@ def show_fantasy_cricket():
                     </div>
                 """, unsafe_allow_html=True)
                 
-                if st.button("CREATE TEAM ➜", key=f"btn_{match['id']}", use_container_width=True):
+                if st.button("CREATE TEAM ➜", key=f"btn_{match['id']}", width="stretch"):
                     st.session_state.selected_match_id = match['id']
                     st.rerun()
 
@@ -386,7 +386,7 @@ def show_fantasy_cricket():
         
         st.markdown(f"""
         <div style="background: #1a1c24; padding: 20px; border-radius: 15px; border-left: 5px solid #2ecc71; margin-bottom: 15px;">
-            <h4 style="margin-top: 0; color: #ffffff;">🛡️ Selection Rules</h4>
+            <h4 style="margin-top: 0; color: #e2e8f0;">🛡️ Selection Rules</h4>
             <ul style="font-size: 0.9rem; color: #e0e0e0; margin: 0; padding-left: 20px;">
                 <li>Select 11 players (2+ Batsmen, 2+ Bowlers, 1+ Wicket-keeper)</li>
                 <li>Budget: <b>1M</b> total (Player prices: 300K/200K/100K/50K)</li>
@@ -396,7 +396,7 @@ def show_fantasy_cricket():
         
         <div style="background: #1a1c24; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span style="color: #ffffff; font-weight: bold;">💰 Budget</span>
+                <span style="color: #e2e8f0; font-weight: bold;">💰 Budget</span>
                 <span style="color: {budget_color}; font-weight: bold;">{spent_budget:,} / {TOTAL_BUDGET:,}</span>
             </div>
             <div style="background: #34495e; border-radius: 10px; height: 20px; overflow: hidden;">
@@ -416,7 +416,7 @@ def show_fantasy_cricket():
             
             for i, team in enumerate(teams):
                 with [c1, c2][i]:
-                    st.markdown(f"<h5 style='color: #ffffff;'>{team}</h5>", unsafe_allow_html=True)
+                    st.markdown(f"<h5 style='color: #e2e8f0;'>{team}</h5>", unsafe_allow_html=True)
                     team_role_players = role_players[role_players['team'] == team]
                     if team_role_players.empty:
                         st.caption("No players in this role")
@@ -522,7 +522,7 @@ def show_fantasy_cricket():
             save_btn_label = "🚀 Submit Fantasy Squad" if is_valid else "⚠️ Complete Your Squad"
             save_disabled = not is_valid
             
-            if st.button(save_btn_label, type="primary", disabled=save_disabled, use_container_width=True):
+            if st.button(save_btn_label, type="primary", disabled=save_disabled, width="stretch"):
                 try:
                     conn = get_db_connection()
                     user = conn.execute("SELECT id FROM users WHERE username = ?", (st.session_state.username,)).fetchone()
@@ -540,7 +540,7 @@ def show_fantasy_cricket():
             st.info("💡 Keep picking until you satisfy all requirements!")
             if selected_players:
                 # Professional team display instead of array format
-                st.markdown("<h4 style='color: #ffffff; margin-top: 20px;'>Current Lineup</h4>", unsafe_allow_html=True)
+                st.markdown("<h4 style='color: #e2e8f0; margin-top: 20px;'>Current Lineup</h4>", unsafe_allow_html=True)
                 
                 # Group by roles for display
                 lineup_df = squad_df[squad_df['player'].isin(selected_players)]
@@ -555,7 +555,7 @@ def show_fantasy_cricket():
                             with cols[idx % 4]:
                                 st.markdown(f"""
                                 <div style='background: #2c3e50; padding: 12px; border-radius: 10px; margin: 5px 0; text-align: center; border: 2px solid #34495e;'>
-                                    <div style='font-size: 0.95rem; font-weight: bold; color: #ffffff; margin-bottom: 4px;'>{player['player']}</div>
+                                    <div style='font-size: 0.95rem; font-weight: bold; color: #e2e8f0; margin-bottom: 4px;'>{player['player']}</div>
                                     <div style='font-size: 0.75rem; color: #3498db; margin-bottom: 6px;'>{player['team']}</div>
                                     <div style='font-size: 0.7rem; color: #2ecc71; font-weight: 600;'>{int(player['price']/1000)}K</div>
                                 </div>

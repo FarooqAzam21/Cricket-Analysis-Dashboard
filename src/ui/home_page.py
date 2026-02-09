@@ -18,7 +18,7 @@ def show_home_page(all_players=None):
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             padding: clamp(30px, 8vw, 60px) 20px;
             border-radius: 16px;
-            color: white;
+            color: #e2e8f0;
             text-align: center;
             margin-bottom: clamp(20px, 5vw, 30px);
             box-shadow: 0 10px 30px rgba(16, 185, 129, 0.2);
@@ -92,7 +92,7 @@ def show_home_page(all_players=None):
         
         .stats-box {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
+            color: #e2e8f0;
             padding: clamp(20px, 5vw, 30px);
             border-radius: 14px;
             text-align: center;
@@ -144,7 +144,7 @@ def show_home_page(all_players=None):
         
         .quick-link-btn:hover {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
+            color: #e2e8f0;
             transform: translateY(-4px);
             box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
         }
@@ -393,17 +393,17 @@ def show_home_page(all_players=None):
     nav_col1, nav_col2, nav_col3 = st.columns(3, gap="small")
     
     with nav_col1:
-        if st.button("📊 Analysis", use_container_width=True, help="Go to cricket analysis"):
+        if st.button("📊 Analysis", width="stretch", help="Go to cricket analysis"):
             st.session_state.page = "🏏 Cricket Analysis"
             st.rerun()
     
     with nav_col2:
-        if st.button("🏆 Tournament", use_container_width=True, help="Manage tournaments"):
+        if st.button("🏆 Tournament", width="stretch", help="Manage tournaments"):
             st.session_state.page = "🏆 Tournament"
             st.rerun()
     
     with nav_col3:
-        if st.button("🏏 Fantasy", use_container_width=True, help="Fantasy cricket"):
+        if st.button("🏏 Fantasy", width="stretch", help="Fantasy cricket"):
             st.session_state.page = "🏆 Tournament"
             st.session_state.fantasy_page = "Fantasy Cricket"
             st.rerun()

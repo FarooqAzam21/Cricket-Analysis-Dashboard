@@ -99,7 +99,7 @@ def render_format_analysis(batsmen, all_rounders, bowlers_data, wicket_keepers):
                     fig = px.bar(top_runs, x='player', y='runs', color='Team', 
                                  title=f"🏆 Top {top_n_charts} Run Scorers ({min_matches}+ M, {min_runs}+ R)")
                     fig.update_layout(xaxis={'categoryorder':'total descending'}, xaxis_tickangle=45)
-                    st.plotly_chart(fig, use_container_width=True, key=f'top_runs_{fmt}')
+                    st.plotly_chart(fig, width="stretch", key=f'top_runs_{fmt}')
                 else:
                     st.warning(f"No players found with {min_matches}+ Matches & {min_runs}+ Runs")
             
@@ -110,7 +110,7 @@ def render_format_analysis(batsmen, all_rounders, bowlers_data, wicket_keepers):
                     title = f"📈 Avg vs SR (SR >= {min_sr})" if not sr_filtered_batsmen.empty else "📈 Avg vs SR"
                     fig = px.scatter(top_scatter, x='average', y='strike_rate', color='Team', 
                                      size='matches', hover_name='player', title=title)
-                    st.plotly_chart(fig, use_container_width=True, key=f'avg_sr_{fmt}')
+                    st.plotly_chart(fig, width="stretch", key=f'avg_sr_{fmt}')
 
             with col3:
                 if not fmt_wicket_keepers.empty:
@@ -121,7 +121,7 @@ def render_format_analysis(batsmen, all_rounders, bowlers_data, wicket_keepers):
                         top_wk = sort_players(wk_elite, top_n=top_n_charts, by='average', ascending=False)
                         fig = px.scatter(top_wk, x='average', y='strike_rate', color='Team',
                                          size='matches', hover_name='player', title=f"📊 WKs: Avg vs SR ({wk_min}+ M)")
-                        st.plotly_chart(fig, use_container_width=True, key=f'wk_scatter_{fmt}')
+                        st.plotly_chart(fig, width="stretch", key=f'wk_scatter_{fmt}')
 
             # --- Detailed Batting Analysis ---
             st.markdown("---")
@@ -132,7 +132,7 @@ def render_format_analysis(batsmen, all_rounders, bowlers_data, wicket_keepers):
                     fig = px.bar(top_avg, x='player', y='average', color='Team', 
                                  title=f"Top {top_n_charts} Batters by Average ({min_matches}+ M)")
                     fig.update_layout(xaxis={'categoryorder':'total descending'}, xaxis_tickangle=45)
-                    st.plotly_chart(fig, use_container_width=True, key=f'bat_avg_{fmt}')
+                    st.plotly_chart(fig, width="stretch", key=f'bat_avg_{fmt}')
                 
                 with col_b2:
                     plot_data_sr = sr_filtered_batsmen if not sr_filtered_batsmen.empty else filtered_batsmen
@@ -140,7 +140,7 @@ def render_format_analysis(batsmen, all_rounders, bowlers_data, wicket_keepers):
                     fig = px.bar(top_sr, x='player', y='strike_rate', color='Team', 
                                  title=f"Top {top_n_charts} by Strike Rate (SR >= {min_sr})")
                     fig.update_layout(xaxis={'categoryorder':'total descending'}, xaxis_tickangle=45)
-                    st.plotly_chart(fig, use_container_width=True, key=f'bat_sr_{fmt}')
+                    st.plotly_chart(fig, width="stretch", key=f'bat_sr_{fmt}')
 
             # --- All-Rounders Analysis ---
             st.markdown("---")
@@ -151,13 +151,13 @@ def render_format_analysis(batsmen, all_rounders, bowlers_data, wicket_keepers):
                     top_wickets_ar = sort_players(filtered_all_rounders, top_n=top_n_charts, by='wickets', ascending=False)
                     fig = px.bar(top_wickets_ar, x='player', y='wickets', color='Team', title=f"Top {top_n_charts} All-Rounders by Wickets")
                     fig.update_layout(xaxis={'categoryorder':'total descending'}, xaxis_tickangle=45)
-                    st.plotly_chart(fig, use_container_width=True, key=f'wickets_ar_{fmt}')
+                    st.plotly_chart(fig, width="stretch", key=f'wickets_ar_{fmt}')
                 
                 with col_a2:
                     top_bowling_avg_ar = sort_players(filtered_all_rounders, top_n=top_n_charts, by='bowling_average', ascending=True)
                     fig = px.bar(top_bowling_avg_ar, x='player', y='bowling_average', color='Team', title=f"Top {top_n_charts} by Bowling Avg")
                     fig.update_layout(xaxis={'categoryorder':'total ascending'}, xaxis_tickangle=45)
-                    st.plotly_chart(fig, use_container_width=True, key=f'bowling_avg_ar_{fmt}')
+                    st.plotly_chart(fig, width="stretch", key=f'bowling_avg_ar_{fmt}')
 
             # --- Bowlers Analysis ---
             st.markdown("---")
@@ -168,10 +168,10 @@ def render_format_analysis(batsmen, all_rounders, bowlers_data, wicket_keepers):
                     top_wickets_bw = sort_players(filtered_bowlers, top_n=top_n_charts, by='wickets', ascending=False)
                     fig = px.bar(top_wickets_bw, x='player', y='wickets', color='Team', title=f"Top {top_n_charts} Bowlers by Wickets")
                     fig.update_layout(xaxis={'categoryorder':'total descending'}, xaxis_tickangle=45)
-                    st.plotly_chart(fig, use_container_width=True, key=f'wickets_bw_{fmt}')
+                    st.plotly_chart(fig, width="stretch", key=f'wickets_bw_{fmt}')
                 
                 with col_bw2:
                     top_bowling_avg_bw = sort_players(filtered_bowlers, top_n=top_n_charts, by='bowling_average', ascending=True)
                     fig = px.bar(top_bowling_avg_bw, x='player', y='bowling_average', color='Team', title=f"Top {top_n_charts} by Bowling Avg")
                     fig.update_layout(xaxis={'categoryorder':'total ascending'}, xaxis_tickangle=45)
-                    st.plotly_chart(fig, use_container_width=True, key=f'bowling_avg_bw_{fmt}')
+                    st.plotly_chart(fig, width="stretch", key=f'bowling_avg_bw_{fmt}')

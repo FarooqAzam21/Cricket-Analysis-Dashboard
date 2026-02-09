@@ -17,7 +17,8 @@ from src.database import (
     update_team_name, update_match_number, add_player_performance, get_match_performances,
     calculate_team_strength, get_team_strength_rating, calculate_updated_fantasy_scores,
     promote_to_super8, get_tournament_stats, delete_match,
-    save_playing_xi, get_playing_xi
+    save_playing_xi, get_playing_xi, update_wc_csv_stats, update_batch_wc_csv_stats,
+    populate_csv_with_all_squad_players
 )
 
 def check_admin_access():
@@ -25,6 +26,16 @@ def check_admin_access():
     if 'username' not in st.session_state or st.session_state.username != 'admin':
         st.error("⛔ Unauthorized Access. Admin panel is only for administrators.")
         st.stop()
+
+def parse_squad_list(squad_data):
+    """Safely parse squad data from JSON or comma-separated string"""
+    if not squad_data: return []
+    try:
+        players = json.loads(squad_data)
+        if isinstance(players, list): return players
+        return [str(players)]
+    except:
+        return [p.strip() for p in squad_data.split(',') if p.strip()]
 
 def show_admin_panel():
     """Main admin panel interface"""
@@ -51,7 +62,7 @@ def show_admin_panel():
                 'Status': t['status']
             })
         
-        st.dataframe(pd.DataFrame(tourn_data), use_container_width=True)
+        st.dataframe(pd.DataFrame(tourn_data), width="stretch")
         st.info(f"💡 Use the Tournament ID from the table above to manage tournaments in the tabs below")
     else:
         st.warning("No tournaments found. Create one in Tab 1 below.")
@@ -77,7 +88,7 @@ def show_admin_panel():
         }
         .stTabs [aria-selected="true"] {
             background-color: #238636 !important;
-            color: white !important;
+            color: #e2e8f0 !important;
             border-color: #2ea043 !important;
         }
         </style>
@@ -251,12 +262,7 @@ def show_admin_panel():
                             player_list = t20_players['player'].unique().tolist()
                             
                             # Show current squad if exists
-                            current_squad = []
-                            if team_details['squad']:
-                                try:
-                                    current_squad = json.loads(team_details['squad'])
-                                except:
-                                    current_squad = []
+                            current_squad = parse_squad_list(team_details['squad'])
                             
                             st.write(f"**Current Squad** ({len(current_squad)} players):")
                             if current_squad:
@@ -392,7 +398,7 @@ def show_admin_panel():
                                 'Group': m['group_letter']
                             })
                         
-                        st.dataframe(pd.DataFrame(match_data), use_container_width=True, hide_index=True)
+                        st.dataframe(pd.DataFrame(match_data), width="stretch", hide_index=True)
                         
                         # Date/Time editing moved to Manage Matches tab for consistency
                         
@@ -560,7 +566,7 @@ def show_admin_panel():
                                 'Status': match_dict['status'].title(),
                             })
                         
-                        st.dataframe(pd.DataFrame(match_data), use_container_width=True, hide_index=True)
+                        st.dataframe(pd.DataFrame(match_data), width="stretch", hide_index=True)
                         
                         # Create a mapping for descriptive selectboxes
                         match_map = {
@@ -622,230 +628,309 @@ def show_admin_panel():
     
     # ========== TAB 6: UPDATE SCORES ==========
     with tab6:
-        st.header("Update Match Scores & Player Performance")
+        st.header("🏏 Match Result & Performance Management")
         
         tournament_id = st.number_input("Tournament ID", min_value=1, step=1, key="score_tournament")
         
         if tournament_id:
             tournament = get_tournament(tournament_id)
             if tournament:
-                st.info(f"Tournament: {tournament['name']}")
+                st.info(f"Tournament: **{tournament['name']}**")
                 
                 matches = get_tournament_matches(tournament_id)
-                incomplete_matches = [m for m in matches if m['status'] != 'completed']
+                if not matches:
+                    st.warning("No matches found for this tournament.")
+                    st.stop()
+
+                all_teams = get_tournament_teams(tournament_id)
                 
-                if incomplete_matches:
-                    all_teams = get_tournament_teams(tournament_id)
-                    match_options = {}
-                    
-                    for m in incomplete_matches:
-                        team1 = next((t['team_name'] for t in all_teams if t['id'] == m['team1_id']), f"Team {m['team1_id']}")
-                        team2 = next((t['team_name'] for t in all_teams if t['id'] == m['team2_id']), f"Team {m['team2_id']}")
-                        match_options[f"{team1} vs {team2} ({m['match_date']})"] = m['id']
-                    
-                    selected_match_display = st.selectbox("Select Match", match_options.keys())
-                    match_id = match_options[selected_match_display]
-                    match = next(m for m in incomplete_matches if m['id'] == match_id)
-                    
-                    # --- TIME CHECK ---
-                    m_dict = dict(match)
-                    match_dt_str = f"{m_dict['match_date']} {m_dict.get('match_time', '10:00')}"
+                with st.expander("📝 CSV Setup & Sync", expanded=False):
+                    st.write("Ensure all tournament players are present in `wc_players.csv` for stat tracking.")
+                    if st.button("📥 Sync All Squad Players to CSV", type="secondary", width="stretch"):
+                        # populate_csv_with_all_squad_players imported at top
+                        success, msg = populate_csv_with_all_squad_players(tournament_id)
+                        if success: st.success(msg)
+                        else: st.error(msg)
+
+                match_options = {}
+                for m in matches:
+                    team1 = next((t['team_name'] for t in all_teams if t['id'] == m['team1_id']), f"Team {m['team1_id']}")
+                    team2 = next((t['team_name'] for t in all_teams if t['id'] == m['team2_id']), f"Team {m['team2_id']}")
+                    status_icon = "✅" if m['status'] == 'completed' else "⏳"
+                    match_options[f"{status_icon} {team1} vs {team2} ({m['match_date']})"] = m['id']
+                
+                selected_match_display = st.selectbox("Select Match to Manage", match_options.keys())
+                match_id = match_options[selected_match_display]
+                match = dict(next(m for m in matches if m['id'] == match_id))
+                
+                # --- TIME CHECK (Optional, but kept for logic) ---
+                match_dt_str = f"{match['match_date']} {match.get('match_time', '10:00')}"
+                try:
                     match_dt = datetime.strptime(match_dt_str, "%Y-%m-%d %H:%M")
-                    
-                    if datetime.now() < match_dt:
+                    if datetime.now() < match_dt and match['status'] != 'completed':
                         st.warning(f"⏳ **Match Result Entry Locked**")
                         st.info(f"This match is scheduled for **{match_dt_str}**. Results can only be entered after the match starts.")
-                        st.stop()
-                    
-                    # Step 1: Update Match Score
-                    st.subheader("Step 1: Match Result")
+                        # Allowing entry anyway for admin testing if needed, or st.stop()
+                except: pass
+
+                # STEP 1: MATCH RESULT
+                st.markdown("""
+                    <style>
+                    /* Vibrant colors for labels */
+                    .stNumberInput label, .stRadio label, .stCheckbox label, .stSelectbox label, .stMultiSelect label {
+                        color: #00ff88 !important; /* Neon Green */
+                        font-weight: 900 !important;
+                        text-shadow: 0px 0px 5px rgba(0,255,136,0.3);
+                        text-transform: uppercase;
+                        letter-spacing: 1.5px;
+                        font-size: 0.9rem !important;
+                    }
+                    .stMarkdown h3 {
+                        color: #00d2ff !important; /* Electric Blue */
+                        text-shadow: 0px 0px 8px rgba(0,210,255,0.4);
+                        border-bottom: 2px solid #00d2ff;
+                        padding-bottom: 8px;
+                        margin-top: 25px !important;
+                    }
+                    div[data-testid="stExpander"] {
+                        border: 1px solid #333;
+                        border-radius: 12px;
+                        background-color: #12141d;
+                        margin-bottom: 10px;
+                    }
+                    .stButton>button {
+                        border-radius: 8px !important;
+                        font-weight: 700 !important;
+                        transition: all 0.3s ease !important;
+                    }
+                    .stButton>button:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0px 4px 12px rgba(0,0,0,0.4);
+                    }
+                    /* Force white text for better contrast on dark inputs */
+                    .stNumberInput input, .stSelectbox div {
+                        color: #e2e8f0 !important;
+                    }
+                    </style>
+                """, unsafe_allow_html=True)
+                
+                st.markdown("### 🏟️ Step 1: Final Match Score")
+                with st.expander("Update Match Summary (Runs & Winner)", expanded=(match['status'] != 'completed')):
                     col1, col2, col3 = st.columns([3, 1, 3])
+                    team1_name = next((t['team_name'] for t in all_teams if t['id'] == match['team1_id']), f"Team {match['team1_id']}")
+                    team2_name = next((t['team_name'] for t in all_teams if t['id'] == match['team2_id']), f"Team {match['team2_id']}")
                     
                     with col1:
-                        team1_name = next((t['team_name'] for t in all_teams if t['id'] == match['team1_id']), f"Team {match['team1_id']}")
-                        st.write(f"### {team1_name}")
-                        team1_score = st.number_input(f"{team1_name} Runs", min_value=0, step=1, key="team1_score")
-                    
-                    with col2:
-                        st.markdown("**VS**")
-                    
+                        st.write(f"**{team1_name}**")
+                        t1_score = st.number_input(f"Runs Scored", min_value=0, value=match['team1_score'] or 0, key="t1_score_val")
+                    with col2: st.markdown("<br><center>vs</center>", unsafe_allow_html=True)
                     with col3:
-                        team2_name = next((t['team_name'] for t in all_teams if t['id'] == match['team2_id']), f"Team {match['team2_id']}")
-                        st.write(f"### {team2_name}")
-                        team2_score = st.number_input(f"{team2_name} Runs", min_value=0, step=1, key="team2_score")
+                        st.write(f"**{team2_name}**")
+                        t2_score = st.number_input(f"Runs Scored", min_value=0, value=match['team2_score'] or 0, key="t2_score_val")
                     
-                    # Select winner
-                    winner_options = {
-                        team1_name: match['team1_id'],
-                        team2_name: match['team2_id'],
-                        "No Result": None
-                    }
-                    
-                    winner_display = st.selectbox("Match Winner", winner_options.keys())
+                    winner_options = {team1_name: match['team1_id'], team2_name: match['team2_id'], "No Result": None}
+                    curr_winner_id = match.get('winner_id')
+                    curr_winner_name = next((name for name, id in winner_options.items() if id == curr_winner_id), "No Result")
+                    winner_display = st.selectbox("Match Winner", list(winner_options.keys()), index=list(winner_options.keys()).index(curr_winner_name))
                     winner_id = winner_options[winner_display]
-                    
-                    if st.button("Update Score", key="update_score"):
+
+                    batting_first_options = {team1_name: match['team1_id'], team2_name: match['team2_id']}
+                    curr_bat_first = next((name for name, id in batting_first_options.items() if id == match.get('batting_first_id')), team1_name)
+                    batting_first_display = st.radio("Who Batted First?", list(batting_first_options.keys()), 
+                                                     index=list(batting_first_options.keys()).index(curr_bat_first), horizontal=True)
+                    batting_first_id = batting_first_options[batting_first_display]
+
+                    st.markdown("---")
+                    c_ov1, c_ov2 = st.columns(2)
+                    with c_ov1:
+                        st.write(f"**{team1_name} Overs**")
+                        t1_ov = st.number_input("Overs Faced (e.g. 15.2)", 0.0, 20.0, value=float(match.get('team1_overs', 20.0)), key="t1_ov_val")
+                        t1_ao = st.checkbox("All Out?", value=bool(match.get('team1_all_out', 0)), key="t1_ao_val")
+                    with c_ov2:
+                        st.write(f"**{team2_name} Overs**")
+                        t2_ov = st.number_input("Overs Faced (e.g. 15.2)", 0.0, 20.0, value=float(match.get('team2_overs', 20.0)), key="t2_ov_val")
+                        t2_ao = st.checkbox("All Out?", value=bool(match.get('team2_all_out', 0)), key="t2_ao_val")
+
+                    if st.button("Update Match Result", type="primary"):
                         try:
-                            update_match_result(match_id, winner_id, team1_score, team2_score)
-                            st.success("✅ Match score updated successfully!")
-                            st.balloons()
-                        except Exception as e:
-                            st.error(f"Error updating score: {e}")
+                            # update_match_result is already imported at top
+                            update_match_result(match_id, winner_id, t1_score, t2_score, 
+                                               batting_first_id, t1_ov, t2_ov, t1_ao, t2_ao)
+                            st.success("✅ Match summary and NRR data updated!")
+                            st.rerun()
+                        except Exception as e: st.error(f"Error: {e}")
+
+                # STEP 2: PLAYING 11 SELECTION
+                st.markdown("### 📋 Step 2: Select Playing 11")
+                with st.expander("Finalize Lineups (Pick 11 from each squad)", expanded=(match['status'] == 'completed')):
+                    col1, col2 = st.columns(2)
                     
-                    st.divider()
-                    
-                    # Step 2: Add Player Performance
-                    st.subheader("Step 2: Player Performance Tracking")
-                    
-                    # Get completed matches for performance entry
-                    completed_matches = [m for m in matches if m['status'] == 'completed']
-                    
-                    if completed_matches:
-                        perf_match_options = {}
-                        for m in completed_matches:
-                            team1 = next((t['team_name'] for t in all_teams if t['id'] == m['team1_id']), f"Team {m['team1_id']}")
-                            team2 = next((t['team_name'] for t in all_teams if t['id'] == m['team2_id']), f"Team {m['team2_id']}")
-                            perf_match_options[f"{team1} vs {team2} ({m['match_date']})"] = m['id']
-                        
-                        perf_selected_match = st.selectbox("Select Match for Performance Entry", perf_match_options.keys(), key="perf_select_match")
-                        perf_match_id = perf_match_options[perf_selected_match]
-                        
-                        perf_match = next(m for m in completed_matches if m['id'] == perf_match_id)
-                        perf_team1_name = next((t['team_name'] for t in all_teams if t['id'] == perf_match['team1_id']), f"Team {perf_match['team1_id']}")
-                        perf_team2_name = next((t['team_name'] for t in all_teams if t['id'] == perf_match['team2_id']), f"Team {perf_match['team2_id']}")
-                        
-                        # Display existing performances
-                        existing_perfs = get_match_performances(perf_match_id)
-                        if existing_perfs:
-                            st.info(f"📊 Already recorded performances for this match:")
-                            perf_df = pd.DataFrame([{
-                                'Player': p['player_name'],
-                                'Team': perf_team1_name if p['team_id'] == perf_match['team1_id'] else perf_team2_name,
-                                'Runs': p['runs'],
-                                'Balls': p['balls_faced'],
-                                'Fours': p['fours'],
-                                'Sixes': p['sixes'],
-                                'Wickets': p['wickets']
-                            } for p in existing_perfs])
-                            st.dataframe(perf_df, use_container_width=True)
-                        
-                            st.subheader("Add New Player Performance")
+                    def render_xi_selector(team_id, team_name, column):
+                        with column:
+                            st.write(f"**{team_name} Lineup**")
+                            details = get_team_details(team_id)
+                            squad = parse_squad_list(details['squad']) if details else []
+                            current_xi = get_playing_xi(match_id, team_id)
                             
-                            col1, col2 = st.columns(2)
+                            selected_xi = st.multiselect(
+                                f"Select for {team_name}", 
+                                squad, 
+                                default=current_xi if current_xi else [],
+                                key=f"xi_sel_{team_id}"
+                            )
                             
-                            with col1:
-                                perf_team = st.selectbox("Select Team", [perf_team1_name, perf_team2_name], key="perf_team_select")
-                                perf_team_id = perf_match['team1_id'] if perf_team == perf_team1_name else perf_match['team2_id']
+                            if st.button(f"Save {team_name} XI", key=f"btn_save_xi_{team_id}"):
+                                save_playing_xi(match_id, team_id, selected_xi)
+                                st.success(f"Lineup for {team_name} saved!")
                             
-                            with col2:
-                                # Get team players
-                                team_details = get_team_details(perf_team_id)
-                                team_players = team_details['squad'].split(',') if team_details and team_details['squad'] else []
+                            st.caption(f"Selected: {len(selected_xi)}/11")
+                        return selected_xi
+
+                    xi1 = render_xi_selector(match['team1_id'], team1_name, col1)
+                    xi2 = render_xi_selector(match['team2_id'], team2_name, col2)
+
+                # STEP 3: PERFORMANCE TRACKING
+                st.markdown("### 📊 Step 3: Individual Player Performance")
+                if not xi1 or not xi2:
+                    st.info("Please select Playing 11 for both teams in Step 2 to enter performances.")
+                else:
+                    target_players = xi1 + xi2
+                    
+                    # Already recorded stats
+                    existing_perfs = {p['player_name']: dict(p) for p in get_match_performances(match_id)}
+                    
+                    # Filtering and Sorting
+                    team_filter = st.radio("Enter Stats For:", [team1_name, team2_name, "All Players"], horizontal=True)
+                    
+                    form_players = []
+                    if team_filter == team1_name: form_players = xi1
+                    elif team_filter == team2_name: form_players = xi2
+                    else: form_players = target_players
+
+                    st.write(f"Showing {len(form_players)} players")
+                    
+                    for p_name in form_players:
+                        p_team_id = match['team1_id'] if p_name in xi1 else match['team2_id']
+                        p_data = existing_perfs.get(p_name, {})
+                        
+                        with st.expander(f"👤 {p_name} ({'Recorded' if p_name in existing_perfs else 'Pending'})", expanded=False):
+                            c1, c2, c3, c4 = st.columns(4)
+                            
+                            with c1:
+                                st.write("**Batting**")
+                                runs = st.number_input("Runs", 0, 500, value=p_data.get('runs', 0), key=f"r_{p_name}")
+                                balls = st.number_input("Balls", 0, 300, value=p_data.get('balls_faced', 0), key=f"b_{p_name}")
+                                not_out = st.checkbox("Not Out", value=bool(p_data.get('is_not_out', 0)), key=f"no_{p_name}")
+                                if balls > 0: st.caption(f"SR: **{(runs/balls)*100:.1f}**")
+                            
+                            with c2:
+                                st.write("**Boundaries**")
+                                fours = st.number_input("4s", 0, 50, value=p_data.get('fours', 0), key=f"4s_{p_name}")
+                                sixes = st.number_input("6s", 0, 50, value=p_data.get('sixes', 0), key=f"6s_{p_name}")
+                            
+                            with c3:
+                                st.write("**Bowling**")
+                                wkts = st.number_input("Wickets", 0, 10, value=p_data.get('wickets', 0), key=f"w_{p_name}")
+                                overs = st.number_input("Overs", 0.0, 4.0, value=float(p_data.get('overs_bowled', 0.0)), step=0.1, key=f"o_{p_name}")
+                                runs_con = st.number_input("Conceded", 0, 100, value=p_data.get('runs_conceded', 0), key=f"c_{p_name}")
+                                if overs > 0: st.caption(f"Econ: **{runs_con/overs:.2f}**")
+                            
+                            with c4:
+                                st.write("**Other**")
+                                catches = st.number_input("Catches", 0, 10, value=p_data.get('catches', 0), key=f"cat_{p_name}")
                                 
-                                if team_players:
-                                    # Multiselect for players who played
-                                    playing_players = st.multiselect(
-                                        "Select Playing 11 (Exactly 11 required)", 
-                                        team_players, 
-                                        default=get_playing_xi(perf_match_id, perf_team_id),
-                                        key="perf_playing_select",
-                                        help="Finalize your 11 players for this match before entering scores"
+                                if st.button(f"Save Stats for {p_name}", key=f"save_btn_{p_name}", type="secondary", width="stretch"):
+                                    # 1. Save to Database
+                                    add_player_performance(
+                                        match_id, p_name, p_team_id,
+                                        runs, balls, fours, sixes,
+                                        wkts, overs, runs_con, 0, catches, not_out
                                     )
                                     
-                                    if st.button("📢 Save/Finalize Playing 11", key=f"save_xi_{perf_team_id}"):
-                                        if len(playing_players) > 0:
-                                            success, msg = save_playing_xi(perf_match_id, perf_team_id, playing_players)
-                                            if success:
-                                                st.success(f"✅ {perf_team} Playing 11 saved!")
-                                            else:
-                                                st.error(msg)
-                                        else:
-                                            st.warning("Please select at least one player.")
+                                    # 2. Sync to CSV
+                                    # update_wc_csv_stats imported at top
+                                    m_stats = {
+                                        'runs': runs, 'balls': balls, 'fours': fours, 'sixes': sixes,
+                                        'wickets': wkts, 'overs': overs, 'runs_conceded': runs_con,
+                                        'catches': catches, 'is_not_out': not_out
+                                    }
+                                    p_team_name = team1_name if p_name in xi1 else team2_name
+                                    res, msg = update_wc_csv_stats(p_name, m_stats, p_team_name)
+                                    if res: st.success(f"Data synced for {p_name}!")
+                                    else: st.warning(f"DB updated, but CSV error: {msg}")
 
-                                    if len(playing_players) != 11 and len(playing_players) > 0:
-                                        st.warning(f"⚠️ Selected {len(playing_players)} players. Pro Tip: International matches usually have exactly 11.")
-                                else:
-                                    st.error("No players found for this team")
-                                    playing_players = []
-                            
-                            if playing_players:
-                                # We'll use a data editor or dynamic fields for multiple players
-                                st.write("📝 **Enter Match Performance Details**")
-                                
-                                for p_name in playing_players:
-                                    with st.expander(f"👤 {p_name} - Stats", expanded=True):
-                                        p_col1, p_col2, p_col3 = st.columns(3)
-                                        
-                                        with p_col1:
-                                            st.write("**Batting**")
-                                            p_runs = st.number_input("Runs", min_value=0, step=1, key=f"runs_{p_name}")
-                                            p_balls = st.number_input("Balls Faced", min_value=0, step=1, key=f"balls_{p_name}")
-                                            p_not_out = st.checkbox("Not Out", key=f"no_{p_name}")
-                                            # Simple SR display
-                                            if p_balls > 0:
-                                                p_sr = (p_runs / p_balls) * 100
-                                                st.caption(f"SR: {p_sr:.2f}")
-                                            
-                                        with p_col2:
-                                            st.write("**Boundaries**")
-                                            p_fours = st.number_input("4s", min_value=0, step=1, key=f"4s_{p_name}")
-                                            p_sixes = st.number_input("6s", min_value=0, step=1, key=f"6s_{p_name}")
-                                            
-                                        with p_col3:
-                                            st.write("**Bowling**")
-                                            p_overs = st.number_input("Overs", min_value=0.0, max_value=4.0, step=0.1, key=f"overs_{p_name}")
-                                            p_cons = st.number_input("Runs Conceded", min_value=0, step=1, key=f"cons_{p_name}")
-                                            p_wkts = st.number_input("Wickets", min_value=0, step=1, key=f"wkts_{p_name}")
-                                            # Simple Econ display
-                                            if p_overs > 0:
-                                                p_econ = p_cons / p_overs
-                                                st.caption(f"Econ: {p_econ:.2f}")
-                                        
-                                        if st.button(f"Save {p_name}", key=f"save_{p_name}"):
-                                            try:
-                                                # 1. Save to Database for match stats and fantasy
-                                                add_player_performance(
-                                                    perf_match_id, p_name, perf_team_id,
-                                                    p_runs, p_balls, p_fours, p_sixes,
-                                                    p_wkts, p_overs, p_cons, p_not_out
-                                                )
-                                                
-                                                # 2. Synchronize to wc_players.csv
-                                                from ..database import update_wc_csv_stats
-                                                match_stats = {
-                                                    'runs': p_runs,
-                                                    'balls': p_balls,
-                                                    'fours': p_fours,
-                                                    'sixes': p_sixes,
-                                                    'wickets': p_wkts,
-                                                    'overs': p_overs,
-                                                    'runs_conceded': p_cons,
-                                                    'is_not_out': p_not_out
-                                                }
-                                                csv_success, csv_msg = update_wc_csv_stats(p_name, match_stats)
-                                                
-                                                if csv_success:
-                                                    st.success(f"✅ Saved for {p_name} and updated CSV!")
-                                                else:
-                                                    st.warning(f"✅ Saved for {p_name}, but CSV update note: {csv_msg}")
-                                                    
-                                            except Exception as e:
-                                                st.error(f"Error: {e}")
-                        
-                        # Recalculate fantasy scores
-                        if st.button("🔄 Recalculate Fantasy Points (After all performances recorded)", key="recalc_fantasy"):
+                    st.markdown("### 🚀 Batch Actions")
+                    col_b1, col_b2 = st.columns(2)
+                    with col_b1:
+                        if st.button(f"📥 SAVE ALL {team_filter} STATS", type="primary", width="stretch"):
                             try:
-                                calculate_updated_fantasy_scores(tournament_id)
-                                st.success("✅ Fantasy points recalculated based on performance data!")
-                                st.balloons()
+                                # add_player_performance and update_batch_wc_csv_stats imported at top
+                                batch_data = []
+                                for p_name in form_players:
+                                    p_team_id = match['team1_id'] if p_name in xi1 else match['team2_id']
+                                    p_team_name = team1_name if p_name in xi1 else team2_name
+                                    
+                                    # Pull current values from session state keys
+                                    r = st.session_state.get(f"r_{p_name}", 0)
+                                    b = st.session_state.get(f"b_{p_name}", 0)
+                                    no = st.session_state.get(f"no_{p_name}", False)
+                                    f4 = st.session_state.get(f"4s_{p_name}", 0)
+                                    s6 = st.session_state.get(f"6s_{p_name}", 0)
+                                    w = st.session_state.get(f"w_{p_name}", 0)
+                                    o = st.session_state.get(f"o_{p_name}", 0.0)
+                                    c = st.session_state.get(f"c_{p_name}", 0)
+                                    cat = st.session_state.get(f"cat_{p_name}", 0)
+                                    
+                                    # 1. DB Save
+                                    add_player_performance(match_id, p_name, p_team_id, r, b, f4, s6, w, o, c, 0, cat, no)
+                                    
+                                    # 2. Add to Batch List for CSV
+                                    batch_data.append({
+                                        'player_name': p_name,
+                                        'team_name': p_team_name,
+                                        'match_stats': {
+                                            'runs': r, 'balls': b, 'fours': f4, 'sixes': s6,
+                                            'wickets': w, 'overs': o, 'runs_conceded': c,
+                                            'catches': cat, 'is_not_out': no
+                                        }
+                                    })
+                                
+                                # 3. Bulk CSV Write
+                                success, msg = update_batch_wc_csv_stats(batch_data)
+                                if success:
+                                    st.success(f"✅ Success: {msg}")
+                                    st.balloons()
+                                else:
+                                    st.error(f"❌ Batch Sync Error: {msg}")
                             except Exception as e:
-                                st.error(f"Error recalculating fantasy points: {e}")
-                    else:
-                        st.info("No completed matches yet. Complete some matches first to record performances.")
-                else:
-                    st.info("✅ All matches completed!")
+                                st.error(f"Error: {e}")
+
+                    st.divider()
+                    if st.button("🔄 RE-CALCULATE FANTASY POINTS (FINAL STEP)", type="primary", width="stretch"):
+                        try:
+                            from ..database import calculate_updated_fantasy_scores
+                            calculate_updated_fantasy_scores(tournament_id)
+                            st.success("✅ Tournament Leaderboard & Fantasy Points Updated!")
+                            st.balloons()
+                        except Exception as e: st.error(f"Error: {e}")
+
+                st.divider()
+                with st.expander("⚠️ Danger Zone: Reset Tournament"):
+                    st.warning("This will reset all match results, player scores, and standings for this tournament. This action cannot be undone.")
+                    confirm = st.text_input("Type 'RESET' to confirm", key="reset_confirm")
+                    if st.button("🔴 RESET TOURNAMENT PROGRESS", type="secondary", width="stretch"):
+                        if confirm == "RESET":
+                            from ..database import total_tournament_reset
+                            success, msg = total_tournament_reset(tournament_id)
+                            if success:
+                                st.success(msg)
+                                st.rerun()
+                            else:
+                                st.error(f"Reset failed: {msg}")
+                        else:
+                            st.error("Please type 'RESET' to confirm.")
             else:
-                st.error("Tournament not found")
+                st.error("Tournament ID not found in database.")
 
     # ========== TAB 7: SUPER 8 & STAGES ==========
     with tab7:
@@ -856,7 +941,7 @@ def show_admin_panel():
             tournament = get_tournament(tournament_id)
             if tournament:
                 st.subheader("Promote to Super 8")
-                st.write("This will take the Top 2 teams from each of the 4 groups (A, B, C, D) based on Points and NRR, then schedule the Super 8 round-robin matches.")
+                st.write("Advance Top 2 teams from each group to Super 8 based on Points/NRR.")
                 
                 if st.button("✨ Advance to Super 8", type="primary"):
                     success, msg = promote_to_super8(tournament_id)
@@ -868,7 +953,7 @@ def show_admin_panel():
                 
                 st.divider()
                 st.subheader("Knockout Progression")
-                st.info("Once Super 8 is complete, manually schedule the Semi-Finals using the 'Schedule Matches' tab.")
+                st.info("Manual scheduling for Semi-Finals/Finals is available in 'Schedule Matches' tab.")
 
     # ========== TAB 8: TOURNAMENT STATS ==========
     with tab8:
@@ -876,87 +961,28 @@ def show_admin_panel():
         tournament_id = st.number_input("Tournament ID", min_value=1, step=1, key="stats_man_id")
         
         if tournament_id:
-            s_tab1, s_tab2, s_tab3 = st.tabs(["Top Scorers", "Top Bowlers", "Most Sixes"])
+            s_tab1, s_tab2, s_tab3, s_tab4 = st.tabs(["Top Scorers", "Top Bowlers", "Most Sixes", "Most Catches"])
             
             with s_tab1:
                 df = get_tournament_stats(tournament_id, 'runs')
-                if not df.empty:
-                    st.dataframe(df, use_container_width=True)
-                else:
-                    st.write("No batting data recorded yet.")
+                if not df.empty: st.dataframe(df, width="stretch")
+                else: st.write("No batting data.")
             
             with s_tab2:
                 df = get_tournament_stats(tournament_id, 'wickets')
-                if not df.empty:
-                    st.dataframe(df, use_container_width=True)
-                else:
-                    st.write("No bowling data recorded yet.")
+                if not df.empty: st.dataframe(df, width="stretch")
+                else: st.write("No bowling data.")
                     
             with s_tab3:
                 df = get_tournament_stats(tournament_id, 'sixes')
-                if not df.empty:
-                    st.dataframe(df, use_container_width=True)
-                else:
-                    st.write("No sixes data recorded yet.")
-    
-    # ========== TEAM STRENGTH DISPLAY ==========
-    st.divider()
-    st.subheader("⚡ AI Team Strength Analysis")
-    
-    strength_tournament_id = st.number_input("Tournament ID for Team Strength", min_value=1, step=1, key="strength_tournament")
-    
-    if strength_tournament_id:
-        strength_tournament = get_tournament(strength_tournament_id)
-        if strength_tournament:
-            strength_teams = get_tournament_teams(strength_tournament_id)
-            
-            if strength_teams:
-                st.write(f"**{strength_tournament['name']}** - Team Strength Ratings")
-                
-                strength_data = []
-                for team in strength_teams:
-                    strength = get_team_strength_rating(strength_tournament_id, team['id'])
-                    strength_data.append({
-                        'Team': team['team_name'],
-                        'Group': team['group_letter'],
-                        'Players': len(team['squad'].split(',')) if team['squad'] else 0,
-                        'Strength': strength,
-                        'Rating': '🟢 Strong' if strength >= 70 else '🟡 Medium' if strength >= 50 else '🔴 Weak'
-                    })
-                
-                strength_df = pd.DataFrame(strength_data).sort_values('Strength', ascending=False)
-                st.dataframe(strength_df, use_container_width=True)
-                
-                # Visual representation
-                st.bar_chart(strength_df.set_index('Team')['Strength'])
-            else:
-                st.info("No teams found in this tournament")
-        else:
-            st.error("Tournament not found")
-    
-    # ========== DELETE TOURNAMENT ==========
-    st.divider()
-    st.subheader("⚠️ Danger Zone")
-    
-    delete_tournament_id = st.number_input("Tournament ID to Delete", min_value=1, step=1, key="delete_id")
-    
-    if delete_tournament_id:
-        tournament = get_tournament(delete_tournament_id)
-        if tournament:
-            st.warning(f"⚠️ This will permanently delete '{tournament['name']}' and all related data")
-            
-            confirm = st.checkbox(f"I confirm deletion of '{tournament['name']}'")
-            
-            if confirm and st.button("🗑️ Delete Tournament", key="delete_tournament"):
-                try:
-                    if delete_tournament(delete_tournament_id):
-                        st.success(f"✅ Tournament '{tournament['name']}' deleted successfully")
-                        st.balloons()
-                    else:
-                        st.error("Failed to delete tournament")
-                except Exception as e:
-                    st.error(f"Error deleting tournament: {e}")
-    
+                if not df.empty: st.dataframe(df, width="stretch")
+                else: st.write("No sixes data.")
+
+            with s_tab4:
+                df = get_tournament_stats(tournament_id, 'catches')
+                if not df.empty: st.dataframe(df, width="stretch")
+                else: st.write("No catches data.")
+
     # ========== TAB 9: PLAYER MASTER CONTROL ==========
     with tab9:
         st.header("🛠️ Global Player Master Control")
@@ -980,10 +1006,47 @@ def show_admin_panel():
                     """, (new_p_name, new_p_team, new_p_fmt, new_p_role))
                     conn.commit()
                     st.success(f"Successfully added {new_p_name} to world database!")
-                except Exception as e:
-                    st.error(f"Error: {e}")
-                finally:
-                    conn.close()
+                except Exception as e: st.error(f"Error: {e}")
+                finally: conn.close()
+
+    # ========== AI TEAM STRENGTH ANALYSIS ==========
+    st.divider()
+    st.subheader("⚡ AI Team Strength Analysis")
+    strength_tournament_id = st.number_input("Tournament ID for Team Strength", min_value=1, step=1, key="strength_tournament")
+    
+    if strength_tournament_id:
+        st_tournament = get_tournament(strength_tournament_id)
+        if st_tournament:
+            strength_teams = get_tournament_teams(strength_tournament_id)
+            if strength_teams:
+                st.write(f"**{st_tournament['name']}** - Team Strength Ratings")
+                s_data = []
+                for team in strength_teams:
+                    strength = get_team_strength_rating(strength_tournament_id, team['id'])
+                    s_data.append({
+                        'Team': team['team_name'],
+                        'Group': team['group_letter'],
+                        'Players': len(parse_squad_list(team['squad'])),
+                        'Strength': strength,
+                        'Rating': '🟢 Strong' if strength >= 70 else '🟡 Medium' if strength >= 50 else '🔴 Weak'
+                    })
+                s_df = pd.DataFrame(s_data).sort_values('Strength', ascending=False)
+                st.dataframe(s_df, width="stretch")
+                st.bar_chart(s_df.set_index('Team')['Strength'])
+    
+    # ========== DELETE TOURNAMENT ==========
+    st.divider()
+    st.subheader("⚠️ Danger Zone")
+    del_tourn_id = st.number_input("Tournament ID to Delete", min_value=1, step=1, key="delete_id")
+    if del_tourn_id:
+        t_to_del = get_tournament(del_tourn_id)
+        if t_to_del:
+            confirm = st.checkbox(f"I confirm deletion of '{t_to_del['name']}'")
+            if confirm and st.button("🗑️ Delete Tournament", key="delete_tournament"):
+                if delete_tournament(del_tourn_id):
+                    st.success("Tournament deleted.")
+                    st.rerun()
+                else: st.error("Failed to delete.")
 
 if __name__ == "__main__":
     show_admin_panel()

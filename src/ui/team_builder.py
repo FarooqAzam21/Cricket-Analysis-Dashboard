@@ -177,7 +177,7 @@ def render_team_builder(all_players):
                                 <div style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark) !important;">{player['player']}</div>
                                 <div style="font-size: 0.8rem; opacity: 0.7; font-weight: 600;">{player['Team']}</div>
                             </div>
-                            <div style="background: var(--primary); color: white; padding: 4px 10px; border-radius: 8px; font-weight: 800; font-size: 0.8rem;">
+                            <div style="background: var(--primary); color: #e2e8f0; padding: 4px 10px; border-radius: 8px; font-weight: 800; font-size: 0.8rem;">
                                 #{assigned_pos}
                             </div>
                         </div>
@@ -213,4 +213,4 @@ def render_team_builder(all_players):
                          color_discrete_sequence=['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'],
                          template='plotly_dark')
             fig.update_layout(margin=dict(l=20, r=20, t=20, b=20), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")

@@ -139,7 +139,7 @@ def render_next_match_prediction(df_batsman, df_allrounder=None, df_bowler=None,
                 height=400,
                 showlegend=False
             )
-            st.plotly_chart(fig_prob, use_container_width=True)
+            st.plotly_chart(fig_prob, width="stretch")
             st.caption("The curve indicates the most likely run range. Higher peak = more consistent performer.")
             
         else:
@@ -211,7 +211,7 @@ def render_yearly_prediction(yearwise_data):
                 hovermode='x unified',
                 height=500
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
             
             # Display prediction result
             st.success(f"**Predicted Performance for {next_year}:** {int(predicted_next)} runs")

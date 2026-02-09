@@ -71,7 +71,7 @@ def show_leaderboard():
     st.dataframe(
         df,
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
         column_config={
             "Total Points": st.column_config.NumberColumn(format="%.1f"),
             "Avg Points": st.column_config.NumberColumn(format="%.2f")

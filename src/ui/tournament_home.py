@@ -90,20 +90,20 @@ def show_tournament_home():
                 st.markdown("### 🎯 Top Run Scorers")
                 df_runs = get_tournament_stats(tournament_id, 'runs')
                 if not df_runs.empty:
-                    st.dataframe(df_runs, use_container_width=True, hide_index=True)
+                    st.dataframe(df_runs, width="stretch", hide_index=True)
                 else:
                     st.info("Batting stats will appear after match results are entered.")
                 
                 st.markdown("### 🎲 Top Wicket Takers")
                 df_wkts = get_tournament_stats(tournament_id, 'wickets')
                 if not df_wkts.empty:
-                    st.dataframe(df_wkts, use_container_width=True, hide_index=True)
+                    st.dataframe(df_wkts, width="stretch", hide_index=True)
             
             with s_col2:
                 st.markdown("### 🔥 Most Sixes")
                 df_sixes = get_tournament_stats(tournament_id, 'sixes')
                 if not df_sixes.empty:
-                    st.dataframe(df_sixes, use_container_width=True, hide_index=True)
+                    st.dataframe(df_sixes, width="stretch", hide_index=True)
                 
                 st.markdown("### 🏁 Recent Results")
                 completed = [m for m in matches if m['status'] == 'completed']
@@ -148,7 +148,7 @@ def show_tournament_home():
                     st.dataframe(
                         pd.DataFrame(standings_data),
                         hide_index=True,
-                        use_container_width=True
+                        width="stretch"
                     )
                 else:
                     st.info("No standings data available")
@@ -211,7 +211,7 @@ def show_tournament_home():
             st.dataframe(
                 pd.DataFrame(leaderboard_data),
                 hide_index=True,
-                use_container_width=True
+                width="stretch"
             )
         else:
             st.info("Leaderboard will appear here once users create fantasy teams")

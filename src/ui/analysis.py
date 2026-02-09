@@ -82,7 +82,7 @@ def render_player_analysis(all_players):
                                 title=f"Runs by Format for {selected_player}",
                                 template="plotly_white",
                                 color_discrete_sequence=['#10b981', '#3b82f6', '#f59e0b'])
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch")
                 
                 with chart_tabs[1]:
                     fig2 = px.scatter(format_stats, x='average', y='strike_rate', size='runs', color='Format',
@@ -90,4 +90,4 @@ def render_player_analysis(all_players):
                                      template="plotly_white",
                                      text='Format')
                     fig2.update_traces(textposition='top center')
-                    st.plotly_chart(fig2, use_container_width=True)
+                    st.plotly_chart(fig2, width="stretch")

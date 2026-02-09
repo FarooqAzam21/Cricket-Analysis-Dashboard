@@ -112,7 +112,7 @@ def render_player_management():
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 20px;
         border-radius: 10px;
-        color: white;
+        color: #e2e8f0;
         text-align: center;
         margin: 10px 0;
     }
@@ -198,7 +198,7 @@ def render_player_management():
             display_df.columns = ['Player', 'Team', 'Format', 'Matches', 'Runs', 'Average', 'Strike Rate']
             display_df = display_df.reset_index(drop=True)
             display_df.index = display_df.index + 1
-            st.dataframe(display_df, use_container_width=True)
+            st.dataframe(display_df, width="stretch")
         else:
             st.info("No run scorer data available")
     
@@ -231,7 +231,7 @@ def render_player_management():
             display_df.columns = ['Player', 'Team', 'Format', 'Matches', 'Wickets', 'Bowling Avg', 'Economy']
             display_df = display_df.reset_index(drop=True)
             display_df.index = display_df.index + 1
-            st.dataframe(display_df, use_container_width=True)
+            st.dataframe(display_df, width="stretch")
         else:
             st.info("No wicket taker data available")
     
@@ -264,7 +264,7 @@ def render_player_management():
             display_df.columns = ['Player', 'Team', 'Format', 'Runs', 'Matches', 'Strike Rate', 'Average']
             display_df = display_df.reset_index(drop=True)
             display_df.index = display_df.index + 1
-            st.dataframe(display_df, use_container_width=True)
+            st.dataframe(display_df, width="stretch")
         else:
             st.info("No strike rate data available")
     
@@ -297,7 +297,7 @@ def render_player_management():
             display_df.columns = ['Player', 'Team', 'Format', 'Wickets', 'Matches', 'Bowling Avg', 'Economy']
             display_df = display_df.reset_index(drop=True)
             display_df.index = display_df.index + 1
-            st.dataframe(display_df, use_container_width=True)
+            st.dataframe(display_df, width="stretch")
         else:
             st.info("No bowling average data available")
     
@@ -331,7 +331,7 @@ def render_player_management():
                 display_df.columns = ['Player', 'Team', 'Format', '6s', 'Runs', 'Strike Rate', 'Matches']
                 display_df = display_df.reset_index(drop=True)
                 display_df.index = display_df.index + 1
-                st.dataframe(display_df, use_container_width=True)
+                st.dataframe(display_df, width="stretch")
             else:
                 st.info("No 6's data available in current CSV")
         else:

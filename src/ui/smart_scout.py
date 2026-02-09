@@ -58,7 +58,7 @@ def render_smart_scout(all_players):
                                         <h4 style="margin: 0; color: var(--primary-dark) !important;">{row['player']}</h4>
                                         <p style="margin: 0; font-size: 0.9rem; opacity: 0.7; font-weight: 600;">{row['Team']} | {row.get('role', 'N/A')}</p>
                                     </div>
-                                    <div style="background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.8rem;">
+                                    <div style="background: var(--primary); color: #e2e8f0; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.8rem;">
                                         {match_score}% MATCH
                                     </div>
                                 </div>

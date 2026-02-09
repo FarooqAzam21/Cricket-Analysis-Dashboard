@@ -97,7 +97,7 @@ def apply_custom_styles():
         /* ============= PREMIUM BUTTONS ============= */
         .stButton > button {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
-            color: white !important;
+            color: #e2e8f0 !important;
             border: none !important;
             border-radius: 14px !important;
             padding: 12px 24px !important;
@@ -124,7 +124,7 @@ def apply_custom_styles():
             border: 1px solid rgba(255,255,255,0.2) !important;
             border-radius: 30px !important;
             padding: 12px 20px !important;
-            color: white !important;
+            color: #e2e8f0 !important;
             font-size: 0.9rem !important;
         }
 
