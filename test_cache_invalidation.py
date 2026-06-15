@@ -1,35 +1,25 @@
-"""
-Test script to verify cache invalidation works
-"""
-import os
-import time
-from src.data_loader import _get_csv_mtime
+"""Smoke test for analytics CSV cache invalidation."""
 
-print("Testing CSV modification time detection...")
-print()
+from pathlib import Path
 
-# Initial check
-print(f"Initial mtime sum: {_get_csv_mtime()}")
-time.sleep(1)
+from src.data_loader import _get_csv_cache_key
 
-# Simulate CSV change by checking again
-print(f"After 1 second: {_get_csv_mtime()}")
-time.sleep(1)
 
-# Check individual file times
-csv_files = [
-    'odi_batsman.csv',
-    'odi_bowler.csv',
-    'odi_all_rounders.csv',
-    'yearwise_data.csv'
+CSV_FILES = [
+    "odi_batsman.csv",
+    "odi_bowler.csv",
+    "odi_all_rounders.csv",
+    "yearwise_data.csv",
 ]
 
-print("\nIndividual file mtimes:")
-for f in csv_files:
-    if os.path.exists(f):
-        mtime = os.path.getmtime(f)
-        print(f"  {f}: {mtime}")
-    else:
-        print(f"  {f}: NOT FOUND")
 
-print("\n✅ If you edit a CSV and run this again, the mtime sum should change!")
+def test_csv_cache_key_available():
+    cache_key = _get_csv_cache_key()
+    assert cache_key
+    assert len(cache_key) == 32
+
+
+def test_analytics_csv_files_exist():
+    base_dir = Path(__file__).resolve().parent
+    missing = [csv_file for csv_file in CSV_FILES if not (base_dir / csv_file).exists()]
+    assert not missing, f"Missing analytics CSV files: {missing}"

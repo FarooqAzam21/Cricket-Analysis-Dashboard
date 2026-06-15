@@ -10,11 +10,10 @@ DATA_PATHS = {
     "all_rounder": os.path.join(BASE_DIR, "odi_all_rounders.csv"),
     "bowler": os.path.join(BASE_DIR, "odi_bowler.csv"),
     "yearwise": os.path.join(BASE_DIR, "yearwise_data.csv"),
-    "wc_players": os.path.join(BASE_DIR, "wc_players.csv"),
 }
 
 def apply_custom_styles():
-    """Apply comprehensive RESPONSIVE 'Cricket Pro' CSS theme - Desktop & Mobile Optimized."""
+    """Apply comprehensive responsive analytics warehouse theme."""
     premium_css = """
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
@@ -190,6 +189,7 @@ def apply_custom_styles():
 
 # Application Constants
 MENU_OPTIONS = [
+    "Warehouse & Data Modeling",
     "Format Wise Analysis",
     "Select Playing 11",
     "Player Comparison",

@@ -95,9 +95,9 @@ def test_classification():
     print(f"Role distribution:\n{df['role_lower'].value_counts()}")
     
     # Test filters
-    batsmen = df[df['role_lower'].str.contains('batsman|batter', na=False, regex=False)]
+    batsmen = df[df['role_lower'].str.contains('batsman|batter', na=False, regex=True)]
     bowlers = df[df['role_lower'].str.contains('bowler|spinner|fast|seam|pace', na=False)]
-    wk = df[df['role_lower'].str.contains('wicket|keeper', na=False, regex=False)]
+    wk = df[df['role_lower'].str.contains('wicket|keeper', na=False, regex=True)]
     ar = df[df['role_lower'].str.contains('all-rounder|all rounder|allrounder|fast-bowling|spinner|arm', na=False)]
     
     print(f"\nFiltered results:")
@@ -108,6 +108,8 @@ def test_classification():
     
     # Fallback filters
     print(f"\nFallback filters (runs/wickets):")
+    df['runs'] = pd.to_numeric(df['runs'].astype(str).str.replace('-', '0', regex=False), errors='coerce').fillna(0)
+    df['wickets'] = pd.to_numeric(df['wickets'].astype(str).str.replace('-', '0', regex=False), errors='coerce').fillna(0)
     batsmen_fallback = df[df['runs'] > 0]
     bowlers_fallback = df[df['wickets'] > 0]
     print(f"  - Batsmen (runs > 0): {len(batsmen_fallback)}")
@@ -125,7 +127,7 @@ def test_data_loader():
         print("Loading data...")
         result = load_all_data(_csv_cache_key=_get_csv_cache_key())
         
-        all_players, batsmen, all_rounders, bowlers, df_year, _, _, wk = result
+        all_players, _, all_rounders, bowlers, df_year, batsmen, _, wk = result
         
         print(f"\nResults:")
         print(f"  - Total players: {len(all_players) if all_players is not None else 'None'}")

@@ -158,7 +158,7 @@ def load_all_data(_csv_cache_key=None):
     # Classification logic
     if not all_players.empty:
         # Ensure numeric for filtering and AI models
-        numeric_cols = ['wickets', 'runs', 'average', 'strike_rate', 'Innings', 'bowling_average', 'economy', 'matches']
+        numeric_cols = ['wickets', 'runs', 'average', 'strike_rate', 'bowling_strike_rate', 'Innings', 'bowling_average', 'economy', 'matches']
         for col in numeric_cols:
             if col in all_players.columns:
                 # Replace '-' with 0 before converting
@@ -182,8 +182,8 @@ def load_all_data(_csv_cache_key=None):
         print(f"DEBUG: Role value counts:\n{all_players['role_lower'].value_counts().head(10)}")
         
         # Classify players by role - be more lenient with classification
-        batsmen = all_players[all_players['role_lower'].str.contains('batsman|batter', na=False, regex=False)]
-        wicket_keepers = all_players[all_players['role_lower'].str.contains('wicket|keeper', na=False, regex=False)]
+        batsmen = all_players[all_players['role_lower'].str.contains('batsman|batter', na=False, regex=True)]
+        wicket_keepers = all_players[all_players['role_lower'].str.contains('wicket|keeper', na=False, regex=True)]
         all_rounders = all_players[all_players['role_lower'].str.contains('all-rounder|all rounder|allrounder|fast-bowling|spinning|spinner|arm', na=False)]
         bowlers_data = all_players[all_players['role_lower'].str.contains('bowler|spinner|fast|seam|pace', na=False) | (all_players['wickets'] > 0)]
         
